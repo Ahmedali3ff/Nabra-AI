@@ -13,6 +13,7 @@ import PrivacyPolicy from "./pages/PrivacyPolicy";
 import NotFound from "./pages/NotFound.jsx";
 import Contributors from "./pages/Contributors.jsx";
 import { clearTokens as clearStorage, logout } from "./utils/auth.js";
+import BrowserWarningBanner from "./components/BrowserWarningBanner.jsx";
 
 const tabs = [
   { id: "onboarding", label: "Onboarding", icon: Mic2 },
@@ -327,6 +328,6 @@ export default function App() {
       </main>
 
       <Footer />
-    </main>
+    </div>
   );
 }

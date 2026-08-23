@@ -1,4 +1,5 @@
-import React from "react";
+import React, { useState, useEffect, useRef } from "react";
+import { Check, X, Pencil } from "lucide-react";
 
 const QUICK_REPLIES = [
   { label: "Hello", phrase: "Hello" },
@@ -9,6 +10,18 @@ const QUICK_REPLIES = [
   { label: "Yes", phrase: "Yes, I understand" },
   { label: "No thanks", phrase: "No, thank you" },
 ];
+
+const CATEGORIES = ["General", "Questions", "Responses", "Social"];
+const DEFAULT_QUICK_REPLIES = QUICK_REPLIES.map((r, i) => ({
+  id: `qr-${i}`,
+  label: r.label,
+  phrase: r.phrase,
+  category: "General",
+}));
+
+function generateId() {
+  return "qr-" + Math.random().toString(36).substring(2, 11);
+}
 
 const STORAGE_KEY = "vf_quick_replies";
 
@@ -48,6 +61,8 @@ export function QuickReplies({ onSelect, showToast }) {
   const [editedValue, setEditedValue] = useState("");
   const [selectedCategoryTab, setSelectedCategoryTab] = useState("All");
   const [newCategory, setNewCategory] = useState("General");
+  const [draggedItem, setDraggedItem] = useState(null);
+  const tablistRef = useRef(null);
 
   useEffect(() => {
     try {
@@ -202,25 +217,6 @@ const handleEditKeyDown = (e, oldPhrase) => {
     e.preventDefault();
   };
 
-  const handleDrop = (e, targetId) => {
-    e.preventDefault();
-    if (draggedItem === null) return;
-    const oldIndex = replies.findIndex((r) => r.id === draggedItem);
-    const newIndex = replies.findIndex((r) => r.id === targetId);
-    
-    if (oldIndex !== -1 && newIndex !== -1) {
-      const newReplies = [...replies];
-      const [removed] = newReplies.splice(oldIndex, 1);
-      newReplies.splice(newIndex, 0, removed);
-      setReplies(newReplies);
-    }
-    setDraggedItem(null);
-  };
-
-  const handleDragOver = (e) => {
-    e.preventDefault();
-  };
-
   const handleEditSave = (e) => {
     e.preventDefault();
     if (!editingReplyId || !editingReplyData) return;
@@ -304,27 +300,6 @@ const handleEditKeyDown = (e, oldPhrase) => {
       >
         Quick replies
       </h3>
-
-      <div className="flex flex-wrap gap-2" role="group" aria-label="Quick reply phrases">
-        {QUICK_REPLIES.map(({ label, phrase }) => (
-          <button
-            key={phrase}
-            onClick={() => onSelect(phrase)}
-            className={[
-              "rounded-full border border-neutral-200 bg-neutral-50 px-3 py-1.5",
-              "text-sm text-neutral-700 transition-all duration-150",
-              "hover:-translate-y-px hover:border-blue-400 hover:bg-blue-50 hover:text-blue-700",
-              "focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-1",
-              "active:translate-y-0 active:scale-95",
-              "dark:border-border dark:bg-surface dark:text-neutral-300",
-              "dark:hover:border-blue-500 dark:hover:bg-blue-500/15 dark:hover:text-blue-300 dark:focus:ring-offset-black",
-            ].join(" ")}
-            aria-label={`Quick reply: ${phrase}`}
-          >
-            {isEditing ? "Done" : "Customize"}
-          </button>
-        </div>
-      </div>
 
       {/* Category Tabs */}
       <div

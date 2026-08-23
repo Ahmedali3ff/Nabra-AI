@@ -167,6 +167,7 @@ export async function clearStorage() {
 }
 
 export async function saveTranscriptItem(entry) {
+
   const db = await getDB();
   return new Promise((resolve, reject) => {
     const transaction = db.transaction(TRANSCRIPT_STORE, "readwrite");
@@ -183,6 +184,8 @@ export async function saveTranscriptItem(entry) {
     };
   });
 }
+
+export const saveTranscript = saveTranscriptItem;
 
 export async function getAllTranscripts() {
   const db = await getDB();

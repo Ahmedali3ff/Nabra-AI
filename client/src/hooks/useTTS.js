@@ -1,6 +1,5 @@
 // Sends typed text to the local backend and returns playable cloned speech audio.
 import React from "react";
-import { getApiKey } from "../utils/apiKeyStorage.js";
 import { loadVoiceSettings } from "../utils/voiceSettings.js";
 import { API_BASE_URL } from "../utils/apiConfig.js";
 
@@ -19,7 +18,7 @@ export default function useTTS() {
     try {
       const voiceSettings = loadVoiceSettings();
       const modelId = localStorage.getItem("voiceforge:selectedModelId") || "eleven_multilingual_v2";
-      const apiKey = getApiKey() || localStorage.getItem("voiceforge:elevenlabsApiKey") || "";
+      const apiKey = localStorage.getItem("voiceforge:elevenlabsApiKey") || "";
 
       const response = await fetch(`${API_BASE_URL}/api/voice/speak`, {
         method: "POST",

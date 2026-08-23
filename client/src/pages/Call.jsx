@@ -5,12 +5,13 @@ import TextToSpeech from "../components/TextToSpeech.jsx";
 import VideoPreview from "../components/VideoPreview.jsx";
 import VirtualCamera from "../components/VirtualCamera.jsx";
 import LiveTranscription from "../components/LiveTranscription.jsx";
-import { AACSymbolBoard } from "../components/AACSymbolBoard.jsx";
 import { LanguageSelector } from "../components/LanguageSelector.jsx";
 import useTTS from "../hooks/useTTS.js";
 import useVirtualCamera from "../hooks/useVirtualCamera.js";
 import { getActiveVoiceProfile } from "../hooks/useVoiceClone.js";
 import { useSpeechHistory } from "../hooks/useSpeechHistory.js";
+import { useToast, ToastContainer } from "../components/useToast.jsx";
+import { loadLanguage, persistLanguage } from "../utils/languages.js";
 
 const QUICK_REPLIES = [
   { label: "Hello", phrase: "Hello" },
@@ -51,31 +52,8 @@ export default function Call() {
     } catch { return "0.6"; }
   });
 
-  const [subtitlesEnabled, setSubtitlesEnabled] = React.useState(() => {
-    try {
-      return localStorage.getItem("voiceforge:subtitlesEnabled") === "true";
-    } catch {
-      return false;
-    }
-  });
-  const [subtitleFontSize, setSubtitleFontSize] = React.useState(() => {
-    try {
-      return localStorage.getItem("voiceforge:subtitleFontSize") || "medium";
-    } catch {
-      return "medium";
-    }
-  });
-  const [subtitleBgOpacity, setSubtitleBgOpacity] = React.useState(() => {
-    try {
-      return localStorage.getItem("voiceforge:subtitleBgOpacity") || "0.6";
-    } catch {
-      return "0.6";
-    }
-  });
-
   const [dbError, setDbError] = React.useState("");
 
-  const { speak, status, error, audioUrl } = useTTS();
   const { speak, status, error, audioUrl, engine } = useTTS();
   const virtualCamera = useVirtualCamera(canvasRef);
   const [modelId, setModelId] = React.useState(() => {
@@ -187,35 +165,8 @@ export default function Call() {
     } catch {
       return { xOffset: 0, yOffset: 0, scale: 1.0 };
     }
-
-        setActiveProfile(null);
-        setDbError("Failed to load voice profile");
-      }
-    }
-
-    loadActiveProfile();
-
-    return () => {
-      isMounted = false;
-    };
-  }, []);
-
-  // ---------------- CALIBRATION (SAFE STORAGE READ) ----------------
-  const [calibration] = React.useState(() => {
-    try {
-      const x = parseInt(localStorage.getItem("voiceforge:calibrationXOffset") || "0", 10);
-      const y = parseInt(localStorage.getItem("voiceforge:calibrationYOffset") || "0", 10);
-      const scale = parseFloat(localStorage.getItem("voiceforge:calibrationScale") || "1.0");
-
-      return {
-        xOffset: isNaN(x) ? 0 : x,
-        yOffset: isNaN(y) ? 0 : y,
-        scale: isNaN(scale) ? 1.0 : scale,
-      };
-    } catch {
-      return { xOffset: 0, yOffset: 0, scale: 1.0 };
-    }
   });
+
 
   // ---------------- SAFE CAMERA LOAD ----------------
   React.useEffect(() => {
@@ -262,22 +213,6 @@ export default function Call() {
     };
   }, [showToast]);
 
-  // ---------------- SAFE SPEAK FUNCTION ----------------
-  async function handleSpeak(text) {
-    if (!activeProfile?.voice_id) return;
-    try {
-      const result = await speak({ text, voiceId: activeProfile.voice_id });
-      setIsSpeaking(true);
-      const audio = new Audio(result.audioUrl);
-      audio.onended = () => setIsSpeaking(false);
-      audio.onerror = () => setIsSpeaking(false);
-      await audio.play();
-    } catch {
-      setIsSpeaking(false);
-    }
-  }
-});
-
   const handleCalibrationChange = (key, value) => {
     let parsedValue = typeof value === "string" ? parseFloat(value) : value;
     if (typeof parsedValue !== "number" || isNaN(parsedValue)) return;
@@ -311,91 +246,31 @@ export default function Call() {
     localStorage.setItem("voiceforge:calibrationScale", "1.0");
   };
 
- React.useEffect(() => {
-  let activeStream = null;
-  let isMounted = true;
-
-  async function openCamera() {
-    try {
-      await speak({ text, voiceId: activeProfile.voice_id });
-      addMessage(text);
-    } catch (err) {
-      console.error("TTS streaming error:", err);
-    }
-  }
-
-  openCamera();
-
-  return () => {
-    isMounted = false;
+  async function handleSpeak(text) {
+    if (!activeProfile?.voice_id) return;
 
     try {
+      setActiveText(text);
       const result = await speak({
         text,
         voiceId: activeProfile.voice_id,
         language_code: language,
+        onSpeakingChange: setIsSpeaking,
       });
-
-      setSessionHistory((prev) => [
-        ...prev,
-        {
-          id:
-            typeof crypto !== "undefined" && crypto.randomUUID
-              ? crypto.randomUUID()
-              : String(Date.now()),
-          text,
-          timestamp: new Date().toISOString(),
-          voiceName: activeProfile?.name || "Default Voice",
-        },
-      ]);
 
       if (result?.fallback) {
         showToast("Using browser voice fallback", "info");
       }
     } catch (err) {
-      console.error("TTS error:", err);
-      showToast("Speech generation failed", "error");
-    } finally {
-      setActiveText("");
-    if (activeStream) {
-      activeStream.getTracks().forEach((track) => track.stop());
+      console.error("TTS streaming error:", err);
+      showToast(err?.message || "Speech generation failed", "error");
     }
-  };
-}, [showToast]);
-
-  async function handleSpeak(text) {
-  if (!activeProfile?.voice_id) return;
-
-  try {
-    setActiveText(text);
-    const result = await speak({
-      text,
-      voiceId: activeProfile.voice_id,
-      language_code: language,
-      onSpeakingChange: setIsSpeaking,
-    });
-
-    if (result?.fallback) {
-      showToast("Using browser voice fallback", "info");
-    }
-  } catch (err) {
-    console.error("TTS streaming error:", err);
-    showToast(err?.message || "Speech generation failed", "error");
   }
-}
 
   const isSpeechActive = status === "speaking" || isSpeaking;
 
   return (
     <div className="space-y-5">
-
-      {/* HEADER */}
-      <section className="rounded-lg border border-ink/10 bg-white p-4 shadow-soft">
-        <div className="flex justify-between items-center">
-          <h2 className="text-2xl font-bold">Call control room</h2>
-          <span className="text-sm">
-            Voice: {activeProfile?.name || "No profile"}
-          </span>
       {/* ── Header card ───────────────────────────────────────────────────── */}
       <section className="rounded-lg border border-ink/10 bg-white p-4 shadow-soft dark:border-border dark:bg-surface dark:shadow-soft-dk">
         <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
@@ -439,20 +314,6 @@ export default function Call() {
           Create or select a voice profile before speaking.
         </div>
       )}
-
-      {/* CAMERA */}
-      <section>
-        <video
-          ref={localVideoRef}
-          autoPlay
-          muted
-          playsInline
-          className="w-full rounded bg-black"
-      <PrivacyModeToggle
-        onModeChange={setPrivacyMode}
-        onAvatarChange={setAvatarImage}
-        showToast={showToast}
-      />
 
       {/* Mouth Calibration Drawer */}
       <section className="rounded-lg border border-ink/10 bg-white p-5 shadow-soft">
@@ -655,7 +516,6 @@ export default function Call() {
           </div>
         )}
       </section>
-      </div> {/* Closes top settings inert wrapper */}
 
       <div className="grid gap-5 xl:grid-cols-[0.9fr_1.1fr_0.9fr]">
         {/* Webcam panel */}
@@ -703,28 +563,28 @@ export default function Call() {
                 onClick={() => playSoundEffect("ping")}
                 className="inline-flex min-h-11 items-center justify-center gap-2 rounded-md border border-neutral-200 bg-white px-3 text-xs font-semibold text-neutral-700 transition hover:bg-neutral-50 dark:border-border dark:bg-black dark:text-neutral-200 dark:hover:bg-neutral-900"
               >
-                🔔 Ping Attention
+                ≡ƒöö Ping Attention
               </button>
               <button
                 type="button"
                 onClick={() => playSoundEffect("chime")}
                 className="inline-flex min-h-11 items-center justify-center gap-2 rounded-md border border-neutral-200 bg-white px-3 text-xs font-semibold text-neutral-700 transition hover:bg-neutral-50 dark:border-border dark:bg-black dark:text-neutral-200 dark:hover:bg-neutral-900"
               >
-                🚪 Doorbell Chime
+                ≡ƒÜ¬ Doorbell Chime
               </button>
               <button
                 type="button"
                 onClick={() => playSoundEffect("alert")}
                 className="inline-flex min-h-11 items-center justify-center gap-2 rounded-md border border-neutral-200 bg-white px-3 text-xs font-semibold text-neutral-700 transition hover:bg-neutral-50 dark:border-border dark:bg-black dark:text-neutral-200 dark:hover:bg-neutral-900"
               >
-                ⚠️ Warning Beep
+                ΓÜá∩╕Å Warning Beep
               </button>
               <button
                 type="button"
                 onClick={() => playSoundEffect("applaud")}
                 className="inline-flex min-h-11 items-center justify-center gap-2 rounded-md border border-neutral-200 bg-white px-3 text-xs font-semibold text-neutral-700 transition hover:bg-neutral-50 dark:border-border dark:bg-black dark:text-neutral-200 dark:hover:bg-neutral-900"
               >
-                👏 Applaud Tone
+                ≡ƒæÅ Applaud Tone
               </button>
             </div>
           </section>

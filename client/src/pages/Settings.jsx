@@ -1,20 +1,33 @@
 // Lets users manage browser-stored voice profiles and configure voice synthesis settings.
 import React from "react";
-import { ExternalLink, Trash2 } from "lucide-react";
+import { ExternalLink, Trash2, CircleAlert } from "lucide-react";
 import {
   deleteVoiceProfile,
   getSavedProfiles,
   clearAllVoiceProfiles,
+  saveVoiceProfile,
 } from "../hooks/useVoiceClone.js";
+import {
+  loadLanguage,
+  persistLanguage,
+  getLanguageByCode,
+  LANGUAGE_STORAGE_KEY,
+} from "../utils/languages.js";
+import {
+  loadVoiceSettings,
+  persistVoiceSettings,
+  VOICE_PRESETS,
+} from "../utils/voiceSettings.js";
+import { useToast, ToastContainer } from "../components/useToast.jsx";
 
 export default function Settings() {
   const [apiKey, setApiKey] = React.useState(
     localStorage.getItem("voiceforge:elevenlabsApiKey") || "",
   );
   const [profiles, setProfiles] = React.useState(getSavedProfiles());
+  const [dbError, setDbError] = React.useState("");
+  const { toasts, showToast } = useToast();
 
-  const defaultSettings = DEFAULT_VOICE_SETTINGS;
-  const [voiceSettings, setVoiceSettings] = React.useState(loadVoiceSettings);
   const [language, setLanguage] = React.useState(loadLanguage);
   const selectedLangObj = getLanguageByCode(language);
 
@@ -381,7 +394,7 @@ export default function Settings() {
 
       // Commit profiles to IndexedDB
       for (const profileData of profilesToSave) {
-        await saveProfile(profileData);
+        await saveVoiceProfile({ voice_id: profileData.voice_id, name: profileData.name }, profileData.audioBlob);
       }
 
       // 4. Update localStorage keys (faithfully reproducing empty/null values)
@@ -566,6 +579,7 @@ export default function Settings() {
           <CircleAlert size={18} aria-hidden="true" />
           <span>Database error: {dbError}</span>
         </div>
+      )}
 
       <section className="rounded-lg border border-ink/10 bg-white p-5 shadow-soft dark:border-border dark:bg-surface dark:text-neutral-100 dark:shadow-soft-dk">
         <div className="flex flex-col gap-3 lg:flex-row lg:items-end">

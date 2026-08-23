@@ -1,7 +1,6 @@
 import React from "react";
 import { SendHorizontal, Eraser, Loader2 } from "lucide-react";
 import { loadVoiceSettings } from "../utils/voiceSettings.js";
-import { useUnsavedChanges } from "../hooks/useUnsavedChanges.js";
 
 /**
  * Emotion presets define prompt engineering text and voice_settings overrides
@@ -66,12 +65,13 @@ const EMOTION_PRESETS = [
 const MAX_CHARS = 300;
 const DRAFT_KEY = "voiceforge_draft_text";
 
-export default function TextToSpeech({ onSpeak, disabled = false, status = "idle" }) {
+export default function TextToSpeech({ onSpeak, disabled = false, status = "idle", onTextChange = () => {}, onSpoken = () => {} }) {
   const [text, setText] = React.useState("");
   const [announcement, setAnnouncement] = React.useState("");
   const lastSpokenTextRef = React.useRef("");
   
   const trimmedText = text.trim();
+  const charsLeft = MAX_CHARS - text.length;
 const characterCount = trimmedText.length;
 const wordCount = trimmedText
   ? trimmedText.split(/\s+/).length

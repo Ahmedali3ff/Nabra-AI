@@ -9,6 +9,66 @@ export const DEFAULT_VOICE_SETTINGS = {
   pitch: 0.5,
 };
 
+export const VOICE_PRESETS = {
+  neutral: {
+    stability: 0.45,
+    similarity_boost: 0.8,
+    style: 0.5,
+    use_speaker_boost: true,
+    speed: 1.0,
+    pitch: 0.5,
+    temperature: 0.5,
+    dspPitch: 0.5,
+    dspSpeed: 1.0,
+    dspBass: 0.5,
+    dspMid: 0.5,
+    dspTreble: 0.5,
+  },
+  excited: {
+    stability: 0.3,
+    similarity_boost: 0.85,
+    style: 0.75,
+    use_speaker_boost: true,
+    speed: 1.15,
+    pitch: 0.6,
+    temperature: 0.7,
+    dspPitch: 0.6,
+    dspSpeed: 1.15,
+    dspBass: 0.5,
+    dspMid: 0.5,
+    dspTreble: 0.5,
+  },
+  robotic: {
+    stability: 1.0,
+    similarity_boost: 0.5,
+    style: 0.0,
+    use_speaker_boost: false,
+    speed: 1.0,
+    pitch: 0.5,
+    temperature: 0.1,
+    dspPitch: 0.5,
+    dspSpeed: 1.0,
+    dspBass: 0.5,
+    dspMid: 0.5,
+    dspTreble: 0.5,
+  },
+  soft: {
+    stability: 0.6,
+    similarity_boost: 0.7,
+    style: 0.2,
+    use_speaker_boost: true,
+    speed: 0.9,
+    pitch: 0.4,
+    temperature: 0.4,
+    dspPitch: 0.4,
+    dspSpeed: 0.9,
+    dspBass: 0.5,
+    dspMid: 0.5,
+    dspTreble: 0.5,
+  },
+};
+
+
 /**
  * Reads voice settings from localStorage and returns a fully sanitized object.
  *

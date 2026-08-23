@@ -449,92 +449,93 @@ export default React.forwardRef(function VideoPreview({
             context.drawImage(tempCanvasRef.current, 0, 0, 96, 96, coords.x, coords.y, coords.w, coords.h);
             inferenceSucceeded = true;
           }
-          amplitude = sum / dataArray.length;
         }
 
-        // Map amplitude (0-255) to mouth height range
-        const mouthOpen = isSpeaking ? 6 + (amplitude * 0.12) : 14;
-        const currentCalibration = calibrationRef.current || {};
-        const xOffset = typeof currentCalibration.xOffset === "number" && !isNaN(currentCalibration.xOffset)
-          ? Math.max(-400, Math.min(400, currentCalibration.xOffset))
-          : 0;
-        const yOffset = typeof currentCalibration.yOffset === "number" && !isNaN(currentCalibration.yOffset)
-          ? Math.max(-250, Math.min(150, currentCalibration.yOffset))
-          : 0;
-        const scale = typeof currentCalibration.scale === "number" && !isNaN(currentCalibration.scale)
-          ? Math.max(0.5, Math.min(2.5, currentCalibration.scale))
-          : 1.0;
+        if (!inferenceSucceeded) {
+          const currentCalibration = calibrationRef.current || {};
+          const xOffset = typeof currentCalibration.xOffset === "number" && !isNaN(currentCalibration.xOffset)
+            ? Math.max(-400, Math.min(400, currentCalibration.xOffset))
+            : 0;
+          const yOffset = typeof currentCalibration.yOffset === "number" && !isNaN(currentCalibration.yOffset)
+            ? Math.max(-250, Math.min(150, currentCalibration.yOffset))
+            : 0;
+          const scale = typeof currentCalibration.scale === "number" && !isNaN(currentCalibration.scale)
+            ? Math.max(0.5, Math.min(2.5, currentCalibration.scale))
+            : 1.0;
+          const mouthOpen = isSpeaking ? 14 : 4;
 
-        // Try ONNX Inference first
-        if (
-          isSpeaking &&
-          ortSessionRef.current &&
-          audioProcessorRef.current &&
-          faceProcessorRef.current
-        ) {
-          try {
-            // 1. Get Audio Features
-            const melFeatures = audioProcessorRef.current.getLatestFeatures();
+          const centerX = canvas.width / 2 + xOffset;
+          const centerY = canvas.height * 0.65 + yOffset;
+          const radiusX = 40 * scale;
+          const radiusY = Math.max(3, mouthOpen * scale);
 
-        context.save();
-        
-        // 1. Draw inner mouth cavity (dark reddish/maroon shade)
-        context.fillStyle = isDark ? "rgba(69, 10, 10, 0.9)" : "rgba(59, 7, 18, 0.9)";
-        context.beginPath();
-        context.ellipse(
-          canvas.width / 2,
-          canvas.height * 0.63,
-          56,
-          mouthOpen,
-          0,
-          0,
-          Math.PI * 2,
+          context.save();
+          
+          // 1. Draw inner mouth cavity
+          context.fillStyle = isDark ? "rgba(69, 10, 10, 0.9)" : "rgba(59, 7, 18, 0.9)";
+          context.beginPath();
+          context.ellipse(
+            centerX,
+            centerY,
+            radiusX,
+            radiusY,
+            0,
+            0,
+            Math.PI * 2,
+          );
+          context.fill();
+
+          // 2. Draw lips shape outline and fill tint
+          context.strokeStyle = "#f43f5e";
+          context.fillStyle = "rgba(244, 63, 94, 0.15)";
+          context.lineWidth = 5 * scale;
+          context.lineCap = "round";
+          context.lineJoin = "round";
+
+          context.beginPath();
+          context.moveTo(centerX - radiusX, centerY);
+          context.bezierCurveTo(
+            centerX - radiusX / 2, centerY - radiusY - 8 * scale,
+            centerX - radiusX / 4, centerY - radiusY - 10 * scale,
+            centerX, centerY - radiusY / 2
+          );
+          context.bezierCurveTo(
+            centerX + radiusX / 4, centerY - radiusY - 10 * scale,
+            centerX + radiusX / 2, centerY - radiusY - 8 * scale,
+            centerX + radiusX, centerY
+          );
+          context.bezierCurveTo(
+            centerX + radiusX / 2, centerY + radiusY + 12 * scale,
+            centerX - radiusX / 2, centerY + radiusY + 12 * scale,
+            centerX - radiusX, centerY
+          );
+          context.closePath();
+          context.fill();
+          context.stroke();
+
+          // 3. Add soft lip gloss highlight
+          context.strokeStyle = "rgba(255, 255, 255, 0.4)";
+          context.lineWidth = 2 * scale;
+          context.beginPath();
+          context.moveTo(centerX - radiusX / 2, centerY + radiusY + 4 * scale);
+          context.bezierCurveTo(
+            centerX - radiusX / 4, centerY + radiusY + 7 * scale,
+            centerX + radiusX / 4, centerY + radiusY + 7 * scale,
+            centerX + radiusX / 2, centerY + radiusY + 4 * scale
+          );
+          context.stroke();
+
+          context.restore();
+        }
+      }
+
+      if (subtitlesEnabledRef.current && activeTextRef.current) {
+        drawSubtitles(
+          context,
+          activeTextRef.current,
+          subtitleFontSizeRef.current,
+          subtitleBgOpacityRef.current
         );
-        context.fill();
-
-        // 2. Draw lips shape outline and fill tint
-        context.strokeStyle = "#f43f5e"; // rose/coral lip color
-        context.fillStyle = "rgba(244, 63, 94, 0.15)"; // subtle soft coral tint
-        context.lineWidth = 5 * scale;
-        context.lineCap = "round";
-        context.lineJoin = "round";
-
-        // Cupid's bow upper lip curve
-        context.beginPath();
-        context.moveTo(centerX - radiusX, centerY);
-        context.bezierCurveTo(
-          centerX - radiusX / 2, centerY - radiusY - 8 * scale,
-          centerX - radiusX / 4, centerY - radiusY - 10 * scale,
-          centerX, centerY - radiusY / 2
-        );
-        context.bezierCurveTo(
-          centerX + radiusX / 4, centerY - radiusY - 10 * scale,
-          centerX + radiusX / 2, centerY - radiusY - 8 * scale,
-          centerX + radiusX, centerY
-        );
-        // Lower lip bottom curve
-        context.bezierCurveTo(
-          centerX + radiusX / 2, centerY + radiusY + 12 * scale,
-          centerX - radiusX / 2, centerY + radiusY + 12 * scale,
-          centerX - radiusX, centerY
-        );
-        context.closePath();
-        context.fill();
-        context.stroke();
-
-        // 3. Add a soft lip gloss highlight curve on the lower lip
-        context.strokeStyle = "rgba(255, 255, 255, 0.4)";
-        context.lineWidth = 2 * scale;
-        context.beginPath();
-        context.moveTo(centerX - radiusX / 2, centerY + radiusY + 4 * scale);
-        context.bezierCurveTo(
-          centerX - radiusX / 4, centerY + radiusY + 7 * scale,
-          centerX + radiusX / 4, centerY + radiusY + 7 * scale,
-          centerX + radiusX / 2, centerY + radiusY + 4 * scale
-        );
-        context.stroke();
-
-        context.restore();
       }
 
       if (video && video.requestVideoFrameCallback && !avatarImage) {
@@ -543,6 +544,7 @@ export default React.forwardRef(function VideoPreview({
         animationRef.current = requestAnimationFrame(draw);
       }
     }
+
 
     const videoElement = videoRef.current;
     if (videoElement && videoElement.requestVideoFrameCallback && !avatarImage) {

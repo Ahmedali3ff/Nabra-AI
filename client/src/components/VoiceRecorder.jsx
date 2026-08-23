@@ -13,11 +13,12 @@ export default function VoiceRecorder({ onRecordingReady, disabled = false }) {
   const durationRef = React.useRef(0);
   const [recorderError, setRecorderError] = React.useState("");
   const [isExtracting, setIsExtracting] = React.useState(false);
+  const [rawAudioBlob, setRawAudioBlob] = React.useState(null);
   
-  const fileInputRef = React.useRef(null);
   const recorderRef = React.useRef(null);
   const fileInputRef = React.useRef(null);
   const chunksRef = React.useRef([]);
+
   const timerRef = React.useRef(null);
   const streamRef = React.useRef(null);
   const isMountedRef = React.useRef(true);
@@ -194,39 +195,7 @@ export default function VoiceRecorder({ onRecordingReady, disabled = false }) {
     }
   }
 
-  async function handleFileUpload(event) {
-    const file = event.target.files?.[0];
-    if (!file) return;
-    setIsExtracting(true);
-    setRecorderError("");
-    try {
-      const { blob, duration: fileDuration } = await extractAudioFromFile(file);
-      setRawAudioBlob(blob);
-      const url = URL.createObjectURL(blob);
-      setAudioUrl((previous) => {
-        if (previous) URL.revokeObjectURL(previous);
-        return url;
-      });
-      onRecordingReady(blob);
-      streamRef.current?.getTracks().forEach((track) => track.stop());
-    };
-
-    setDuration(0);
-    timerRef.current = window.setInterval(
-      () => setDuration((value) => value + 1),
-      1000,
-    );
-    recorder.start();
-    setIsRecording(true);
-  }
-
   function stopRecording() {
-    if (durationRef.current < MIN_DURATION) {
-      const confirmStop = window.confirm(
-        `Your recording is only ${durationRef.current} seconds. A minimum of ${MIN_DURATION} seconds is recommended for high-quality voice cloning. Stop recording anyway?`,
-      );
-      if (!confirmStop) return;
-    }
     if (streamRef.current) {
       streamRef.current.getTracks().forEach((track) => {
         try {
@@ -237,35 +206,6 @@ export default function VoiceRecorder({ onRecordingReady, disabled = false }) {
     recorderRef.current?.stop();
   }
 
-  async function handleFileUpload(event) {
-    const [file] = event.target.files || [];
-    if (!file) return;
-
-    try {
-      setIsExtracting(true);
-      setRecorderError("");
-      const { blob, duration: extractedDuration } = await extractAudioFromFile(file);
-      const normalizedDuration = Math.max(0, Math.round(extractedDuration));
-
-      setRawAudioBlob(blob);
-      const url = URL.createObjectURL(blob);
-      setAudioUrl((previous) => {
-        if (previous) URL.revokeObjectURL(previous);
-        return url;
-      });
-      setDuration(normalizedDuration);
-      durationRef.current = normalizedDuration;
-      onRecordingReady(blob, { duration: normalizedDuration, isValid: normalizedDuration >= MIN_DURATION });
-    } catch (err) {
-      const friendlyMessage = err?.message || "Unable to process the selected file.";
-      setRecorderError(friendlyMessage);
-      if (errorTimerRef.current) clearTimeout(errorTimerRef.current);
-      errorTimerRef.current = setTimeout(() => setRecorderError(""), 6000);
-    } finally {
-      setIsExtracting(false);
-      event.target.value = "";
-    }
-  }
 
   async function handleFileUpload(event) {
     const file = event.target.files?.[0];

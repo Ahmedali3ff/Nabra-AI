@@ -34,7 +34,7 @@ const VALID_CODES = new Set(SUPPORTED_LANGUAGES.map((l) => l.code));
 export function isValidLanguageCode(code) { return code === "" || VALID_CODES.has(code); }
 
 const BY_CODE = Object.fromEntries(SUPPORTED_LANGUAGES.map((l) => [l.code, l]));
-export function getLanguageByCode(code) { return BY_CODE[code]; }
+
 
 /** Returns the language object for a given code, or undefined. */
 export function getLanguageByCode(code) {

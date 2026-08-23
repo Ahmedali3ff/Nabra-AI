@@ -1,7 +1,5 @@
 // Renders the first-time setup flow for recording and cloning a reference voice.
 import React, { useRef, useEffect } from "react";
-import { CheckCircle2, Loader2, CircleAlert, ArrowRight } from "lucide-react";
-import React from "react";
 import { CheckCircle2, Loader2, CircleAlert, ArrowRight, RotateCcw } from "lucide-react";
 import VoiceRecorder from "../components/VoiceRecorder.jsx";
 import useVoiceClone from "../hooks/useVoiceClone.js";
@@ -214,42 +212,11 @@ export default function Onboarding({ onReady }) {
   const { cloneVoice, status, error: apiError } = useVoiceClone();
   const { toasts, showToast } = useToast();
   const isCloning = status === "cloning";
-<<<<<<< HEAD
-  const [serverStatus, setServerStatus] = React.useState({ isMock: false, space: "" });
-=======
   const [serverStatus, setServerStatus] = React.useState({
     isMock: false,
+    space: "",
     hasServerKey: false,
   });
->>>>>>> 7eeb8da (refactor: reuse voice name length constants)
-
-  React.useEffect(() => {
-    fetch("/api/voice/status")
-      .then((res) => res.json())
-      .then((data) => setServerStatus(data))
-      .catch((err) => console.error("Failed to fetch server status:", err));
-  }, []);
-
-  const recordingDuration = recording?.duration || 0;
-
-const MIN_NAME_LENGTH = 3;
-const MAX_NAME_LENGTH = 100;
-
-export default function Onboarding({ onReady }) {
-  const [recording, setRecording] = React.useState(null);
-  const [recordingDuration, setRecordingDuration] = React.useState(0);
-
-  function handleRecordingReady(blob, duration = 0) {
-    setRecording(blob);
-    setRecordingDuration(duration);
-  }
-
-  const [voiceName, setVoiceName] = React.useState("VoiceForge Voice");
-  const [successProfile, setSuccessProfile] = React.useState(null);
-  const { cloneVoice, status, error: apiError } = useVoiceClone();
-  const { toasts, showToast } = useToast();
-  const isCloning = status === "cloning";
-  const [serverStatus, setServerStatus] = React.useState({ isMock: false, space: "" });
 
   React.useEffect(() => {
   const controller = new AbortController();
@@ -351,27 +318,18 @@ export default function Onboarding({ onReady }) {
     localStorage.setItem("voiceforge:maxUnlockedStep", maxUnlockedStep.toString());
   }, [maxUnlockedStep]);
 
-  const recordingDuration = recording?.duration ?? 0;
-
-  function handleRecordingReady(blob, payload) {
-    setRecording(normalizeRecordingResult(blob, payload));
-  }
-
   async function handleClone() {
-    // 1. Strict validation guards: recording and a valid name are required.
+
     if (!hasKey || !recording) return;
-    if (recordingDuration < 10) return;
-    if (nameError) return; // block on empty / whitespace / over-limit name
-
-  function handleRecordingReady(blob, payload) {
-    setRecording(normalizeRecordingResult(blob, payload));
+    if (nameError) return;
+    try {
+      const profile = await cloneVoice(recording, voiceName);
+      setSuccessProfile(profile);
+    } catch (err) {
+      console.error("Clone failed:", err);
+    }
   }
 
-  async function handleClone() {
-    if (!recording || !recording.isValid) return;
-    const profile = await cloneVoice(recording.blob, voiceName);
-    setSuccessProfile(profile);
-  }
 
   return (
     <div className="space-y-6">
@@ -411,6 +369,7 @@ export default function Onboarding({ onReady }) {
             ))}
           </div>
         </div>
+      </div>
       </section>
 
       {/* STEP 1: PROFILE MANAGEMENT CONTROLS */}
