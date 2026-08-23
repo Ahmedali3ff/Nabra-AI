@@ -19,10 +19,10 @@ export default function Library() {
   const loadData = async () => {
     try {
       const cols = await getAllCollections();
-      setCollections(cols);
+      setCollections(Array.isArray(cols) ? cols : []);
 
       const voices = await getAllProfiles();
-      setProfiles(voices);
+      setProfiles(Array.isArray(voices) ? voices : []);
     } catch (err) {
       console.error(err);
     }
@@ -44,7 +44,7 @@ export default function Library() {
 
     try {
       await saveCollection(newCol);
-      setCollections(prev => [...prev, newCol]);
+      setCollections(prev => [...(Array.isArray(prev) ? prev : []), newCol]);
       setNewColName("");
       setStatusMsg("Collection folder created successfully!");
       setTimeout(() => setStatusMsg(""), 3000);
@@ -56,41 +56,43 @@ export default function Library() {
   const handleDeleteCollection = async (id) => {
     if (window.confirm("Are you sure you want to delete this collection?")) {
       await deleteCollection(id);
-      setCollections(prev => prev.filter(c => c.id !== id));
+      setCollections(prev => (Array.isArray(prev) ? prev : []).filter(c => c.id !== id));
     }
   };
 
   const handleAddVoiceToCol = async (colId, voiceId) => {
-    const col = collections.find(c => c.id === colId);
+    const col = (Array.isArray(collections) ? collections : []).find(c => c.id === colId);
     if (!col) return;
 
-    if (col.voiceIds.includes(voiceId)) return;
+    const voiceIds = Array.isArray(col.voiceIds) ? col.voiceIds : [];
+    if (voiceIds.includes(voiceId)) return;
 
     const updated = {
       ...col,
-      voiceIds: [...col.voiceIds, voiceId]
+      voiceIds: [...voiceIds, voiceId]
     };
 
     try {
       await saveCollection(updated);
-      setCollections(prev => prev.map(c => c.id === colId ? updated : c));
+      setCollections(prev => (Array.isArray(prev) ? prev : []).map(c => c.id === colId ? updated : c));
     } catch (err) {
       console.error(err);
     }
   };
 
   const handleRemoveVoiceFromCol = async (colId, voiceId) => {
-    const col = collections.find(c => c.id === colId);
+    const col = (Array.isArray(collections) ? collections : []).find(c => c.id === colId);
     if (!col) return;
 
+    const voiceIds = Array.isArray(col.voiceIds) ? col.voiceIds : [];
     const updated = {
       ...col,
-      voiceIds: col.voiceIds.filter(id => id !== voiceId)
+      voiceIds: voiceIds.filter(id => id !== voiceId)
     };
 
     try {
       await saveCollection(updated);
-      setCollections(prev => prev.map(c => c.id === colId ? updated : c));
+      setCollections(prev => (Array.isArray(prev) ? prev : []).map(c => c.id === colId ? updated : c));
     } catch (err) {
       console.error(err);
     }
@@ -106,10 +108,13 @@ export default function Library() {
     }, 2000);
   };
 
+  const safeCollections = Array.isArray(collections) ? collections : [];
+  const safeProfiles = Array.isArray(profiles) ? profiles : [];
+
   return (
     <div className="space-y-6">
       <header className="rounded-lg border border-ink/10 bg-white p-5 shadow-soft dark:border-border dark:bg-surface">
-        <h2 className="text-2xl font-bold dark:text-neutral-100">Voice Library & AI inference</h2>
+        <h2 className="text-2xl font-bold dark:text-neutral-100">Voice Library &amp; AI inference</h2>
         <p className="mt-1 text-sm text-ink/65 dark:text-muted">
           Organize cloned voice profiles into collections folders and manage local browser weights.
         </p>
@@ -143,10 +148,10 @@ export default function Library() {
           </form>
 
           <div className="space-y-4 mt-4">
-            {collections.length === 0 ? (
+            {safeCollections.length === 0 ? (
               <p className="text-sm text-ink/50 dark:text-muted py-2">No voice collections folders created yet.</p>
             ) : (
-              collections.map(col => (
+              safeCollections.map(col => (
                 <div key={col.id} className="rounded-md border border-ink/10 bg-cloud p-4 dark:border-border dark:bg-black space-y-3">
                   <div className="flex justify-between items-center">
                     <span className="font-bold text-sm text-ink dark:text-neutral-200">{col.name}</span>
@@ -160,11 +165,11 @@ export default function Library() {
 
                   {/* Voices in collection */}
                   <div className="space-y-1">
-                    {col.voiceIds.length === 0 ? (
+                    {(!Array.isArray(col.voiceIds) || col.voiceIds.length === 0) ? (
                       <p className="text-xs text-ink/40 dark:text-neutral-500 italic">No voice profiles added yet.</p>
                     ) : (
                       col.voiceIds.map(vId => {
-                        const profile = profiles.find(p => p.voice_id === vId);
+                        const profile = safeProfiles.find(p => p && p.voice_id === vId);
                         return (
                           <div key={vId} className="flex justify-between items-center text-xs bg-white border border-ink/5 rounded px-2 py-1 dark:bg-surface dark:border-border">
                             <span>{profile?.name || vId}</span>
@@ -191,7 +196,7 @@ export default function Library() {
                     className="w-full text-xs rounded border border-ink/15 bg-white p-1 dark:border-border dark:bg-surface"
                   >
                     <option value="">+ Add voice to folder</option>
-                    {profiles.map(p => (
+                    {safeProfiles.map(p => (
                       <option key={p.voice_id} value={p.voice_id}>{p.name}</option>
                     ))}
                   </select>

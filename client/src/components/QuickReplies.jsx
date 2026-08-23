@@ -261,11 +261,13 @@ const handleEditKeyDown = (e, oldPhrase) => {
     showToast("Quick reply updated", "success");
   };
 
-  const filteredReplies = replies.filter((reply) => {
+  const safeReplies = Array.isArray(replies) ? replies : [];
+  const filteredReplies = safeReplies.filter((reply) => {
+    if (!reply) return false;
     if (selectedCategoryTab === "All") return true;
     return reply.category === selectedCategoryTab;
   });
-  const allCats = ["All", ...categories];
+  const allCats = ["All", ...CATEGORIES];
 
   const handleTabKeyDown = (e) => {
     const currentIndex = allCats.indexOf(selectedCategoryTab);

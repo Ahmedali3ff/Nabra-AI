@@ -3,8 +3,9 @@ import { ChevronLeft, ChevronRight, Inbox, Pin, Search, Trash2, Download } from 
 import { MessageCard } from "./MessageCard";
 import useDebounce from "../hooks/useDebounce";
 
-export function SpeechHistory({history,
-  favorites,
+export function SpeechHistory({
+  history = [],
+  favorites = new Set(),
   sessionTranscript = [],
   onReuse,
   onReplay,
@@ -20,16 +21,24 @@ export function SpeechHistory({history,
   const [search, setSearch] = useState("");
   const deferredSearch = useDeferredValue(search);
 
+  const safeHistory = Array.isArray(history) ? history : [];
+  const safeFavorites = favorites instanceof Set
+    ? favorites
+    : new Set(Array.isArray(favorites) ? favorites : []);
+  const safeSessionTranscript = Array.isArray(sessionTranscript) ? sessionTranscript : [];
+
   const visible = useMemo(() => {
-    let messages = tab === "pinned" ? history.filter((message) => favorites.has(message.id)) : history;
+    let messages = tab === "pinned"
+      ? safeHistory.filter((message) => message && safeFavorites.has(message.id))
+      : safeHistory;
 
     if (deferredSearch.trim()) {
       const query = deferredSearch.toLowerCase();
-      messages = messages.filter((message) => message.text.toLowerCase().includes(query));
+      messages = messages.filter((message) => message && message.text && message.text.toLowerCase().includes(query));
     }
 
     return messages;
-  }, [history, favorites, tab, deferredSearch]);
+  }, [safeHistory, safeFavorites, tab, deferredSearch]);
 
   const tabs = ["all", "pinned"];
 
@@ -123,9 +132,9 @@ function handleExportJson() {
             <span className="flex-1 truncate text-sm font-medium text-neutral-700 dark:text-neutral-200">
               History
             </span>
-            {history.length > 0 && (
+            {safeHistory.length > 0 && (
               <span className="rounded-full bg-neutral-200 px-2 py-0.5 text-xs text-neutral-600 dark:bg-surface dark:text-neutral-300">
-                {history.length}
+                {safeHistory.length}
               </span>
             )}
           </>
@@ -200,7 +209,7 @@ function handleExportJson() {
                   <li key={message.id}>
                     <MessageCard
                       message={message}
-                      isPinned={favorites.has(message.id)}
+                      isPinned={safeFavorites.has(message.id)}
                       onReuse={onReuse}
                       onReplay={onReplay}
                       onToggleFav={onToggleFav}
@@ -215,7 +224,7 @@ function handleExportJson() {
             )}
           </div>
 
-         {sessionTranscript?.length > 0 && (
+         {safeSessionTranscript.length > 0 && (
   <div className="flex flex-col gap-2 flex-shrink-0 border-t border-neutral-200 p-2 dark:border-border">
     <button
       onClick={handleExportTranscript}
@@ -235,7 +244,7 @@ function handleExportJson() {
   </div>
 )}
 
-{history.length > 0 && (
+{safeHistory.length > 0 && (
   <div className="flex-shrink-0 border-t border-neutral-200 p-2 dark:border-border">
     <button
       onClick={handleClearHistory}

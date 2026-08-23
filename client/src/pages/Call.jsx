@@ -132,6 +132,10 @@ export default function Call() {
     removeMessage,
     toggleFavorite,
   } = useSpeechHistory();
+  const safeHistory = Array.isArray(history) ? history : [];
+  const safeFavorites = favorites instanceof Set
+    ? favorites
+    : new Set(Array.isArray(favorites) ? favorites : []);
   const [activePanelTab, setActivePanelTab] = React.useState("quick-replies");
 
   // persist language safely
@@ -693,10 +697,10 @@ export default function Call() {
 
               {activePanelTab === "pinned" && (
                 <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
-                  {history.filter(m => favorites.has(m.id)).length === 0 ? (
+                  {safeHistory.filter(m => m && safeFavorites.has(m.id)).length === 0 ? (
                     <p className="text-sm text-ink/65 dark:text-neutral-400 py-4 text-center">No pinned phrases yet.</p>
                   ) : (
-                    history.filter(m => favorites.has(m.id)).map((msg) => (
+                    safeHistory.filter(m => m && safeFavorites.has(m.id)).map((msg) => (
                       <div key={msg.id} className="flex items-center justify-between p-2 rounded bg-cloud dark:bg-black border border-ink/10 dark:border-border">
                         <span className="text-sm font-semibold truncate flex-1 mr-2">{msg.text}</span>
                         <div className="flex items-center gap-1">
@@ -726,10 +730,10 @@ export default function Call() {
 
               {activePanelTab === "history" && (
                 <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
-                  {history.length === 0 ? (
+                  {safeHistory.length === 0 ? (
                     <p className="text-sm text-ink/65 dark:text-neutral-400 py-4 text-center">No history yet. Type above to speak!</p>
                   ) : (
-                    history.slice(0, 10).map((msg) => (
+                    safeHistory.slice(0, 10).map((msg) => (
                       <div key={msg.id} className="flex items-center justify-between p-2 rounded bg-cloud dark:bg-black border border-ink/10 dark:border-border">
                         <span className="text-sm font-semibold truncate flex-1 mr-2">{msg.text}</span>
                         <div className="flex items-center gap-1">
