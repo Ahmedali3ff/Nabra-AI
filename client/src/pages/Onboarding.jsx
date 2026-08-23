@@ -337,15 +337,13 @@ export default function Onboarding({ onReady }) {
         <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
           <div>
             <p className="text-sm font-bold uppercase tracking-[0.18em] text-mint">
-              Step 1 of 3
+              Step {activeStep} of 3
             </p>
             <h2 className="mt-2 text-3xl font-bold">
-              Create your voice profile
+              {stepContent[activeStep]?.title}
             </h2>
             <p className="mt-3 max-w-3xl text-base leading-7 text-white/75">
-              Record a short, consent-based reference clip. VoiceForge sends it
-              to ElevenLabs through your local server and saves the returned
-              voice ID in this browser.
+              {stepContent[activeStep]?.description}
             </p>
           </div>
           <div className="flex items-center gap-3">
@@ -360,16 +358,16 @@ export default function Onboarding({ onReady }) {
               className="grid w-full max-w-sm grid-cols-3 gap-2"
               aria-label="Onboarding progress"
             >
-            {["Record", "Clone", "Call"].map((step, index) => (
-              <div
-                key={step}
-                className={`h-2 rounded-full ${index === 0 ? "bg-coral" : "bg-white/25"}`}
-                title={step}
-              />
-            ))}
+              {["Record", "Settings", "Call"].map((step, index) => (
+                <div
+                  key={step}
+                  className={`h-2 rounded-full transition-all ${index + 1 <= activeStep ? "bg-coral" : "bg-white/25"}`}
+                  title={step}
+                />
+              ))}
+            </div>
           </div>
         </div>
-      </div>
       </section>
 
       {/* STEP 1: PROFILE MANAGEMENT CONTROLS */}

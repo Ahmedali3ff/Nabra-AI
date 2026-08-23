@@ -15,9 +15,9 @@ describe("Accessibility (a11y) attributes and status regions", () => {
 
   it("renders VoiceQuickSettings sliders with ARIA value attributes", () => {
     render(<VoiceQuickSettings defaultOpen={true} />);
-    const pitchSlider = screen.getByRole("slider", { name: "Pitch Transposition" });
-    expect(pitchSlider.getAttribute("aria-valuemin")).toBe("-12");
-    expect(pitchSlider.getAttribute("aria-valuemax")).toBe("12");
+    const pitchSlider = screen.getByRole("slider", { name: "Stability" });
+    expect(pitchSlider.getAttribute("aria-valuemin")).toBe("0");
+    expect(pitchSlider.getAttribute("aria-valuemax")).toBe("1");
   });
 
   it("renders KeyboardShortcutsModal with dialog role and aria-describedby", () => {

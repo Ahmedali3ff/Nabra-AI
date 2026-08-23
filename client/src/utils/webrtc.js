@@ -76,6 +76,8 @@ export function receiveDataInChunks(dataChannel, onComplete) {
       currentSize += event.data.byteLength;
     }
   };
+}
+
 export function monitorPeerConnection(pc, onError) {
   if (!pc) return;
   pc.oniceconnectionstatechange = () => {

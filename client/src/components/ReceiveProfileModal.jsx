@@ -319,3 +319,5 @@ export function ReceiveProfileModal({ onClose, onSuccess }) {
     </div>
   );
 }
+
+export default ReceiveProfileModal;

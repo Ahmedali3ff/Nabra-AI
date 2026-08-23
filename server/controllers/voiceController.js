@@ -10,17 +10,14 @@ import { getDb } from "../db.js";
 const ALGORITHM = "aes-256-gcm";
 const IV_LENGTH = 12;
 
-let cachedEncryptionKey = null;
 function getEncryptionKey() {
-  if (!cachedEncryptionKey) {
-    if (!process.env.STREAM_SECRET) {
-      const err = new Error("STREAM_SECRET environment variable is required to sign speech stream tokens.");
-      err.status = 500;
-      throw err;
-    }
-    cachedEncryptionKey = crypto.createHash("sha256").update(process.env.STREAM_SECRET).digest();
+  const secret = process.env.STREAM_SECRET || (process.env.NODE_ENV === "production" ? null : "development-fallback-secret-voiceforge");
+  if (!secret) {
+    const err = new Error("STREAM_SECRET environment variable is required to sign speech stream tokens.");
+    err.status = 500;
+    throw err;
   }
-  return cachedEncryptionKey;
+  return crypto.createHash("sha256").update(secret).digest();
 }
 
 function getApiKey(request) {
@@ -605,6 +602,15 @@ export async function streamSpeech(request, response, next) {
       return;
     }
 
+    // --- mock mode: stream back fake audio bytes without calling Chatterbox ---
+    if (getIsMock()) {
+      response.setHeader("Content-Type", "audio/mpeg");
+      response.setHeader("Transfer-Encoding", "chunked");
+      response.write(Buffer.from("mock-audio-bytes"));
+      response.end();
+      return;
+    }
+
     // Resolve the stored reference audio for this voice profile.
     await pruneVoiceStore();
     const voiceEntry = await voiceStore.get(voiceId);
@@ -612,15 +618,6 @@ export async function streamSpeech(request, response, next) {
       response.status(404).json({
         error: "Voice profile not found. Please re-clone your voice.",
       });
-      return;
-    }
-
-    // --- mock mode: stream back fake audio bytes without calling Chatterbox ---
-    if (getIsMock()) {
-      response.setHeader("Content-Type", "audio/mpeg");
-      response.setHeader("Transfer-Encoding", "chunked");
-      response.write(Buffer.from("mock-audio-bytes"));
-      response.end();
       return;
     }
 
@@ -638,8 +635,8 @@ export async function streamSpeech(request, response, next) {
     let audioUrl;
     try {
       audioUrl = await generateClonedVoice(
-        voiceEntry.audio_data,
-        voiceEntry.mime_type,
+        voiceEntry.audioBuffer,
+        voiceEntry.mimeType,
         text,
         chatterboxLanguage,
         voice_settings,

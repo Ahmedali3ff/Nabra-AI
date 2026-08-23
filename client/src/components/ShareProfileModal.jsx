@@ -314,3 +314,5 @@ export function ShareProfileModal({ profile, onClose }) {
     </div>
   );
 }
+
+export default ShareProfileModal;

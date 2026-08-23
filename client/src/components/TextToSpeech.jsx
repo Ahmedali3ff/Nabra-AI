@@ -132,7 +132,6 @@ if (estimatedDuration > 30) {
         ].join(" ")}
         placeholder="Type what you want to say..."
         title="Type your message here and press Enter to speak"
-        aria-label="Text input for speech synthesis"
       />
       <div id="tts-char-hint" className="mt-1 flex justify-between text-xs text-neutral-400">
         <span>{wordCount} words ({characterCount} chars)</span>

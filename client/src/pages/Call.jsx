@@ -25,6 +25,55 @@ const QUICK_REPLIES = [
   { label: "No, thank you", phrase: "No, thank you" },
 ];
 
+function playSoundEffect(type) {
+  try {
+    const AudioCtx = window.AudioContext || window.webkitAudioContext;
+    if (!AudioCtx) return;
+    const ctx = new AudioCtx();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+
+    const now = ctx.currentTime;
+    if (type === "ping") {
+      osc.type = "sine";
+      osc.frequency.setValueAtTime(880, now);
+      osc.frequency.exponentialRampToValueAtTime(440, now + 0.25);
+      gain.gain.setValueAtTime(0.3, now);
+      gain.gain.exponentialRampToValueAtTime(0.01, now + 0.25);
+      osc.start(now);
+      osc.stop(now + 0.25);
+    } else if (type === "chime") {
+      osc.type = "sine";
+      osc.frequency.setValueAtTime(523.25, now);
+      osc.frequency.setValueAtTime(659.25, now + 0.15);
+      gain.gain.setValueAtTime(0.3, now);
+      gain.gain.exponentialRampToValueAtTime(0.01, now + 0.35);
+      osc.start(now);
+      osc.stop(now + 0.35);
+    } else if (type === "alert") {
+      osc.type = "triangle";
+      osc.frequency.setValueAtTime(350, now);
+      osc.frequency.setValueAtTime(700, now + 0.1);
+      gain.gain.setValueAtTime(0.25, now);
+      gain.gain.exponentialRampToValueAtTime(0.01, now + 0.25);
+      osc.start(now);
+      osc.stop(now + 0.25);
+    } else if (type === "applaud") {
+      osc.type = "sine";
+      osc.frequency.setValueAtTime(440, now);
+      osc.frequency.linearRampToValueAtTime(880, now + 0.4);
+      gain.gain.setValueAtTime(0.2, now);
+      gain.gain.exponentialRampToValueAtTime(0.01, now + 0.4);
+      osc.start(now);
+      osc.stop(now + 0.4);
+    }
+  } catch (e) {
+    console.warn("Sound effect playback failed:", e);
+  }
+}
+
 export default function Call() {
   const [webcamStream, setWebcamStream] = React.useState(null);
   const [cameraError, setCameraError] = React.useState("");
@@ -310,17 +359,17 @@ export default function Call() {
       )}
 
       {/* Mouth Calibration Drawer */}
-      <section className="rounded-lg border border-ink/10 bg-white p-5 shadow-soft">
+      <section className="rounded-lg border border-ink/10 bg-white p-5 shadow-soft dark:border-border dark:bg-surface">
         <button
           id="toggle-calibration-btn"
           type="button"
           onClick={() => setIsCalibrationOpen(!isCalibrationOpen)}
           title={isCalibrationOpen ? "Close calibration settings" : "Open calibration settings"}
           aria-label={isCalibrationOpen ? "Close calibration settings" : "Open calibration settings"}
-          className="flex w-full items-center justify-between font-bold text-ink"
+          className="flex w-full items-center justify-between font-bold text-ink dark:text-neutral-100"
         >
           <div className="flex items-center gap-2">
-            <Sliders size={18} className="text-moss" />
+            <Sliders size={18} className="text-moss dark:text-glow" />
             <h2 className="text-base font-bold">Mouth Calibration Settings</h2>
           </div>
           <ChevronDown
@@ -331,17 +380,17 @@ export default function Call() {
         </button>
 
         {isCalibrationOpen && (
-          <div className="mt-4 border-t border-ink/10 pt-4">
-            <p className="text-sm text-ink/65 mb-4">
+          <div className="mt-4 border-t border-ink/10 pt-4 dark:border-border">
+            <p className="text-sm text-ink/65 dark:text-neutral-400 mb-4">
               Calibrate the audio-driven mouth position and size overlay to align with your camera.
             </p>
             <div className="grid gap-4 sm:gap-6 sm:grid-cols-3">
               <div>
                 <div className="flex justify-between items-center mb-2">
-                  <label htmlFor="calibration-x-slider" className="text-sm font-bold text-ink">
+                  <label htmlFor="calibration-x-slider" className="text-sm font-bold text-ink dark:text-neutral-200">
                     Horizontal Position (X Offset)
                   </label>
-                  <span className="text-xs font-semibold px-2 py-0.5 rounded bg-cloud border border-ink/10 text-moss">
+                  <span className="text-xs font-semibold px-2 py-0.5 rounded bg-cloud border border-ink/10 text-moss dark:bg-black dark:border-border dark:text-glow">
                     {calibration.xOffset > 0 ? `+${calibration.xOffset}` : calibration.xOffset}px
                   </span>
                 </div>
@@ -355,15 +404,15 @@ export default function Call() {
                   onChange={(e) => handleCalibrationChange("xOffset", parseInt(e.target.value, 10))}
                   title="Adjust horizontal position of the mouth overlay"
                   aria-label="Horizontal position slider for mouth calibration"
-                  className="w-full h-2 rounded-lg bg-cloud border border-ink/10 appearance-none cursor-pointer accent-moss focus:outline-none"
+                  className="w-full h-2 rounded-lg bg-cloud border border-ink/10 appearance-none cursor-pointer accent-moss focus:outline-none dark:bg-neutral-800 dark:accent-glow"
                 />
               </div>
               <div>
                 <div className="flex justify-between items-center mb-2">
-                  <label htmlFor="calibration-y-slider" className="text-sm font-bold text-ink">
+                  <label htmlFor="calibration-y-slider" className="text-sm font-bold text-ink dark:text-neutral-200">
                     Vertical Position (Y Offset)
                   </label>
-                  <span className="text-xs font-semibold px-2 py-0.5 rounded bg-cloud border border-ink/10 text-moss">
+                  <span className="text-xs font-semibold px-2 py-0.5 rounded bg-cloud border border-ink/10 text-moss dark:bg-black dark:border-border dark:text-glow">
                     {calibration.yOffset > 0 ? `+${calibration.yOffset}` : calibration.yOffset}px
                   </span>
                 </div>
@@ -377,15 +426,15 @@ export default function Call() {
                   onChange={(e) => handleCalibrationChange("yOffset", parseInt(e.target.value, 10))}
                   title="Adjust vertical position of the mouth overlay"
                   aria-label="Vertical position slider for mouth calibration"
-                  className="w-full h-2 rounded-lg bg-cloud border border-ink/10 appearance-none cursor-pointer accent-moss focus:outline-none"
+                  className="w-full h-2 rounded-lg bg-cloud border border-ink/10 appearance-none cursor-pointer accent-moss focus:outline-none dark:bg-neutral-800 dark:accent-glow"
                 />
               </div>
               <div>
                 <div className="flex justify-between items-center mb-2">
-                  <label htmlFor="calibration-scale-slider" className="text-sm font-bold text-ink">
+                  <label htmlFor="calibration-scale-slider" className="text-sm font-bold text-ink dark:text-neutral-200">
                     Mouth Size (Scale)
                   </label>
-                  <span className="text-xs font-semibold px-2 py-0.5 rounded bg-cloud border border-ink/10 text-moss">
+                  <span className="text-xs font-semibold px-2 py-0.5 rounded bg-cloud border border-ink/10 text-moss dark:bg-black dark:border-border dark:text-glow">
                     {calibration.scale.toFixed(1)}x
                   </span>
                 </div>
@@ -399,7 +448,7 @@ export default function Call() {
                   onChange={(e) => handleCalibrationChange("scale", parseFloat(e.target.value))}
                   title="Adjust size of the mouth overlay"
                   aria-label="Scale slider for mouth calibration"
-                  className="w-full h-2 rounded-lg bg-cloud border border-ink/10 appearance-none cursor-pointer accent-moss focus:outline-none"
+                  className="w-full h-2 rounded-lg bg-cloud border border-ink/10 appearance-none cursor-pointer accent-moss focus:outline-none dark:bg-neutral-800 dark:accent-glow"
                 />
               </div>
             </div>
@@ -427,23 +476,9 @@ export default function Call() {
         >
           Output Language
         </label>
-
-        <select
-          id="output-language"
-          value={language}
-          onChange={setLanguage}
-        />
-        {cameraError && (
-          <p className="text-red-500">{cameraError}</p>
-        )}
+        <LanguageSelector value={language} onChange={setLanguage} />
       </section>
 
-      {/* TEXT TO SPEECH */}
-      <TextToSpeech
-        onSpeak={handleSpeak}
-        disabled={!activeProfile}
-        status={status}
-      />
       <section className="rounded-lg border border-ink/10 bg-white p-5 shadow-soft dark:border-border dark:bg-surface dark:text-neutral-100 dark:shadow-soft-dk">
         <div className="flex items-center justify-between mb-4">
           <div>
@@ -512,7 +547,7 @@ export default function Call() {
       </section>
 
       <div className="grid gap-5 xl:grid-cols-[0.9fr_1.1fr_0.9fr]">
-        {/* Webcam panel */}
+        {/* Webcam & Controls Panel */}
         <div className="space-y-5">
           <section className="rounded-lg border border-ink/10 bg-white p-5 shadow-soft dark:border-border dark:bg-surface dark:shadow-soft-dk">
             <div className="mb-4 flex items-center gap-2">
@@ -525,7 +560,6 @@ export default function Call() {
                 Live webcam
               </h2>
             </div>
-            {/* Video element: bg-black already looks fine in dark mode */}
             <video
               ref={localVideoRef}
               autoPlay
@@ -546,7 +580,6 @@ export default function Call() {
             showToast={showToast}
           />
 
-
           {/* Sound Board & Chimes Board */}
           <section className="rounded-lg border border-ink/10 bg-white p-5 shadow-soft dark:border-border dark:bg-surface dark:shadow-soft-dk">
             <div className="mb-3 flex items-center gap-2">
@@ -564,60 +597,36 @@ export default function Call() {
                 onClick={() => playSoundEffect("ping")}
                 className="inline-flex min-h-11 items-center justify-center gap-2 rounded-md border border-neutral-200 bg-white px-3 text-xs font-semibold text-neutral-700 transition hover:bg-neutral-50 dark:border-border dark:bg-black dark:text-neutral-200 dark:hover:bg-neutral-900"
               >
-                ≡ƒöö Ping Attention
+                🔔 Ping Attention
               </button>
               <button
                 type="button"
                 onClick={() => playSoundEffect("chime")}
                 className="inline-flex min-h-11 items-center justify-center gap-2 rounded-md border border-neutral-200 bg-white px-3 text-xs font-semibold text-neutral-700 transition hover:bg-neutral-50 dark:border-border dark:bg-black dark:text-neutral-200 dark:hover:bg-neutral-900"
               >
-                ≡ƒÜ¬ Doorbell Chime
+                🚪 Doorbell Chime
               </button>
               <button
                 type="button"
                 onClick={() => playSoundEffect("alert")}
                 className="inline-flex min-h-11 items-center justify-center gap-2 rounded-md border border-neutral-200 bg-white px-3 text-xs font-semibold text-neutral-700 transition hover:bg-neutral-50 dark:border-border dark:bg-black dark:text-neutral-200 dark:hover:bg-neutral-900"
               >
-                ΓÜá∩╕Å Warning Beep
+                ⚠️ Warning Beep
               </button>
               <button
                 type="button"
                 onClick={() => playSoundEffect("applaud")}
                 className="inline-flex min-h-11 items-center justify-center gap-2 rounded-md border border-neutral-200 bg-white px-3 text-xs font-semibold text-neutral-700 transition hover:bg-neutral-50 dark:border-border dark:bg-black dark:text-neutral-200 dark:hover:bg-neutral-900"
               >
-                ≡ƒæÅ Applaud Tone
+                👏 Applaud Tone
               </button>
             </div>
           </section>
 
           <LiveTranscription />
         </div>
-        <section className="rounded-lg border border-ink/10 bg-white p-5 shadow-soft dark:border-border dark:bg-surface dark:shadow-soft-dk">
-          <div className="mb-4 flex items-center gap-2">
-            <Camera
-              size={19}
-              aria-hidden="true"
-              className="dark:text-neutral-300"
-            />
-            <h2 className="text-lg font-bold dark:text-neutral-100">
-              Live webcam
-            </h2>
-          </div>
-          {/* Video element: bg-black already looks fine in dark mode */}
-          <video
-            ref={localVideoRef}
-            autoPlay
-            muted
-            playsInline
-            className="aspect-video w-full rounded-md bg-black object-cover"
-          />
-          {cameraError && (
-            <p className="mt-3 text-sm font-semibold text-coral">
-              {cameraError}
-            </p>
-          )}
-        </section>
 
+        {/* Text to Speech & Phrases Panel */}
         <div className="flex flex-col gap-4">
           <TextToSpeech
             onSpeak={handleSpeak}
@@ -761,6 +770,7 @@ export default function Call() {
           </section>
         </div>
 
+        {/* Video Output Preview */}
         <VideoPreview
           ref={canvasRef}
           webcamStream={webcamStream}
@@ -792,29 +802,6 @@ export default function Call() {
           </p>
         )}
       </div>
-
-      {/* VIDEO PREVIEW */}
-      <VideoPreview
-        ref={canvasRef}
-        webcamStream={webcamStream}
-        audioUrl={audioUrl}
-        isSpeaking={isSpeaking}
-        onSpeakingChange={setIsSpeaking}
-        calibration={calibration}
-      />
-
-      {/* VIRTUAL CAMERA */}
-      <VirtualCamera
-        isLive={virtualCamera.isLive}
-        status={virtualCamera.status}
-        onStart={virtualCamera.start}
-        onStop={virtualCamera.stop}
-      />
-
-      {/* TTS ERROR */}
-      {error && (
-        <p className="text-red-500">{error}</p>
-      )}
 
       <ToastContainer toasts={toasts} />
     </div>

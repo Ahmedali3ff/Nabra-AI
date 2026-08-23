@@ -57,11 +57,10 @@ function createMediaElement(id = "audio") {
 
 beforeEach(() => {
   constructedContexts = [];
-  globalThis.window = { AudioContext: FakeAudioContext };
+  window.AudioContext = FakeAudioContext;
 });
 
 afterEach(() => {
-  delete globalThis.window;
   vi.restoreAllMocks();
 });
 

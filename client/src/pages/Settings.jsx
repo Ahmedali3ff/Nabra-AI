@@ -1,6 +1,5 @@
-// Lets users manage browser-stored voice profiles and configure voice synthesis settings.
 import React from "react";
-import { ExternalLink, Trash2, CircleAlert } from "lucide-react";
+import { ExternalLink, Trash2, CircleAlert, Share2, Download, Upload } from "lucide-react";
 import {
   deleteVoiceProfile,
   getSavedProfiles,
@@ -19,6 +18,10 @@ import {
   VOICE_PRESETS,
 } from "../utils/voiceSettings.js";
 import { useToast, ToastContainer } from "../components/useToast.jsx";
+import { PitchShifter } from "../utils/pitchShifter.js";
+import ShareProfileModal from "../components/ShareProfileModal.jsx";
+import ReceiveProfileModal from "../components/ReceiveProfileModal.jsx";
+import TransferSetupModal from "../components/TransferSetupModal.jsx";
 
 export default function Settings() {
   const [apiKey, setApiKey] = React.useState(
@@ -27,6 +30,19 @@ export default function Settings() {
   const [profiles, setProfiles] = React.useState(getSavedProfiles());
   const [dbError, setDbError] = React.useState("");
   const { toasts, showToast } = useToast();
+
+  const [sharingProfile, setSharingProfile] = React.useState(null);
+  const [isReceiving, setIsReceiving] = React.useState(false);
+  const [isTransferOpen, setIsTransferOpen] = React.useState(false);
+
+  const saveApiKey = () => {
+    try {
+      localStorage.setItem("voiceforge:elevenlabsApiKey", apiKey);
+      showToast("ElevenLabs API key saved successfully", "success");
+    } catch (err) {
+      showToast("Failed to save API key", "error");
+    }
+  };
 
   const [language, setLanguage] = React.useState(loadLanguage);
   const selectedLangObj = getLanguageByCode(language);
@@ -694,17 +710,35 @@ export default function Settings() {
       </section>
 
       <section className="rounded-lg border border-ink/10 bg-white p-5 shadow-soft dark:border-border dark:bg-surface dark:text-neutral-100 dark:shadow-soft-dk">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <h2 className="text-xl font-bold">Saved voice profiles</h2>
-          {profiles.length > 0 && (
+          <div className="flex flex-wrap items-center gap-2">
             <button
               type="button"
-              onClick={removeAllProfiles}
-              className="text-sm font-bold text-coral hover:underline"
+              onClick={() => setIsReceiving(true)}
+              className="inline-flex items-center gap-1.5 rounded-md border border-ink/15 bg-cloud px-3 py-1.5 text-xs font-bold text-ink hover:border-moss dark:border-border dark:bg-black dark:text-neutral-200"
             >
-              Clear All Profiles
+              <Download size={14} />
+              Receive Profile
             </button>
-          )}
+            <button
+              type="button"
+              onClick={() => setIsTransferOpen(true)}
+              className="inline-flex items-center gap-1.5 rounded-md border border-ink/15 bg-cloud px-3 py-1.5 text-xs font-bold text-ink hover:border-moss dark:border-border dark:bg-black dark:text-neutral-200"
+            >
+              <Upload size={14} />
+              P2P Transfer
+            </button>
+            {profiles.length > 0 && (
+              <button
+                type="button"
+                onClick={removeAllProfiles}
+                className="text-xs font-bold text-coral hover:underline ml-2"
+              >
+                Clear All
+              </button>
+            )}
+          </div>
         </div>
         <div className="mt-4 divide-y divide-ink/10 rounded-md border border-ink/10 dark:divide-border dark:border-border">
           {profiles.length === 0 && (
@@ -723,16 +757,27 @@ export default function Settings() {
                   {profile.voice_id}
                 </p>
               </div>
-              <button
-                type="button"
-                onClick={() => removeProfile(profile.voice_id)}
-                title={`Delete voice profile "${profile.name}"`}
-                aria-label={`Delete voice profile "${profile.name}"`}
-                className="inline-flex items-center justify-center gap-2 rounded-md border border-coral/40 px-3 py-2 font-bold text-coral hover:bg-coral hover:text-white"
-              >
-                <Trash2 size={16} aria-hidden="true" />
-                Delete
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setSharingProfile(profile)}
+                  title={`Share voice profile "${profile.name}"`}
+                  className="inline-flex items-center justify-center gap-1.5 rounded-md border border-ink/15 px-3 py-1.5 text-xs font-bold text-ink hover:border-moss dark:border-border dark:text-neutral-200"
+                >
+                  <Share2 size={14} />
+                  Share
+                </button>
+                <button
+                  type="button"
+                  onClick={() => removeProfile(profile.voice_id)}
+                  title={`Delete voice profile "${profile.name}"`}
+                  aria-label={`Delete voice profile "${profile.name}"`}
+                  className="inline-flex items-center justify-center gap-1.5 rounded-md border border-coral/40 px-3 py-1.5 text-xs font-bold text-coral hover:bg-coral hover:text-white"
+                >
+                  <Trash2 size={14} aria-hidden="true" />
+                  Delete
+                </button>
+              </div>
             </div>
           ))}
         </div>

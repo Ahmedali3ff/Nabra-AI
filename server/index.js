@@ -54,7 +54,8 @@ app.use((req, res, next) => {
   next();
 });
 
-app.use(
+app.use((req, res, next) => {
+  const isDev = process.env.NODE_ENV !== "production";
   helmet({
     crossOriginOpenerPolicy: { policy: "same-origin" },
     crossOriginEmbedderPolicy: { policy: "require-corp" },
@@ -79,8 +80,8 @@ app.use(
         ],
       },
     },
-  })
-);
+  })(req, res, next);
+});
 
 app.use((_req, res, next) => {
   res.setHeader(
@@ -185,7 +186,7 @@ app.use((error, _request, response, _next) => {
 });
 
 let server;
-if (process.env.NODE_ENV !== "test") {
+if (process.env.NODE_ENV !== "test" && !process.env.NO_SERVER_LISTEN) {
   server = app.listen(port, () => {
     console.log(`VoiceForge API listening on http://localhost:${port}`);
   });

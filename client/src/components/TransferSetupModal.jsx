@@ -150,3 +150,5 @@ export function TransferSetupModal({ onClose }) {
     </div>
   );
 }
+
+export default TransferSetupModal;

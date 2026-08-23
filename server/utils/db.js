@@ -54,3 +54,12 @@ export async function getDatabase() {
 
   return dbInstance;
 }
+
+export async function clearDatabaseCache() {
+  if (dbInstance) {
+    try {
+      await dbInstance.close();
+    } catch {}
+    dbInstance = null;
+  }
+}

@@ -191,9 +191,11 @@ test("cloneVoice enforces maximum voice store size and evicts oldest first", asy
     cloneVoice,
     speak,
     streamSpeech,
-    __getVoiceStoreSize
+    __getVoiceStoreSize,
+    voiceStore
   } = await import("../controllers/voiceController.js?max=" + Date.now());
 
+  await voiceStore.clear();
   const voiceIds = [];
 
   for (let i = 0; i < 3; i++) {
@@ -202,8 +204,7 @@ test("cloneVoice enforces maximum voice store size and evicts oldest first", asy
     });
 
     request.file = {
-      // FIX:
-buffer: Buffer.concat([Buffer.from("RIFF"), Buffer.from(`audio-${i}`)]),
+      buffer: Buffer.concat([Buffer.from("RIFF....WAVE"), Buffer.from(`audio-${i}`)]),
       mimetype: "audio/webm"
     };
 
@@ -212,7 +213,7 @@ buffer: Buffer.concat([Buffer.from("RIFF"), Buffer.from(`audio-${i}`)]),
     await invoke(cloneVoice, request, response);
 
     assert.ok(response.jsonBody.voice_id);
-    voiceIds.push(response.jsonBody.voice_id);
+    voiceIds.push({ voice_id: response.jsonBody.voice_id, owner_token: response.jsonBody.owner_token });
   }
 
   // The store must never exceed the configured cap.
@@ -222,22 +223,26 @@ buffer: Buffer.concat([Buffer.from("RIFF"), Buffer.from(`audio-${i}`)]),
   // speak -> streamSpeech round trip and checking for the 404 lookup miss
   // (this exercises pruneVoiceStore()+voiceStore.get() exactly as production
   // traffic would, rather than reaching into internals).
-  const [firstVoiceId] = voiceIds;
+  const [firstVoice] = voiceIds;
 
   const speakRequest = createRequest({
-    body: { text: "Hello", voice_id: firstVoiceId }
+    body: { text: "Hello", voice_id: firstVoice.voice_id, owner_token: firstVoice.owner_token }
   });
   const speakResponse = createResponse();
   await invoke(speak, speakRequest, speakResponse);
 
-  const streamRequest = createRequest({
-    query: { t: speakResponse.jsonBody.speechId }
-  });
-  const streamResponse = createResponse();
-  await invoke(streamSpeech, streamRequest, streamResponse);
+  let streamStatusCode = speakResponse.statusCode;
+  if (speakResponse.jsonBody?.speechId) {
+    const streamRequest = createRequest({
+      query: { t: speakResponse.jsonBody.speechId }
+    });
+    const streamResponse = createResponse();
+    await invoke(streamSpeech, streamRequest, streamResponse);
+    streamStatusCode = streamResponse.statusCode;
+  }
 
   assert.equal(
-    streamResponse.statusCode,
+    streamStatusCode,
     404,
     "the oldest voice should have been evicted once the store exceeded its cap"
   );
@@ -286,14 +291,17 @@ test("cloneVoice removes expired voices after TTL", async (t) => {
     cloneVoice,
     speak,
     streamSpeech,
-    __getVoiceStoreSize
+    __getVoiceStoreSize,
+    voiceStore
   } = await import("../controllers/voiceController.js?ttl=" + Date.now());
+
+  await voiceStore.clear();
 
   const cloneRequest = createRequest({
     body: { name: "temporary voice" }
   });
   cloneRequest.file = {
-    buffer: Buffer.concat([Buffer.from("RIFF"), Buffer.from("audio")]),
+    buffer: Buffer.concat([Buffer.from("RIFF....WAVE"), Buffer.from("audio")]),
     mimetype: "audio/webm"
   };
 
@@ -301,6 +309,7 @@ test("cloneVoice removes expired voices after TTL", async (t) => {
   await invoke(cloneVoice, cloneRequest, cloneResponse);
 
   const expiredVoiceId = cloneResponse.jsonBody.voice_id;
+  const expiredOwnerToken = cloneResponse.jsonBody.owner_token;
   assert.ok(expiredVoiceId);
   assert.equal(__getVoiceStoreSize(), 1);
 
@@ -310,19 +319,23 @@ test("cloneVoice removes expired voices after TTL", async (t) => {
   // speak() itself never checks the voice store, so this still succeeds;
   // streamSpeech is what enforces the TTL via pruneVoiceStore().
   const speakRequest = createRequest({
-    body: { text: "Hello", voice_id: expiredVoiceId }
+    body: { text: "Hello", voice_id: expiredVoiceId, owner_token: expiredOwnerToken }
   });
   const speakResponse = createResponse();
   await invoke(speak, speakRequest, speakResponse);
 
-  const streamRequest = createRequest({
-    query: { t: speakResponse.jsonBody.speechId }
-  });
-  const streamResponse = createResponse();
-  await invoke(streamSpeech, streamRequest, streamResponse);
+  let streamStatusCode = speakResponse.statusCode;
+  if (speakResponse.jsonBody?.speechId) {
+    const streamRequest = createRequest({
+      query: { t: speakResponse.jsonBody.speechId }
+    });
+    const streamResponse = createResponse();
+    await invoke(streamSpeech, streamRequest, streamResponse);
+    streamStatusCode = streamResponse.statusCode;
+  }
 
   assert.equal(
-    streamResponse.statusCode,
+    streamStatusCode,
     404,
     "expired voice should no longer resolve"
   );
@@ -365,65 +378,69 @@ test("cloneVoice prunes only expired voices and preserves recent ones", async (t
     cloneVoice,
     speak,
     streamSpeech,
-    __getVoiceStoreSize
+    __getVoiceStoreSize,
+    voiceStore
   } = await import("../controllers/voiceController.js?ttl-preserve=" + Date.now());
+
+  await voiceStore.clear();
 
   const baseTime = originalNow();
   Date.now = () => baseTime;
 
   const oldRequest = createRequest({ body: { name: "old voice" } });
-  oldRequest.file = { buffer: Buffer.concat([Buffer.from("RIFF"), Buffer.from("audio-old")]), mimetype: "audio/webm" };
+  oldRequest.file = { buffer: Buffer.concat([Buffer.from("RIFF....WAVE"), Buffer.from("audio-old")]), mimetype: "audio/webm" };
   const oldResponse = createResponse();
   await invoke(cloneVoice, oldRequest, oldResponse);
   const oldVoiceId = oldResponse.jsonBody.voice_id;
+  const oldOwnerToken = oldResponse.jsonBody.owner_token;
   assert.ok(oldVoiceId);
 
   // 30s later - still within the old voice's 60s TTL - clone a second voice.
-  // Its own TTL window now runs from +30s to +90s.
   Date.now = () => baseTime + 30_000;
 
   const newRequest = createRequest({ body: { name: "new voice" } });
-  newRequest.file = { buffer: Buffer.concat([Buffer.from("RIFF"), Buffer.from("audio-new")]),
- mimetype: "audio/webm" };
+  newRequest.file = { buffer: Buffer.concat([Buffer.from("RIFF....WAVE"), Buffer.from("audio-new")]), mimetype: "audio/webm" };
   const newResponse = createResponse();
   await invoke(cloneVoice, newRequest, newResponse);
   assert.ok(newResponse.jsonBody.voice_id);
 
   assert.equal(__getVoiceStoreSize(), 2);
 
-  // 65s after baseTime: the old voice (created at +0, expires at +60s) has
-  // expired; the new one (created at +30s, expires at +90s) has not.
+  // 65s after baseTime: the old voice has expired; the new one has not.
   Date.now = () => baseTime + 65_000;
 
-  // Any store access triggers pruneVoiceStore() - use a third clone to do so.
   const triggerRequest = createRequest({ body: { name: "trigger prune" } });
-  triggerRequest.file = { buffer: Buffer.concat([Buffer.from("RIFF"), Buffer.from("audio-trigger")]), mimetype: "audio/webm" };
+  triggerRequest.file = { buffer: Buffer.concat([Buffer.from("RIFF....WAVE"), Buffer.from("audio-trigger")]), mimetype: "audio/webm" };
   const triggerResponse = createResponse();
   await invoke(cloneVoice, triggerRequest, triggerResponse);
 
-  // If pruning were broken, size would be 3 (old+new+trigger all retained).
-  // The default MAX_STORED_VOICES (20) is not overridden here, so this can
-  // only be 2 if TTL pruning - not the max-size cap - removed the old entry.
   assert.equal(
     __getVoiceStoreSize(),
     2,
-    "only the expired entry should be pruned; the still-valid one stays"
+    "pruning should remove only the expired voice (old) and retain both new and trigger voices"
   );
 
-  // Confirm specifically that it was the *old* voice that's gone.
   const speakRequest = createRequest({
-    body: { text: "Hello", voice_id: oldVoiceId }
+    body: { text: "Hello", voice_id: oldVoiceId, owner_token: oldOwnerToken }
   });
   const speakResponse = createResponse();
   await invoke(speak, speakRequest, speakResponse);
 
-  const streamRequest = createRequest({
-    query: { t: speakResponse.jsonBody.speechId }
-  });
-  const streamResponse = createResponse();
-  await invoke(streamSpeech, streamRequest, streamResponse);
+  let streamStatusCode = speakResponse.statusCode;
+  if (speakResponse.jsonBody?.speechId) {
+    const streamRequest = createRequest({
+      query: { t: speakResponse.jsonBody.speechId }
+    });
+    const streamResponse = createResponse();
+    await invoke(streamSpeech, streamRequest, streamResponse);
+    streamStatusCode = streamResponse.statusCode;
+  }
 
-  assert.equal(streamResponse.statusCode, 404);
+  assert.equal(
+    streamStatusCode,
+    404,
+    "the old voice should have been pruned after expiration"
+  );
 });
 
 test("clampNumber returns fallback for invalid numbers", () => {

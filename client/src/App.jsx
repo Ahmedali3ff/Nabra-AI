@@ -1,8 +1,9 @@
 import React, { useState } from "react";
-import { Camera, Mic2, Settings as SettingsIcon, MessageSquare, Sun, Moon, Menu, X, Info } from "lucide-react";
+import { Camera, Mic2, Settings as SettingsIcon, MessageSquare, Sun, Moon, Menu, X, Info, Sparkles } from "lucide-react";
 import Onboarding from "./pages/Onboarding.jsx";
 import Call from "./pages/Call.jsx";
 import Settings from "./pages/Settings.jsx";
+import Landing from "./pages/Landing.jsx";
 import VoiceForge from "./components/VoiceForge";
 import { useTheme } from "./components/ThemeContext.jsx";
 import Footer from './components/footer.jsx';
@@ -16,21 +17,22 @@ import { clearTokens as clearStorage, logout } from "./utils/auth.js";
 import BrowserWarningBanner from "./components/BrowserWarningBanner.jsx";
 
 const tabs = [
-  { id: "onboarding", label: "Onboarding", icon: Mic2 },
-  { id: "call",       label: "Call",         icon: Camera },
+  { id: "landing",    label: "Home",        icon: Sparkles },
+  { id: "onboarding", label: "Onboarding",  icon: Mic2 },
+  { id: "call",       label: "Call",        icon: Camera },
   { id: "compose",    label: "Compose",     icon: MessageSquare },
-  { id: "about", label: "About", icon: Info },
+  { id: "about",      label: "About",       icon: Info },
   { id: "settings",   label: "Settings",    icon: SettingsIcon },
 ];
 
 const DEFAULT_TAB = "landing";
-const tabIds = new Set(tabs.map((tab) => tab.id));
+const ALL_TAB_IDS = new Set([...tabs.map((tab) => tab.id), "contributors"]);
 
 function getSavedTab() {
   try {
-    const saved = sessionStorage.getItem("voiceforge:activeTab");
+    const saved = localStorage.getItem("voiceforge:activeTab");
     if (saved === "landing") return saved;
-    return tabIds.has(saved) ? saved : DEFAULT_TAB;
+    return ALL_TAB_IDS.has(saved) ? saved : DEFAULT_TAB;
   } catch {
     return DEFAULT_TAB;
   }
@@ -102,6 +104,7 @@ export default function App() {
   const [activeTab, setActiveTab] = useState(getSavedTab);
   const { theme, toggleTheme } = useTheme();
   const [shortcutsOpen, setShortcutsOpen] = React.useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
 
   const handleLogout = async () => {
     try {
@@ -142,10 +145,8 @@ export default function App() {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [shortcutsOpen]);
 
-
-
   function selectTab(tab) {
-    if (!tabIds.has(tab)) return;
+    if (!ALL_TAB_IDS.has(tab)) return;
 
     saveActiveTab(tab);
     setActiveTab(tab);
@@ -208,19 +209,19 @@ export default function App() {
       <header className="sticky top-0 z-40 border-b border-ink/10 bg-white/70 backdrop-blur-md dark:border-border dark:bg-surface/70">
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-3 px-4 py-3 sm:px-6 lg:px-8">
           {/* Logo + Title */}
-            <div
-              className="flex items-center gap-3 min-w-0 cursor-pointer"
-              onClick={() => selectTab("onboarding")}
-              role="button"
-              tabIndex={0}
-              aria-label="Go to home"
-              onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && selectTab("onboarding")}
-            >
-              <img
-                src="/models/logo5.png"
-                alt="VoiceForge Logo"
-                className="h-10 w-10 flex-shrink-0 object-contain sm:h-12 sm:w-12"
-              />
+          <div
+            className="flex items-center gap-3 min-w-0 cursor-pointer"
+            onClick={() => selectTab("landing")}
+            role="button"
+            tabIndex={0}
+            aria-label="Go to home"
+            onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && selectTab("landing")}
+          >
+            <img
+              src="/models/logo5.png"
+              alt="VoiceForge Logo"
+              className="h-10 w-10 flex-shrink-0 object-contain sm:h-12 sm:w-12"
+            />
             <div className="min-w-0">
               <p className="hidden text-xs font-semibold uppercase tracking-[0.18em] text-moss dark:text-glow sm:block">
                 Open source assistive video
@@ -231,22 +232,35 @@ export default function App() {
             </div>
           </div>
 
-          {/* Mobile: theme toggle only */}
-          <button
-            type="button"
-            onClick={toggleTheme}
-            aria-pressed={theme === "dark"}
-            aria-label={
-              theme === "dark" ? "Switch to light mode" : "Switch to dark mode"
-            }
-            className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-ink/15 bg-white text-ink transition hover:border-moss focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-moss dark:border-border dark:bg-black dark:text-neutral-200 dark:focus-visible:ring-glow sm:hidden"
-          >
-            {theme === "dark" ? (
-              <Sun size={17} aria-hidden="true" />
-            ) : (
-              <Moon size={17} aria-hidden="true" />
-            )}
-          </button>
+          {/* Mobile: theme toggle + menu button */}
+          <div className="flex items-center gap-2 sm:hidden">
+            <button
+              type="button"
+              onClick={toggleTheme}
+              aria-pressed={theme === "dark"}
+              aria-label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+              className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-ink/15 bg-white text-ink transition hover:border-moss dark:border-border dark:bg-black dark:text-neutral-200"
+            >
+              {theme === "dark" ? (
+                <Sun size={17} aria-hidden="true" />
+              ) : (
+                <Moon size={17} aria-hidden="true" />
+              )}
+            </button>
+            <button
+              type="button"
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              aria-expanded={mobileMenuOpen}
+              aria-label="Toggle navigation menu"
+              className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-ink/15 bg-white text-ink transition hover:border-moss dark:border-border dark:bg-black dark:text-neutral-200"
+            >
+              {mobileMenuOpen ? (
+                <X size={19} aria-hidden="true" />
+              ) : (
+                <Menu size={19} aria-hidden="true" />
+              )}
+            </button>
+          </div>
 
           {/* Desktop nav + theme toggle */}
           <div className="hidden items-center gap-2 sm:flex">
@@ -291,6 +305,36 @@ export default function App() {
             </button>
           </div>
         </div>
+
+        {/* Mobile dropdown drawer */}
+        {mobileMenuOpen && (
+          <div className="border-t border-ink/10 px-4 py-3 sm:hidden dark:border-border dark:bg-surface">
+            <nav className="flex flex-col gap-2" aria-label="Mobile navigation">
+              {tabs.map((tab) => {
+                const Icon = tab.icon;
+                const selected = activeTab === tab.id;
+                return (
+                  <button
+                    key={tab.id}
+                    type="button"
+                    onClick={() => {
+                      selectTab(tab.id);
+                      setMobileMenuOpen(false);
+                    }}
+                    className={`flex items-center gap-3 rounded-md border px-4 py-2.5 text-sm font-semibold transition ${
+                      selected
+                        ? "border-ink bg-black text-white dark:border-glow dark:bg-glow dark:text-black"
+                        : "border-ink/15 bg-white text-ink dark:border-border dark:bg-black dark:text-neutral-200"
+                    }`}
+                  >
+                    <Icon size={18} />
+                    {tab.label}
+                  </button>
+                );
+              })}
+            </nav>
+          </div>
+        )}
       </header>
 
       {/* Main Content Area */}
@@ -301,6 +345,8 @@ export default function App() {
             element={
               activeTab === "compose" ? (
                 <VoiceForge />
+              ) : activeTab === "landing" ? (
+                <Landing onNavigate={selectTab} />
               ) : (
                 <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
                   {activeTab === "onboarding" && <Onboarding onReady={() => selectTab("call")} />}
