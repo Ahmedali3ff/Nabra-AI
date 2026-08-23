@@ -12,6 +12,8 @@ import { getActiveVoiceProfile } from "../hooks/useVoiceClone.js";
 import { useSpeechHistory } from "../hooks/useSpeechHistory.js";
 import { useToast, ToastContainer } from "../components/useToast.jsx";
 import { loadLanguage, persistLanguage } from "../utils/languages.js";
+import PrivacyModeToggle from "../components/PrivacyModeToggle.jsx";
+
 
 const QUICK_REPLIES = [
   { label: "Hello", phrase: "Hello" },
@@ -53,6 +55,9 @@ export default function Call() {
   });
 
   const [dbError, setDbError] = React.useState("");
+  const [privacyMode, setPrivacyMode] = React.useState(false);
+  const [avatarImage, setAvatarImage] = React.useState(null);
+
 
   const { speak, status, error, audioUrl, engine } = useTTS();
   const virtualCamera = useVirtualCamera(canvasRef);
@@ -92,23 +97,15 @@ export default function Call() {
   // ---------------- SAFE PROFILE LOAD ----------------
   React.useEffect(() => {
     let isMounted = true;
-    let localStream = null;
 
     async function loadActiveProfile() {
       try {
-        const stream = await navigator.mediaDevices.getUserMedia({
-          video: true,
-          audio: false,
-        });
-        if (!isMounted) {
-          stream.getTracks().forEach((t) => t.stop());
-          return;
+        const profile = await getActiveVoiceProfile();
+        if (isMounted) {
+          setActiveProfile(profile);
         }
-        localStream = stream;
-        setWebcamStream(stream);
-        if (localVideoRef.current) localVideoRef.current.srcObject = stream;
-      } catch (webcamError) {
-        setCameraError(webcamError.message);
+      } catch (profileError) {
+        console.error("Failed to load active profile:", profileError);
       }
     }
     loadActiveProfile();
@@ -120,12 +117,9 @@ export default function Call() {
       isMounted = false;
       window.removeEventListener("voiceforge:profileChanged", loadActiveProfile);
       window.removeEventListener("storage", loadActiveProfile);
-      // Stop any open camera tracks on unmount to release the mic/camera indicator
-      if (localStream) {
-        localStream.getTracks().forEach((t) => t.stop());
-      }
     };
   }, []);
+
 
   const [isCalibrationOpen, setIsCalibrationOpen] = React.useState(false);
   const [calibration, setCalibration] = React.useState(() => {
@@ -545,6 +539,13 @@ export default function Call() {
               </p>
             )}
           </section>
+
+          <PrivacyModeToggle
+            onModeChange={setPrivacyMode}
+            onAvatarChange={setAvatarImage}
+            showToast={showToast}
+          />
+
 
           {/* Sound Board & Chimes Board */}
           <section className="rounded-lg border border-ink/10 bg-white p-5 shadow-soft dark:border-border dark:bg-surface dark:shadow-soft-dk">
