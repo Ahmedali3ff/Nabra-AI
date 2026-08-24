@@ -8,9 +8,13 @@ import KeyboardShortcutsModal from "./KeyboardShortcutsModal";
 describe("Accessibility (a11y) attributes and status regions", () => {
   it("renders TextToSpeech textarea with aria-label and live status region", () => {
     render(<TextToSpeech status="speaking" />);
-    const textarea = screen.getByRole("textbox", { name: "Text to synthesize" });
+    const textarea = screen.getByRole("textbox", {
+      name: "Text to synthesize",
+    });
     expect(textarea).toBeDefined();
-    expect(screen.getByText("Synthesizing and playing speech audio...")).toBeDefined();
+    expect(
+      screen.getByText("Synthesizing and playing speech audio..."),
+    ).toBeDefined();
   });
 
   it("renders VoiceQuickSettings sliders with ARIA value attributes", () => {
@@ -23,6 +27,8 @@ describe("Accessibility (a11y) attributes and status regions", () => {
   it("renders KeyboardShortcutsModal with dialog role and aria-describedby", () => {
     render(<KeyboardShortcutsModal isOpen={true} onClose={() => {}} />);
     const dialog = screen.getByRole("dialog");
-    expect(dialog.getAttribute("aria-describedby")).toBe("keyboard-shortcuts-desc");
+    expect(dialog.getAttribute("aria-describedby")).toBe(
+      "keyboard-shortcuts-desc",
+    );
   });
 });

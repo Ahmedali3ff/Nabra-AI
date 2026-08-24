@@ -3,7 +3,7 @@
 const CHUNK_SIZE = 16 * 1024; // 16 KB
 
 export async function sendDataInChunks(dataChannel, data) {
-  dataChannel.binaryType = 'arraybuffer';
+  dataChannel.binaryType = "arraybuffer";
   const jsonStr = JSON.stringify(data);
   const encoder = new TextEncoder();
   const bytes = encoder.encode(jsonStr);
@@ -43,7 +43,7 @@ export async function sendDataInChunks(dataChannel, data) {
 }
 
 export function receiveDataInChunks(dataChannel, onComplete) {
-  dataChannel.binaryType = 'arraybuffer';
+  dataChannel.binaryType = "arraybuffer";
   let expectedSize = 0;
   let receivedBytes = [];
   let currentSize = 0;
@@ -54,7 +54,7 @@ export function receiveDataInChunks(dataChannel, onComplete) {
         const msg = JSON.parse(event.data);
         if (msg.type === "metadata") {
           expectedSize = msg.size;
-        } else if (msg.type === 'eof') {
+        } else if (msg.type === "eof") {
           // Reconstruct
           const totalBuffer = new Uint8Array(currentSize);
           let offset = 0;
@@ -81,8 +81,13 @@ export function receiveDataInChunks(dataChannel, onComplete) {
 export function monitorPeerConnection(pc, onError) {
   if (!pc) return;
   pc.oniceconnectionstatechange = () => {
-    if (pc.iceConnectionState === "failed" || pc.iceConnectionState === "disconnected") {
-      onError?.(new Error(`WebRTC ICE connection state: ${pc.iceConnectionState}`));
+    if (
+      pc.iceConnectionState === "failed" ||
+      pc.iceConnectionState === "disconnected"
+    ) {
+      onError?.(
+        new Error(`WebRTC ICE connection state: ${pc.iceConnectionState}`),
+      );
     }
   };
 }
@@ -99,18 +104,28 @@ export function waitForICEConnection(peerConnection, timeoutMs = 15000) {
 
     const timer = setTimeout(() => {
       peerConnection.removeEventListener("iceconnectionstatechange", onChange);
-      reject(new Error("WebRTC ICE negotiation timed out — check network firewall settings."));
+      reject(
+        new Error(
+          "WebRTC ICE negotiation timed out — check network firewall settings.",
+        ),
+      );
     }, timeoutMs);
 
     function onChange() {
       const state = peerConnection.iceConnectionState;
       if (state === "connected" || state === "completed") {
         clearTimeout(timer);
-        peerConnection.removeEventListener("iceconnectionstatechange", onChange);
+        peerConnection.removeEventListener(
+          "iceconnectionstatechange",
+          onChange,
+        );
         resolve();
       } else if (state === "failed" || state === "closed") {
         clearTimeout(timer);
-        peerConnection.removeEventListener("iceconnectionstatechange", onChange);
+        peerConnection.removeEventListener(
+          "iceconnectionstatechange",
+          onChange,
+        );
         reject(new Error(`WebRTC ICE connection failed with state: ${state}`));
       }
     }

@@ -1,7 +1,12 @@
 // client/src/utils/wavEncoder.js
 // Client-side PCM WAV Encoder for AudioBuffer slices
 
-export function encodeWAV(audioBuffer, startOffset = 0, endOffset = null, options = {}) {
+export function encodeWAV(
+  audioBuffer,
+  startOffset = 0,
+  endOffset = null,
+  options = {},
+) {
   const sampleRate = audioBuffer.sampleRate;
   const originalChannels = audioBuffer.numberOfChannels;
   const targetChannels = options.targetChannels || originalChannels;
@@ -59,7 +64,12 @@ export function encodeWAV(audioBuffer, startOffset = 0, endOffset = null, option
 
   let offset = 44;
   for (let i = 0; i < numSamples; i++) {
-      const rawSample = channelData[c][startSample + i];
+    const idx = startSample + i;
+    for (let c = 0; c < numChannels; c++) {
+      const sourceChannel = Math.min(c, originalChannels - 1);
+      const rawSample = channelData[sourceChannel]
+        ? channelData[sourceChannel][idx]
+        : 0;
       const safeSample = isNaN(rawSample) ? 0 : rawSample;
       // Clamp sample to [-1, 1]
       const clamped = Math.max(-1, Math.min(1, safeSample));
@@ -67,15 +77,6 @@ export function encodeWAV(audioBuffer, startOffset = 0, endOffset = null, option
       const pcmSample = clamped < 0 ? clamped * 0x8000 : clamped * 0x7fff;
       view.setInt16(offset, pcmSample, true);
       offset += 2;
-    } else {
-      for (let c = 0; c < numChannels; c++) {
-        const sourceChannel = Math.min(c, originalChannels - 1);
-        const sample = channelData[sourceChannel][idx];
-        const clamped = Math.max(-1, Math.min(1, sample));
-        const pcmSample = clamped < 0 ? clamped * 0x8000 : clamped * 0x7fff;
-        view.setInt16(offset, pcmSample, true);
-        offset += 2;
-      }
     }
   }
 

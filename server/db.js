@@ -1,12 +1,12 @@
-import sqlite3 from 'sqlite3';
-import { open } from 'sqlite';
-import path from 'path';
-import { fileURLToPath } from 'url';
-import fs from 'fs';
+import sqlite3 from "sqlite3";
+import { open } from "sqlite";
+import path from "path";
+import { fileURLToPath } from "url";
+import fs from "fs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const dataDir = path.join(__dirname, 'data');
-const dbPath = path.join(dataDir, 'voiceforge.db');
+const dataDir = path.join(__dirname, "data");
+const dbPath = path.join(dataDir, "voiceforge.db");
 
 let dbPromise = null;
 
@@ -18,7 +18,7 @@ export async function getDb() {
 
     dbPromise = open({
       filename: dbPath,
-      driver: sqlite3.Database
+      driver: sqlite3.Database,
     }).then(async (db) => {
       await db.exec(`
         CREATE TABLE IF NOT EXISTS voice_profiles (

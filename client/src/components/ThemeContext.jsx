@@ -24,7 +24,9 @@ function storeTheme(theme) {
   try {
     localStorage.setItem("voiceforge:theme", theme);
     // Dispatch a custom event so all open tabs can react immediately
-    window.dispatchEvent(new CustomEvent("voiceforge:themeChanged", { detail: { theme } }));
+    window.dispatchEvent(
+      new CustomEvent("voiceforge:themeChanged", { detail: { theme } }),
+    );
   } catch {
     // Theme still works for the current session when persistence is unavailable.
   }
@@ -45,7 +47,10 @@ export function ThemeProvider({ children }) {
 
   React.useEffect(() => {
     function handleStorage(event) {
-      if (event.key === "voiceforge:theme" && (event.newValue === "dark" || event.newValue === "light")) {
+      if (
+        event.key === "voiceforge:theme" &&
+        (event.newValue === "dark" || event.newValue === "light")
+      ) {
         setTheme(event.newValue);
       }
     }

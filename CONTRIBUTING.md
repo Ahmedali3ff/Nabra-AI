@@ -132,4 +132,3 @@ New contributors can start with issues labeled [`good first issue`](https://gith
 - The change is scoped to one concern.
 - The correct program template is used.
 - The PR links its related issue.
-

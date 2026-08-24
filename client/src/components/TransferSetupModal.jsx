@@ -21,7 +21,10 @@ export function TransferSetupModal({ onClose }) {
         const url = generateTransferUrl(compressed);
         setTransferUrl(url);
       } catch (err) {
-        setError("Failed to generate transfer payload: " + (err.message || String(err)));
+        setError(
+          "Failed to generate transfer payload: " +
+            (err.message || String(err)),
+        );
       } finally {
         setLoading(false);
       }
@@ -73,7 +76,10 @@ export function TransferSetupModal({ onClose }) {
         <div className="mt-5 space-y-4">
           {loading ? (
             <div className="flex flex-col items-center justify-center py-10">
-              <Loader2 size={36} className="animate-spin text-moss dark:text-glow" />
+              <Loader2
+                size={36}
+                className="animate-spin text-moss dark:text-glow"
+              />
               <p className="mt-3 text-sm font-medium text-ink/70 dark:text-muted">
                 Packaging voice profiles &amp; settings... (100%)
               </p>
@@ -141,7 +147,9 @@ export function TransferSetupModal({ onClose }) {
               </div>
 
               <p className="text-xs text-ink/55 dark:text-muted">
-                🔒 <strong>Privacy First:</strong> Transfer data is encoded directly in the URL using URL-safe compression. No voice data or settings are ever sent to any remote server.
+                🔒 <strong>Privacy First:</strong> Transfer data is encoded
+                directly in the URL using URL-safe compression. No voice data or
+                settings are ever sent to any remote server.
               </p>
             </>
           )}

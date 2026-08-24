@@ -32,9 +32,9 @@ export default function BrowserWarningBanner() {
       className="flex w-full items-center justify-between gap-4 border-b border-ink/15 bg-amber-50 px-4 py-2 text-sm text-ink dark:border-border dark:bg-amber-950/40 dark:text-neutral-200"
     >
       <span>
-        You're using an unsupported browser. For full functionality
-        (webcam capture, virtual camera, TTS), please use{" "}
-        <strong>Chrome</strong> or <strong>Edge</strong>.
+        You're using an unsupported browser. For full functionality (webcam
+        capture, virtual camera, TTS), please use <strong>Chrome</strong> or{" "}
+        <strong>Edge</strong>.
       </span>
       <button
         type="button"

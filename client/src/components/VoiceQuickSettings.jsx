@@ -9,7 +9,17 @@ import {
 /**
  * A single labelled range slider row.
  */
-function SliderRow({ id, label, description, value, formattedValue, min = 0, max = 1, step = 0.01, onChange }) {
+function SliderRow({
+  id,
+  label,
+  description,
+  value,
+  formattedValue,
+  min = 0,
+  max = 1,
+  step = 0.01,
+  onChange,
+}) {
   const displayVal = formattedValue !== undefined ? formattedValue : value;
   return (
     <div className="space-y-1">

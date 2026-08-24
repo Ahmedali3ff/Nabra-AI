@@ -10,7 +10,7 @@ async function makePostRequest(app, url, body) {
       method: "POST",
       url,
       body,
-      headers: { "content-type": "application/json" }
+      headers: { "content-type": "application/json" },
     };
     // Mock minimal express request response cycle
   });
@@ -20,10 +20,14 @@ test("Database persistence tests", async (t) => {
   const db = await getDatabase();
 
   await t.test("Can initialize database and tables exist", async () => {
-    const voicesTable = await db.get("SELECT name FROM sqlite_master WHERE type='table' AND name='voices'");
+    const voicesTable = await db.get(
+      "SELECT name FROM sqlite_master WHERE type='table' AND name='voices'",
+    );
     assert.ok(voicesTable, "voices table should exist");
 
-    const speechHistoryTable = await db.get("SELECT name FROM sqlite_master WHERE type='table' AND name='speech_history'");
+    const speechHistoryTable = await db.get(
+      "SELECT name FROM sqlite_master WHERE type='table' AND name='speech_history'",
+    );
     assert.ok(speechHistoryTable, "speech_history table should exist");
   });
 
@@ -32,10 +36,18 @@ test("Database persistence tests", async (t) => {
     await db.run(
       `INSERT OR REPLACE INTO voices (voice_id, name, owner_token, tuning_parameters, created_at)
        VALUES (?, ?, ?, ?, ?)`,
-      [testVoiceId, "Test Voice", "token-123", JSON.stringify({ stability: 0.5 }), new Date().toISOString()]
+      [
+        testVoiceId,
+        "Test Voice",
+        "token-123",
+        JSON.stringify({ stability: 0.5 }),
+        new Date().toISOString(),
+      ],
     );
 
-    const voice = await db.get("SELECT * FROM voices WHERE voice_id = ?", [testVoiceId]);
+    const voice = await db.get("SELECT * FROM voices WHERE voice_id = ?", [
+      testVoiceId,
+    ]);
     assert.equal(voice.name, "Test Voice");
     assert.equal(voice.owner_token, "token-123");
   });
@@ -45,10 +57,19 @@ test("Database persistence tests", async (t) => {
     await db.run(
       `INSERT OR REPLACE INTO speech_history (id, text, voice_id, language_code, is_favorite, timestamp)
        VALUES (?, ?, ?, ?, ?, ?)`,
-      [testSpeechId, "Hello world", "test-voice-id-123", "en-US", 1, Date.now()]
+      [
+        testSpeechId,
+        "Hello world",
+        "test-voice-id-123",
+        "en-US",
+        1,
+        Date.now(),
+      ],
     );
 
-    const speech = await db.get("SELECT * FROM speech_history WHERE id = ?", [testSpeechId]);
+    const speech = await db.get("SELECT * FROM speech_history WHERE id = ?", [
+      testSpeechId,
+    ]);
     assert.equal(speech.text, "Hello world");
     assert.equal(speech.is_favorite, 1);
   });

@@ -1,12 +1,5 @@
 import React, { useEffect, useState } from "react";
-import {
-  Copy,
-  Trash2,
-  Star,
-  Volume2,
-  Clock,
-  Mic2,
-} from "lucide-react";
+import { Copy, Trash2, Star, Volume2, Clock, Mic2 } from "lucide-react";
 
 const defaultHistory = [
   {
@@ -38,7 +31,7 @@ export default function SpeakingHistory() {
         setHistory(defaultHistory);
         localStorage.setItem(
           "voiceforge-history",
-          JSON.stringify(defaultHistory)
+          JSON.stringify(defaultHistory),
         );
       }
     } catch {
@@ -47,10 +40,7 @@ export default function SpeakingHistory() {
   }, []);
 
   useEffect(() => {
-    localStorage.setItem(
-      "voiceforge-history",
-      JSON.stringify(history)
-    );
+    localStorage.setItem("voiceforge-history", JSON.stringify(history));
   }, [history]);
 
   const copyText = async (text) => {
@@ -66,23 +56,20 @@ export default function SpeakingHistory() {
   const toggleFavorite = (id) => {
     setHistory((prev) =>
       prev.map((item) =>
-        item.id === id
-          ? { ...item, favorite: !item.favorite }
-          : item
-      )
+        item.id === id ? { ...item, favorite: !item.favorite } : item,
+      ),
     );
   };
 
   const deleteItem = (id) => {
     if (!window.confirm("Delete this history item?")) return;
 
-    setHistory((prev) =>
-      prev.filter((item) => item.id !== id)
-    );
+    setHistory((prev) => prev.filter((item) => item.id !== id));
   };
 
   const clearAllHistory = () => {
-    if (!window.confirm("Are you sure you want to clear all speaking history?")) return;
+    if (!window.confirm("Are you sure you want to clear all speaking history?"))
+      return;
     setHistory([]);
   };
 
@@ -91,9 +78,7 @@ export default function SpeakingHistory() {
   return (
     <div className="max-w-6xl mx-auto px-6 py-8">
       <div className="flex justify-between items-center mb-2">
-        <h1 className="text-3xl font-bold">
-          Speaking History Timeline
-        </h1>
+        <h1 className="text-3xl font-bold">Speaking History Timeline</h1>
         {safeHistory.length > 0 && (
           <button
             onClick={clearAllHistory}

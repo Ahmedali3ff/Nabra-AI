@@ -111,13 +111,9 @@ export default function KeyboardShortcutCenter() {
       </p>
 
       <div className="rounded-xl border p-5 mb-8 bg-white dark:bg-neutral-900 shadow">
-        <h2 className="font-semibold text-lg mb-2">
-          Current Action
-        </h2>
+        <h2 className="font-semibold text-lg mb-2">Current Action</h2>
 
-        <p className="text-blue-600 font-medium">
-          {message}
-        </p>
+        <p className="text-blue-600 font-medium">{message}</p>
       </div>
 
       <div className="grid md:grid-cols-2 gap-5">
@@ -139,9 +135,7 @@ export default function KeyboardShortcutCenter() {
       </div>
 
       <div className="mt-10 rounded-xl bg-blue-50 dark:bg-neutral-800 p-5">
-        <h3 className="font-semibold mb-2">
-          Accessibility Notes
-        </h3>
+        <h3 className="font-semibold mb-2">Accessibility Notes</h3>
 
         <ul className="list-disc ml-6 space-y-2">
           <li>All shortcuts work globally.</li>

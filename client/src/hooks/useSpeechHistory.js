@@ -92,9 +92,14 @@ export function pruneHistory(history, favorites = [], policy = "forever") {
   });
 }
 
-export function trimHistoryPreservingFavorites(entries, favoriteIds = new Set(), maxHistory = 25) {
+export function trimHistoryPreservingFavorites(
+  entries,
+  favoriteIds = new Set(),
+  maxHistory = 25,
+) {
   if (!Array.isArray(entries)) return [];
-  const favSet = favoriteIds instanceof Set ? favoriteIds : new Set(favoriteIds);
+  const favSet =
+    favoriteIds instanceof Set ? favoriteIds : new Set(favoriteIds);
 
   const favoritedEntries = [];
   const unpinnedEntries = [];
@@ -109,7 +114,10 @@ export function trimHistoryPreservingFavorites(entries, favoriteIds = new Set(),
   }
 
   const keptUnpinned = unpinnedEntries.slice(0, maxHistory);
-  const keptIds = new Set([...favoritedEntries.map((e) => e.id), ...keptUnpinned.map((e) => e.id)]);
+  const keptIds = new Set([
+    ...favoritedEntries.map((e) => e.id),
+    ...keptUnpinned.map((e) => e.id),
+  ]);
 
   return entries.filter((e) => e && keptIds.has(e.id));
 }
@@ -139,7 +147,7 @@ export function reconcileFavoritesWithHistory(favoriteIds, history) {
   const historySet = new Set(
     (history || [])
       .filter((m) => m && typeof m === "object" && m.id)
-      .map((m) => m.id)
+      .map((m) => m.id),
   );
   const arr = Array.from(favoriteIds);
   return new Set(arr.filter((id) => historySet.has(id)));
@@ -149,9 +157,11 @@ export function useSpeechHistory() {
   // ── State ────────────────────────────────────────────────────────────────
   const [history, setHistory] = useState(() => readStorage(HISTORY_KEY, []));
   const [favorites, setFavorites] = useState(
-    () => new Set(readStorage(FAVS_KEY, []))
+    () => new Set(readStorage(FAVS_KEY, [])),
   );
-  const [sessionTranscript, setSessionTranscript] = useState(() => readSessionStorage(TRANSCRIPT_KEY, []));
+  const [sessionTranscript, setSessionTranscript] = useState(() =>
+    readSessionStorage(TRANSCRIPT_KEY, []),
+  );
 
   // ── Persistence ──────────────────────────────────────────────────────────
   useEffect(() => {
@@ -178,7 +188,6 @@ export function useSpeechHistory() {
     }
   }, [favorites]);
 
-
   // ── Cross-Tab Synchronization ─────────────────────────────────────────────
   useEffect(() => {
     function handleStorage(event) {
@@ -197,38 +206,38 @@ export function useSpeechHistory() {
 
   // ── Actions ──────────────────────────────────────────────────────────────
 
-  const addMessage = useCallback((text, id) => {
-    const trimmed = text.trim();
-    if (!trimmed) return;
+  const addMessage = useCallback(
+    (text, id) => {
+      const trimmed = text.trim();
+      if (!trimmed) return;
 
-    const timestamp = Date.now();
-    const resolvedId = id || crypto.randomUUID();
+      const timestamp = Date.now();
+      const resolvedId = id || crypto.randomUUID();
 
-    setSessionTranscript((prev) => [
-      ...prev,
-      {
-        text: trimmed,
-        timestamp,
-        status: "success",
-      },
-    ]);
+      setSessionTranscript((prev) => [
+        ...prev,
+        {
+          text: trimmed,
+          timestamp,
+          status: "success",
+        },
+      ]);
 
-    setHistory((prev) => {
-      const existing = prev.find((m) => m.text === trimmed);
-      const entry = existing
-        ? { ...existing, timestamp: Date.now() }
-        : { id: resolvedId, text: trimmed, timestamp: Date.now() };
+      setHistory((prev) => {
+        const existing = prev.find((m) => m.text === trimmed);
+        const entry = existing
+          ? { ...existing, timestamp: Date.now() }
+          : { id: resolvedId, text: trimmed, timestamp: Date.now() };
 
-      const updated = [
-        entry,
-        ...prev.filter((m) => m.id !== entry.id),
-      ];
+        const updated = [entry, ...prev.filter((m) => m.id !== entry.id)];
 
-      return trimHistoryPreservingFavorites(updated, favorites, MAX_HISTORY);
-    });
+        return trimHistoryPreservingFavorites(updated, favorites, MAX_HISTORY);
+      });
 
-    return resolvedId;
-  }, [favorites]);
+      return resolvedId;
+    },
+    [favorites],
+  );
 
   const removeMessage = useCallback((id) => {
     setHistory((prev) => prev.filter((m) => m.id !== id));

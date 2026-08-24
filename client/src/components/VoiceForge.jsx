@@ -39,28 +39,31 @@ export default function VoiceForge() {
 
   const { toasts, showToast } = useToast();
   const handleClearHistory = useCallback(() => {
-  speakCounterRef.current++;
-  audioMapRef.current.forEach((blobUrl) => URL.revokeObjectURL(blobUrl));
-  audioMapRef.current.clear();
-  clearHistory();
-}, [clearHistory]);
+    speakCounterRef.current++;
+    audioMapRef.current.forEach((blobUrl) => URL.revokeObjectURL(blobUrl));
+    audioMapRef.current.clear();
+    clearHistory();
+  }, [clearHistory]);
 
-  const speak = useCallback(async (text) => {
-    if (!text.trim()) return;
+  const speak = useCallback(
+    async (text) => {
+      if (!text.trim()) return;
 
-    setIsSpeaking(true);
-    setAnnouncement("Speech synthesis started.");
+      setIsSpeaking(true);
+      setAnnouncement("Speech synthesis started.");
 
-    try {
-      await ttsSpeak({ text, language_code: language });
-      setAnnouncement("Speech playback completed.");
-    } catch (err) {
-      showToast(err?.message || "Speech playback failed", "error");
-      setAnnouncement("Speech playback failed.");
-    } finally {
-      setIsSpeaking(false);
-    }
-  }, [ttsSpeak, showToast, language]);
+      try {
+        await ttsSpeak({ text, language_code: language });
+        setAnnouncement("Speech playback completed.");
+      } catch (err) {
+        showToast(err?.message || "Speech playback failed", "error");
+        setAnnouncement("Speech playback failed.");
+      } finally {
+        setIsSpeaking(false);
+      }
+    },
+    [ttsSpeak, showToast, language],
+  );
 
   const handleSpeak = useCallback(async () => {
     const text = inputText.trim();
@@ -78,80 +81,104 @@ export default function VoiceForge() {
     }
   }, [inputText, speak, addMessage, showToast]);
 
-  const handleReplay = useCallback((text) => {
-    speak(text);
-    showToast("Replaying...", "info");
-  }, [speak, showToast]);
+  const handleReplay = useCallback(
+    (text) => {
+      speak(text);
+      showToast("Replaying...", "info");
+    },
+    [speak, showToast],
+  );
 
-    const getAudioUrl = useCallback((id) => {
-  return audioMapRef.current.get(id);
-}, []);
+  const getAudioUrl = useCallback((id) => {
+    return audioMapRef.current.get(id);
+  }, []);
 
-const handleDownload = useCallback((id, text) => {
-  const blobUrl = audioMapRef.current.get(id);
-  if (!blobUrl) return;
-  const safeName = text.trim().slice(0, 40).replace(/[^a-z0-9 ]/gi, "").trim().replace(/\s+/g, "_") || "audio";
-  const anchor = document.createElement("a");
-  anchor.href = blobUrl;
-  const now = new Date();
-  const timestamp = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,"0")}-${String(now.getDate()).padStart(2,"0")}_${String(now.getHours()).padStart(2,"0")}-${String(now.getMinutes()).padStart(2,"0")}-${String(now.getSeconds()).padStart(2,"0")}`;
-  anchor.download = `${safeName}_${timestamp}.mp3`;
-  anchor.style.cssText = "position:absolute;opacity:0;pointer-events:none";
-  document.body.appendChild(anchor);
-  anchor.click();
-  document.body.removeChild(anchor);
-}, []);
+  const handleDownload = useCallback((id, text) => {
+    const blobUrl = audioMapRef.current.get(id);
+    if (!blobUrl) return;
+    const safeName =
+      text
+        .trim()
+        .slice(0, 40)
+        .replace(/[^a-z0-9 ]/gi, "")
+        .trim()
+        .replace(/\s+/g, "_") || "audio";
+    const anchor = document.createElement("a");
+    anchor.href = blobUrl;
+    const now = new Date();
+    const timestamp = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}_${String(now.getHours()).padStart(2, "0")}-${String(now.getMinutes()).padStart(2, "0")}-${String(now.getSeconds()).padStart(2, "0")}`;
+    anchor.download = `${safeName}_${timestamp}.mp3`;
+    anchor.style.cssText = "position:absolute;opacity:0;pointer-events:none";
+    document.body.appendChild(anchor);
+    anchor.click();
+    document.body.removeChild(anchor);
+  }, []);
 
-const handleDeleteMessage = useCallback((id) => {
-  const blobUrl = audioMapRef.current.get(id);
-  if (blobUrl) {
-    URL.revokeObjectURL(blobUrl);
-    audioMapRef.current.delete(id);
-  }
-  removeMessage(id);
-}, [removeMessage]);
+  const handleDeleteMessage = useCallback(
+    (id) => {
+      const blobUrl = audioMapRef.current.get(id);
+      if (blobUrl) {
+        URL.revokeObjectURL(blobUrl);
+        audioMapRef.current.delete(id);
+      }
+      removeMessage(id);
+    },
+    [removeMessage],
+  );
 
-  const handleReuse = useCallback((text) => {
-    setInputText(text);
-    textareaRef.current?.focus();
-    showToast("Loaded into composer", "success");
-  }, [showToast]);
+  const handleReuse = useCallback(
+    (text) => {
+      setInputText(text);
+      textareaRef.current?.focus();
+      showToast("Loaded into composer", "success");
+    },
+    [showToast],
+  );
 
-  const handleCopy = useCallback((text) => {
-    const target = text || inputText;
-    if (!target.trim()) {
-      showToast("Nothing to copy", "error");
-      return;
-    }
+  const handleCopy = useCallback(
+    (text) => {
+      const target = text || inputText;
+      if (!target.trim()) {
+        showToast("Nothing to copy", "error");
+        return;
+      }
 
-    navigator.clipboard
-      .writeText(target)
-      .then(() => showToast("Copied to clipboard", "success"))
-      .catch(() => {
-        const ta = document.createElement("textarea");
-        ta.value = target;
-        ta.style.position = "absolute";
-        ta.style.opacity = "0";
-        document.body.appendChild(ta);
-        ta.select();
-        document.execCommand("copy");
-        document.body.removeChild(ta);
-        showToast("Copied", "success");
-      });
-  }, [inputText, showToast]);
+      navigator.clipboard
+        .writeText(target)
+        .then(() => showToast("Copied to clipboard", "success"))
+        .catch(() => {
+          const ta = document.createElement("textarea");
+          ta.value = target;
+          ta.style.position = "absolute";
+          ta.style.opacity = "0";
+          document.body.appendChild(ta);
+          ta.select();
+          document.execCommand("copy");
+          document.body.removeChild(ta);
+          showToast("Copied", "success");
+        });
+    },
+    [inputText, showToast],
+  );
 
-  const handleQuickReply = useCallback((phrase) => {
-    setInputText(phrase);
-    textareaRef.current?.focus();
-    showToast("Quick reply loaded", "success");
-  }, [showToast]);
+  const handleQuickReply = useCallback(
+    (phrase) => {
+      setInputText(phrase);
+      textareaRef.current?.focus();
+      showToast("Quick reply loaded", "success");
+    },
+    [showToast],
+  );
 
-  const handleKeyDown = useCallback((event) => {
-    if ((event.ctrlKey || event.metaKey) && event.key === "Enter") {
-      event.preventDefault();
-      handleSpeak();
-    }
-  }, [handleSpeak]);
+  const handleKeyDown = useCallback(
+    (event) => {
+      if ((event.ctrlKey || event.metaKey) && event.key === "Enter") {
+        event.preventDefault();
+        handleSpeak();
+      }
+    },
+    [handleSpeak],
+  );
 
   const charsLeft = MAX_CHARS - inputText.length;
 
@@ -225,7 +252,10 @@ const handleDeleteMessage = useCallback((id) => {
           history={history}
           favorites={favorites}
           sessionTranscript={sessionTranscript}
-          onReuse={(text) => { handleReuse(text); setHistoryOpen(false); }}
+          onReuse={(text) => {
+            handleReuse(text);
+            setHistoryOpen(false);
+          }}
           onReplay={handleReplay}
           onToggleFav={toggleFavorite}
           onDelete={removeMessage}
@@ -234,7 +264,10 @@ const handleDeleteMessage = useCallback((id) => {
         />
       </div>
 
-      <main className="flex flex-1 flex-col overflow-hidden" aria-label="Speech composer">
+      <main
+        className="flex flex-1 flex-col overflow-hidden"
+        aria-label="Speech composer"
+      >
         <header className="flex flex-shrink-0 items-center gap-2 border-b border-neutral-200 px-5 py-3.5 dark:border-border dark:bg-black">
           <h1 className="text-base font-semibold text-neutral-800 dark:text-neutral-100">
             VoiceForge
@@ -277,7 +310,9 @@ const handleDeleteMessage = useCallback((id) => {
             <span
               className={[
                 "text-xs tabular-nums",
-                charsLeft < 50 ? "text-red-500" : "text-neutral-400 dark:text-neutral-500",
+                charsLeft < 50
+                  ? "text-red-500"
+                  : "text-neutral-400 dark:text-neutral-500",
               ].join(" ")}
               aria-live="polite"
             >
@@ -292,7 +327,9 @@ const handleDeleteMessage = useCallback((id) => {
             id="vf-compose"
             ref={textareaRef}
             value={inputText}
-            onChange={(event) => setInputText(event.target.value.slice(0, MAX_CHARS))}
+            onChange={(event) =>
+              setInputText(event.target.value.slice(0, MAX_CHARS))
+            }
             onKeyDown={handleKeyDown}
             placeholder="Type your message or select a quick reply..."
             maxLength={MAX_CHARS}
@@ -305,14 +342,26 @@ const handleDeleteMessage = useCallback((id) => {
               "dark:placeholder:text-neutral-600",
               "focus:border-blue-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-200",
               "dark:focus:bg-black dark:focus:ring-blue-500/30",
-              charsLeft < 50 ? "border-red-300 dark:border-red-800" : "border-neutral-200 dark:border-border",
+              charsLeft < 50
+                ? "border-red-300 dark:border-red-800"
+                : "border-neutral-200 dark:border-border",
             ].join(" ")}
             rows={6}
           />
 
-          <p id="vf-hint" className="text-xs text-neutral-400 dark:text-neutral-600">
-            Tip: Press <kbd className="rounded border border-neutral-200 px-1 font-mono text-[10px] dark:border-border">Ctrl</kbd> +{" "}
-            <kbd className="rounded border border-neutral-200 px-1 font-mono text-[10px] dark:border-border">Enter</kbd> to speak quickly.
+          <p
+            id="vf-hint"
+            className="text-xs text-neutral-400 dark:text-neutral-600"
+          >
+            Tip: Press{" "}
+            <kbd className="rounded border border-neutral-200 px-1 font-mono text-[10px] dark:border-border">
+              Ctrl
+            </kbd>{" "}
+            +{" "}
+            <kbd className="rounded border border-neutral-200 px-1 font-mono text-[10px] dark:border-border">
+              Enter
+            </kbd>{" "}
+            to speak quickly.
           </p>
 
           <div className="flex items-center gap-2">
@@ -339,12 +388,16 @@ const handleDeleteMessage = useCallback((id) => {
             <button
               onClick={handleSpeak}
               disabled={!inputText.trim() || isSpeaking}
-              aria-label={isSpeaking ? "Currently speaking" : "Speak and save to history"}
+              aria-label={
+                isSpeaking ? "Currently speaking" : "Speak and save to history"
+              }
               className={[
                 "ml-auto flex items-center gap-2 rounded-md px-5 py-2 text-sm font-medium text-white transition",
                 "focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-1 dark:focus:ring-offset-black",
                 "disabled:cursor-not-allowed disabled:opacity-50",
-                isSpeaking ? "bg-blue-400" : "bg-blue-600 hover:bg-blue-700 active:scale-[0.98]",
+                isSpeaking
+                  ? "bg-blue-400"
+                  : "bg-blue-600 hover:bg-blue-700 active:scale-[0.98]",
               ].join(" ")}
             >
               <Mic2 size={16} aria-hidden="true" />

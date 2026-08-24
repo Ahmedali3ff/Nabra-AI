@@ -49,7 +49,9 @@ export default function CaptionOverlay({
         <div className="space-y-3">
           {/* Position */}
           <div>
-            <p className="text-xs text-ink/60 dark:text-muted mb-1.5 font-medium uppercase tracking-wide">Position</p>
+            <p className="text-xs text-ink/60 dark:text-muted mb-1.5 font-medium uppercase tracking-wide">
+              Position
+            </p>
             <div className="flex gap-2">
               {["top", "middle", "bottom"].map((pos) => (
                 <button
@@ -69,7 +71,9 @@ export default function CaptionOverlay({
 
           {/* Font Size */}
           <div>
-            <p className="text-xs text-ink/60 dark:text-muted mb-1.5 font-medium uppercase tracking-wide">Font Size</p>
+            <p className="text-xs text-ink/60 dark:text-muted mb-1.5 font-medium uppercase tracking-wide">
+              Font Size
+            </p>
             <div className="flex gap-2">
               {["small", "medium", "large"].map((size) => (
                 <button

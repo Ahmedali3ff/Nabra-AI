@@ -17,7 +17,11 @@ export function formatTime(timestamp) {
 }
 
 export function formatDuration(totalSeconds) {
-  if (typeof totalSeconds !== "number" || !Number.isFinite(totalSeconds) || totalSeconds < 0) {
+  if (
+    typeof totalSeconds !== "number" ||
+    !Number.isFinite(totalSeconds) ||
+    totalSeconds < 0
+  ) {
     return "0:00";
   }
   const hours = Math.floor(totalSeconds / 3600);
@@ -33,7 +37,8 @@ export function formatDuration(totalSeconds) {
 }
 
 export function formatBytes(bytes, decimals = 1) {
-  if (typeof bytes !== "number" || !Number.isFinite(bytes) || bytes <= 0) return "0 Bytes";
+  if (typeof bytes !== "number" || !Number.isFinite(bytes) || bytes <= 0)
+    return "0 Bytes";
   const k = 1024;
   const dm = decimals < 0 ? 0 : decimals;
   const sizes = ["Bytes", "KB", "MB", "GB"];

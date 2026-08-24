@@ -46,7 +46,10 @@ export function QuickReplies({ onSelect, showToast: propShowToast }) {
         return parsed.map((item) => ({
           ...item,
           id: item.id || generateId(),
-          category: item.category && CATEGORIES.includes(item.category) ? item.category : "General",
+          category:
+            item.category && CATEGORIES.includes(item.category)
+              ? item.category
+              : "General",
         }));
       }
       return DEFAULT_QUICK_REPLIES;
@@ -136,53 +139,53 @@ export function QuickReplies({ onSelect, showToast: propShowToast }) {
     notify("Quick reply deleted", "success");
   };
   const handleEdit = (oldPhrase) => {
-  const cleanPhrase = editedValue.trim();
-  const normalizedOldPhrase = oldPhrase.toLowerCase();
-  const isDuplicate = replies.some(
-    (reply) =>
-      reply.phrase.toLowerCase() === cleanPhrase.toLowerCase() &&
-    reply.phrase.toLowerCase() !== normalizedOldPhrase
-  );
+    const cleanPhrase = editedValue.trim();
+    const normalizedOldPhrase = oldPhrase.toLowerCase();
+    const isDuplicate = replies.some(
+      (reply) =>
+        reply.phrase.toLowerCase() === cleanPhrase.toLowerCase() &&
+        reply.phrase.toLowerCase() !== normalizedOldPhrase,
+    );
 
-  if (!cleanPhrase) {
-    notify("Phrase cannot be empty", "error");
-    return;
-  }
-  if (cleanPhrase.length > 120) {
-    notify("Phrase is too long (max 120 characters)", "error");
-    return;
-  }
-  if (isDuplicate) {
-    notify("This quick reply already exists", "error");
-    return;
-  }
+    if (!cleanPhrase) {
+      notify("Phrase cannot be empty", "error");
+      return;
+    }
+    if (cleanPhrase.length > 120) {
+      notify("Phrase is too long (max 120 characters)", "error");
+      return;
+    }
+    if (isDuplicate) {
+      notify("This quick reply already exists", "error");
+      return;
+    }
 
-  setReplies((prev) =>
-    prev.map((reply) =>
-      reply.phrase === oldPhrase
-        ? {
-            ...reply,
-            phrase: cleanPhrase,
-            label: cleanPhrase,
-          }
-        : reply
-    )
-  );
+    setReplies((prev) =>
+      prev.map((reply) =>
+        reply.phrase === oldPhrase
+          ? {
+              ...reply,
+              phrase: cleanPhrase,
+              label: cleanPhrase,
+            }
+          : reply,
+      ),
+    );
 
-  setEditingPhrase(null);
-  setEditedValue("");
-  notify("Quick reply updated", "success");
-};
-const handleEditKeyDown = (e, oldPhrase) => {
-  if (e.key === "Enter") {
-    handleEdit(oldPhrase);
-  }
-
-  if (e.key === "Escape") {
     setEditingPhrase(null);
     setEditedValue("");
-  }
-};
+    notify("Quick reply updated", "success");
+  };
+  const handleEditKeyDown = (e, oldPhrase) => {
+    if (e.key === "Enter") {
+      handleEdit(oldPhrase);
+    }
+
+    if (e.key === "Escape") {
+      setEditingPhrase(null);
+      setEditedValue("");
+    }
+  };
 
   const handleEditStart = (id, reply) => {
     setIsAdding(false);
@@ -198,7 +201,7 @@ const handleEditKeyDown = (e, oldPhrase) => {
     if (draggedItem === null) return;
     const oldIndex = replies.findIndex((r) => r.id === draggedItem);
     const newIndex = replies.findIndex((r) => r.id === targetId);
-    
+
     if (oldIndex !== -1 && newIndex !== -1) {
       const newReplies = [...replies];
       const [removed] = newReplies.splice(oldIndex, 1);
@@ -318,7 +321,9 @@ const handleEditKeyDown = (e, oldPhrase) => {
               if (isAdding) setIsAdding(false);
             }}
             className={`inline-flex items-center gap-1 text-xs transition ${
-              isEditing ? "font-bold text-amber-600 dark:text-amber-400" : "text-neutral-500 hover:text-neutral-700 dark:text-neutral-400"
+              isEditing
+                ? "font-bold text-amber-600 dark:text-amber-400"
+                : "text-neutral-500 hover:text-neutral-700 dark:text-neutral-400"
             }`}
             title="Manage quick replies"
           >
@@ -353,7 +358,11 @@ const handleEditKeyDown = (e, oldPhrase) => {
         ))}
       </div>
 
-      <div className="flex flex-wrap items-center gap-2" role="group" aria-label="Quick reply phrases">
+      <div
+        className="flex flex-wrap items-center gap-2"
+        role="group"
+        aria-label="Quick reply phrases"
+      >
         {filteredReplies.map(({ id, label, phrase, category }) => {
           const isCurrentlyEditing = editingReplyId === id;
 
@@ -390,7 +399,11 @@ const handleEditKeyDown = (e, oldPhrase) => {
                     className="bg-transparent text-xs text-neutral-500 dark:text-neutral-400 focus:outline-none border-l border-neutral-200 dark:border-neutral-700 pl-1.5 mr-1 cursor-pointer"
                   >
                     {CATEGORIES.map((cat) => (
-                      <option key={cat} value={cat} className="dark:bg-neutral-900 dark:text-neutral-100">
+                      <option
+                        key={cat}
+                        value={cat}
+                        className="dark:bg-neutral-900 dark:text-neutral-100"
+                      >
                         {cat}
                       </option>
                     ))}
@@ -425,54 +438,54 @@ const handleEditKeyDown = (e, oldPhrase) => {
                   "text-sm text-neutral-700 dark:border-border dark:bg-surface dark:text-neutral-300",
                 ].join(" ")}
               >
-              {editingPhrase === phrase ? (
-  <>
-    <input
-      value={editedValue}
-      onChange={(e) => setEditedValue(e.target.value)}
-      onKeyDown={(e) => handleEditKeyDown(e, phrase)}
-      className="bg-transparent text-sm outline-none"
-      autoFocus
-    />
+                {editingPhrase === phrase ? (
+                  <>
+                    <input
+                      value={editedValue}
+                      onChange={(e) => setEditedValue(e.target.value)}
+                      onKeyDown={(e) => handleEditKeyDown(e, phrase)}
+                      className="bg-transparent text-sm outline-none"
+                      autoFocus
+                    />
 
-    <button
-      onClick={() => handleEdit(phrase)}
-      aria-label="Save quick reply"
-    >
-      <Check size={12} />
-    </button>
-    <button
-  onClick={() => {
-    setEditingPhrase(null);
-    setEditedValue("");
-  }}
-  aria-label="Cancel edit"
->
-  <X size={12} />
-</button>
-  </>
-) : (
-  <>
-    <span className="truncate max-w-[150px]">{label}</span>
+                    <button
+                      onClick={() => handleEdit(phrase)}
+                      aria-label="Save quick reply"
+                    >
+                      <Check size={12} />
+                    </button>
+                    <button
+                      onClick={() => {
+                        setEditingPhrase(null);
+                        setEditedValue("");
+                      }}
+                      aria-label="Cancel edit"
+                    >
+                      <X size={12} />
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <span className="truncate max-w-[150px]">{label}</span>
 
-    <button
-      onClick={() => {
-        setEditingPhrase(phrase);
-        setEditedValue(label);
-      }}
-      aria-label="Edit quick reply"
-    >
-      <Pencil size={12} />
-    </button>
+                    <button
+                      onClick={() => {
+                        setEditingPhrase(phrase);
+                        setEditedValue(label);
+                      }}
+                      aria-label="Edit quick reply"
+                    >
+                      <Pencil size={12} />
+                    </button>
 
-    <button
-      onClick={() => handleDelete(id)}
-      aria-label={`Delete quick reply: ${phrase}`}
-    >
-      <X size={12} />
-    </button>
-  </>
-)}
+                    <button
+                      onClick={() => handleDelete(id)}
+                      aria-label={`Delete quick reply: ${phrase}`}
+                    >
+                      <X size={12} />
+                    </button>
+                  </>
+                )}
               </div>
             );
           }
@@ -518,7 +531,11 @@ const handleEditKeyDown = (e, oldPhrase) => {
               className="bg-transparent text-xs text-neutral-500 dark:text-neutral-400 focus:outline-none border-l border-neutral-200 dark:border-neutral-700 pl-1.5 mr-1 cursor-pointer"
             >
               {CATEGORIES.map((cat) => (
-                <option key={cat} value={cat} className="dark:bg-neutral-900 dark:text-neutral-100">
+                <option
+                  key={cat}
+                  value={cat}
+                  className="dark:bg-neutral-900 dark:text-neutral-100"
+                >
                   {cat}
                 </option>
               ))}

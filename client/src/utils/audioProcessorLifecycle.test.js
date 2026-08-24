@@ -34,7 +34,8 @@ class FakeAudioContext {
       context: this,
       connections: [],
       connect: vi.fn(function connect(destination) {
-        if (!this.connections.includes(destination)) this.connections.push(destination);
+        if (!this.connections.includes(destination))
+          this.connections.push(destination);
       }),
       disconnect: vi.fn(function disconnect() {
         this.connections = [];
@@ -89,7 +90,9 @@ describe("source node binding", () => {
 
     await processor.initialize(element);
 
-    expect(processor.source.connections).toContain(constructedContexts[0].destination);
+    expect(processor.source.connections).toContain(
+      constructedContexts[0].destination,
+    );
   });
 
   it("does not write a source node property onto the media element", async () => {

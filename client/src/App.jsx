@@ -1,12 +1,23 @@
 import React, { useState } from "react";
-import { Camera, Mic2, Settings as SettingsIcon, MessageSquare, Sun, Moon, Menu, X, Info, Sparkles } from "lucide-react";
+import {
+  Camera,
+  Mic2,
+  Settings as SettingsIcon,
+  MessageSquare,
+  Sun,
+  Moon,
+  Menu,
+  X,
+  Info,
+  Sparkles,
+} from "lucide-react";
 import Onboarding from "./pages/Onboarding.jsx";
 import Call from "./pages/Call.jsx";
 import Settings from "./pages/Settings.jsx";
 import Landing from "./pages/Landing.jsx";
 import VoiceForge from "./components/VoiceForge";
 import { useTheme } from "./components/ThemeContext.jsx";
-import Footer from './components/footer.jsx';
+import Footer from "./components/footer.jsx";
 import KeyboardShortcutsModal from "./components/KeyboardShortcutsModal.jsx";
 import ScrollToBottomButton from "./components/ScrollToBottomButton.jsx";
 import About from "./pages/About";
@@ -17,12 +28,12 @@ import { clearTokens as clearStorage, logout } from "./utils/auth.js";
 import BrowserWarningBanner from "./components/BrowserWarningBanner.jsx";
 
 const tabs = [
-  { id: "landing",    label: "Home",        icon: Sparkles },
-  { id: "onboarding", label: "Onboarding",  icon: Mic2 },
-  { id: "call",       label: "Call",        icon: Camera },
-  { id: "compose",    label: "Compose",     icon: MessageSquare },
-  { id: "about",      label: "About",       icon: Info },
-  { id: "settings",   label: "Settings",    icon: SettingsIcon },
+  { id: "landing", label: "Home", icon: Sparkles },
+  { id: "onboarding", label: "Onboarding", icon: Mic2 },
+  { id: "call", label: "Call", icon: Camera },
+  { id: "compose", label: "Compose", icon: MessageSquare },
+  { id: "about", label: "About", icon: Info },
+  { id: "settings", label: "Settings", icon: SettingsIcon },
 ];
 
 const DEFAULT_TAB = "landing";
@@ -49,24 +60,24 @@ function saveActiveTab(tab) {
 // A minimal, self-contained router to avoid adding third-party dependencies.
 function Routes({ children }) {
   const [currentPath, setCurrentPath] = React.useState(
-    typeof window !== "undefined" ? window.location.pathname : "/"
+    typeof window !== "undefined" ? window.location.pathname : "/",
   );
 
   React.useEffect(() => {
     const handleLocationChange = () => {
       setCurrentPath(window.location.pathname);
     };
-    
+
     window.addEventListener("popstate", handleLocationChange);
-    
+
     const originalPushState = window.history.pushState;
     const originalReplaceState = window.history.replaceState;
-    
+
     window.history.pushState = function (...args) {
       originalPushState.apply(this, args);
       handleLocationChange();
     };
-    
+
     window.history.replaceState = function (...args) {
       originalReplaceState.apply(this, args);
       handleLocationChange();
@@ -84,8 +95,10 @@ function Routes({ children }) {
 
   React.Children.forEach(children, (child) => {
     if (!React.isValidElement(child)) return;
-    const isMainPath = (child.props.path === "/" && (currentPath === "/" || currentPath === "/index.html"));
-    
+    const isMainPath =
+      child.props.path === "/" &&
+      (currentPath === "/" || currentPath === "/index.html");
+
     if (child.props.path === "*") {
       fallback = child;
     } else if (child.props.path === currentPath || isMainPath) {
@@ -120,9 +133,9 @@ export default function App() {
       "voiceforge:activeVoiceId",
       "voiceforge:useClonedVoice",
       "voiceforge:onboardingStep",
-      "voiceforge:maxUnlockedStep"
+      "voiceforge:maxUnlockedStep",
     ];
-    keysToClear.forEach(key => localStorage.removeItem(key));
+    keysToClear.forEach((key) => localStorage.removeItem(key));
     logout();
   };
 
@@ -150,7 +163,10 @@ export default function App() {
 
     saveActiveTab(tab);
     setActiveTab(tab);
-    if (window.location.pathname !== "/" && window.location.pathname !== "/index.html") {
+    if (
+      window.location.pathname !== "/" &&
+      window.location.pathname !== "/index.html"
+    ) {
       window.history.pushState({}, "", "/");
     }
   }
@@ -178,14 +194,14 @@ export default function App() {
         setActiveTab("not-found");
       }
     };
-    
+
     handleSync();
-    
+
     window.addEventListener("popstate", handleSync);
-    
+
     const originalPushState = window.history.pushState;
     const originalReplaceState = window.history.replaceState;
-    
+
     window.history.pushState = function (...args) {
       originalPushState.apply(this, args);
       handleSync();
@@ -194,7 +210,7 @@ export default function App() {
       originalReplaceState.apply(this, args);
       handleSync();
     };
-    
+
     return () => {
       window.removeEventListener("popstate", handleSync);
       window.history.pushState = originalPushState;
@@ -215,7 +231,9 @@ export default function App() {
             role="button"
             tabIndex={0}
             aria-label="Go to home"
-            onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && selectTab("landing")}
+            onKeyDown={(e) =>
+              (e.key === "Enter" || e.key === " ") && selectTab("landing")
+            }
           >
             <img
               src="/models/logo5.png"
@@ -238,7 +256,11 @@ export default function App() {
               type="button"
               onClick={toggleTheme}
               aria-pressed={theme === "dark"}
-              aria-label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+              aria-label={
+                theme === "dark"
+                  ? "Switch to light mode"
+                  : "Switch to dark mode"
+              }
               className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-ink/15 bg-white text-ink transition hover:border-moss dark:border-border dark:bg-black dark:text-neutral-200"
             >
               {theme === "dark" ? (
@@ -349,11 +371,13 @@ export default function App() {
                 <Landing onNavigate={selectTab} />
               ) : (
                 <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
-                  {activeTab === "onboarding" && <Onboarding onReady={() => selectTab("call")} />}
-                  {activeTab === "call"       && <Call />}
-                  {activeTab === "settings"   && <Settings />}
+                  {activeTab === "onboarding" && (
+                    <Onboarding onReady={() => selectTab("call")} />
+                  )}
+                  {activeTab === "call" && <Call />}
+                  {activeTab === "settings" && <Settings />}
                   {activeTab === "contributors" && <Contributors />}
-                  {activeTab === "about"       && <About onNavigate={selectTab} />}
+                  {activeTab === "about" && <About onNavigate={selectTab} />}
                 </div>
               )
             }

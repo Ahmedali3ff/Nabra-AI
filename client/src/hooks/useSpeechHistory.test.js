@@ -8,7 +8,10 @@ import {
 } from "./useSpeechHistory.js";
 
 function makeEntries(n) {
-  return Array.from({ length: n }, (_, i) => ({ id: `id-${i}`, text: `msg ${i}` }));
+  return Array.from({ length: n }, (_, i) => ({
+    id: `id-${i}`,
+    text: `msg ${i}`,
+  }));
 }
 
 describe("pruneHistory utility function", () => {
@@ -19,7 +22,7 @@ describe("pruneHistory utility function", () => {
     { id: "1", text: "Fresh item", timestamp: now - 1 * oneDay },
     { id: "2", text: "8 days old", timestamp: now - 8 * oneDay },
     { id: "3", text: "35 days old", timestamp: now - 35 * oneDay },
-    { id: "4", text: "Pinned but old", timestamp: now - 40 * oneDay }
+    { id: "4", text: "Pinned but old", timestamp: now - 40 * oneDay },
   ];
 
   it("does not prune any items if policy is 'forever'", () => {
@@ -43,14 +46,14 @@ describe("pruneHistory utility function", () => {
   it("prunes items older than 30 days (policy: '30days')", () => {
     const result = pruneHistory(mockHistory, [], "30days");
     expect(result).toHaveLength(2);
-    expect(result.map(item => item.id)).toEqual(["1", "2"]);
+    expect(result.map((item) => item.id)).toEqual(["1", "2"]);
   });
 
   it("exempts pinned/favorite items from auto-pruning", () => {
     const favorites = ["4"]; // Pinned but old (40 days old)
     const result = pruneHistory(mockHistory, favorites, "7days");
     expect(result).toHaveLength(2);
-    expect(result.map(item => item.id)).toEqual(["1", "4"]);
+    expect(result.map((item) => item.id)).toEqual(["1", "4"]);
   });
 });
 
@@ -86,7 +89,9 @@ describe("trimHistoryPreservingFavorites", () => {
     expect(result).toHaveLength(26); // 25 unpinned + 1 favorite, none dropped
     expect(result.find((m) => m.id === "fav-1")).toBeDefined();
     const unpinnedIds = unpinnedEntries.map((m) => m.id);
-    const keptUnpinnedIds = result.filter((m) => m.id !== "fav-1").map((m) => m.id);
+    const keptUnpinnedIds = result
+      .filter((m) => m.id !== "fav-1")
+      .map((m) => m.id);
     expect(keptUnpinnedIds).toEqual(unpinnedIds);
   });
 
@@ -120,7 +125,13 @@ describe("trimHistoryPreservingFavorites", () => {
 
     const result = trimHistoryPreservingFavorites(entries, favoriteIds, 5);
 
-    expect(result.map((m) => m.id)).toEqual(["id-0", "id-1", "id-2", "id-3", "id-4"]);
+    expect(result.map((m) => m.id)).toEqual([
+      "id-0",
+      "id-1",
+      "id-2",
+      "id-3",
+      "id-4",
+    ]);
   });
 
   it("returns an empty array when given no entries", () => {
@@ -270,7 +281,11 @@ describe("clampFavorites", () => {
     expect(afterUnpin.applied).toBe(true);
     expect(afterUnpin.favorites.size).toBe(49);
 
-    const pinAfterFreeingSlot = toggleFavoriteWithCap(afterUnpin.favorites, "brand-new-id", 50);
+    const pinAfterFreeingSlot = toggleFavoriteWithCap(
+      afterUnpin.favorites,
+      "brand-new-id",
+      50,
+    );
     expect(pinAfterFreeingSlot.applied).toBe(true);
   });
 });
@@ -323,7 +338,10 @@ describe("reconcileFavoritesWithHistory", () => {
     const history = makeEntries(1); // only id-0 still exists
     const persistedFavoriteIds = ["id-0", "orphaned-1", "orphaned-2"];
 
-    const reconciled = reconcileFavoritesWithHistory(persistedFavoriteIds, history);
+    const reconciled = reconcileFavoritesWithHistory(
+      persistedFavoriteIds,
+      history,
+    );
     const clamped = clampFavorites(reconciled, 2); // cap of 2, well under orphan count
 
     expect(clamped.size).toBe(1); // only the still-valid id-0 survives
@@ -350,7 +368,9 @@ describe("reconcileFavoritesWithHistory", () => {
     ];
 
     const thirtyDaysAgo = Date.now() - 30 * 24 * 60 * 60 * 1000;
-    const oldEntries = corruptedHistory.filter((m) => m && m.timestamp && m.timestamp < thirtyDaysAgo);
+    const oldEntries = corruptedHistory.filter(
+      (m) => m && m.timestamp && m.timestamp < thirtyDaysAgo,
+    );
 
     expect(oldEntries.length).toBe(0);
   });

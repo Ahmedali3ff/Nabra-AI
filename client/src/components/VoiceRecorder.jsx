@@ -1,6 +1,13 @@
 // Handles microphone permission, short reference recording, playback, and upload readiness.
 import React from "react";
-import { Mic, Square, Upload, CircleAlert, Loader2, FileUp } from "lucide-react";
+import {
+  Mic,
+  Square,
+  Upload,
+  CircleAlert,
+  Loader2,
+  FileUp,
+} from "lucide-react";
 import { extractAudioFromFile } from "../utils/audioExtractor.js";
 
 const MAX_RECORDING_SECONDS = 300; // 5 minute max recording cap
@@ -15,7 +22,7 @@ export default function VoiceRecorder({ onRecordingReady, disabled = false }) {
   const [recorderError, setRecorderError] = React.useState("");
   const [isExtracting, setIsExtracting] = React.useState(false);
   const [rawAudioBlob, setRawAudioBlob] = React.useState(null);
-  
+
   const recorderRef = React.useRef(null);
   const fileInputRef = React.useRef(null);
   const chunksRef = React.useRef([]);
@@ -207,7 +214,6 @@ export default function VoiceRecorder({ onRecordingReady, disabled = false }) {
     recorderRef.current?.stop();
   }
 
-
   async function handleFileUpload(event) {
     const file = event.target.files?.[0];
     if (!file) return;
@@ -219,9 +225,9 @@ export default function VoiceRecorder({ onRecordingReady, disabled = false }) {
     onRecordingReady(null);
     setDuration(0);
     durationRef.current = 0;
-    
+
     setIsExtracting(true);
-    
+
     try {
       const { blob, duration } = await extractAudioFromFile(file);
       const url = URL.createObjectURL(blob);
@@ -344,10 +350,13 @@ export default function VoiceRecorder({ onRecordingReady, disabled = false }) {
     <section className="rounded-lg border border-ink/10 bg-white p-5 shadow-soft dark:border-border dark:bg-surface dark:text-neutral-100 dark:shadow-soft-dk">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h2 className="text-xl font-bold">Record or upload a 10-second reference</h2>
+          <h2 className="text-xl font-bold">
+            Record or upload a 10-second reference
+          </h2>
           <p className="mt-1 max-w-2xl text-sm leading-6 text-ink/70 dark:text-muted">
             Use your own voice or a trusted reference speaker with consent. Keep
-            background noise low. You can also upload a video (.mp4, .mov) or audio file.
+            background noise low. You can also upload a video (.mp4, .mov) or
+            audio file.
           </p>
         </div>
         <span className="rounded-md bg-mint px-3 py-1 text-sm font-semibold text-ink dark:bg-glow/15 dark:text-glow">
@@ -360,8 +369,16 @@ export default function VoiceRecorder({ onRecordingReady, disabled = false }) {
           type="button"
           onClick={isRecording ? stopRecording : startRecording}
           disabled={disabled}
-          title={isRecording ? "Stop recording your voice" : "Start recording your voice"}
-          aria-label={isRecording ? "Stop recording your voice" : "Start recording your voice"}
+          title={
+            isRecording
+              ? "Stop recording your voice"
+              : "Start recording your voice"
+          }
+          aria-label={
+            isRecording
+              ? "Stop recording your voice"
+              : "Start recording your voice"
+          }
           className={`inline-flex items-center justify-center gap-2 rounded-md px-5 py-3 font-bold text-white transition ${
             isRecording
               ? "bg-coral hover:bg-coral/90"

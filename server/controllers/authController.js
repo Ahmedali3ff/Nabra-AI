@@ -5,7 +5,7 @@ import {
   verifyPassword,
   generateAccessToken,
   generateRefreshToken,
-  verifyRefreshToken
+  verifyRefreshToken,
 } from "../utils/auth.js";
 
 /**
@@ -15,22 +15,36 @@ export async function register(req, res, next) {
   try {
     const { username, password } = req.body || {};
 
-    if (!username || !password || typeof username !== "string" || typeof password !== "string") {
-      return res.status(400).json({ error: "Username and password must be valid strings" });
+    if (
+      !username ||
+      !password ||
+      typeof username !== "string" ||
+      typeof password !== "string"
+    ) {
+      return res
+        .status(400)
+        .json({ error: "Username and password must be valid strings" });
     }
 
     const trimmedUsername = username.trim();
     if (trimmedUsername.length < 3 || trimmedUsername.length > 30) {
-      return res.status(400).json({ error: "Username must be between 3 and 30 characters" });
+      return res
+        .status(400)
+        .json({ error: "Username must be between 3 and 30 characters" });
     }
     if (password.length < 8) {
-      return res.status(400).json({ error: "Password must be at least 8 characters long" });
+      return res
+        .status(400)
+        .json({ error: "Password must be at least 8 characters long" });
     }
 
     const db = await getDatabase();
-    
+
     // Check if user already exists
-    const existingUser = await db.get("SELECT id FROM users WHERE username = ?", [trimmedUsername]);
+    const existingUser = await db.get(
+      "SELECT id FROM users WHERE username = ?",
+      [trimmedUsername],
+    );
     if (existingUser) {
       return res.status(400).json({ error: "Username is already taken" });
     }
@@ -42,11 +56,14 @@ export async function register(req, res, next) {
     try {
       await db.run(
         "INSERT INTO users (id, username, password_hash, created_at) VALUES (?, ?, ?, ?)",
-        [id, trimmedUsername, password_hash, created_at]
+        [id, trimmedUsername, password_hash, created_at],
       );
     } catch (dbErr) {
       // Gracefully handle SQLite unique constraint violations (e.g., race conditions)
-      if (dbErr.code === "SQLITE_CONSTRAINT" || dbErr.message?.includes("UNIQUE constraint failed")) {
+      if (
+        dbErr.code === "SQLITE_CONSTRAINT" ||
+        dbErr.message?.includes("UNIQUE constraint failed")
+      ) {
         return res.status(400).json({ error: "Username is already taken" });
       }
       throw dbErr;
@@ -59,14 +76,14 @@ export async function register(req, res, next) {
     // Save refresh token to database
     await db.run(
       "INSERT INTO refresh_tokens (token, user_id, created_at) VALUES (?, ?, ?)",
-      [refreshToken, id, new Date().toISOString()]
+      [refreshToken, id, new Date().toISOString()],
     );
 
     res.status(201).json({
       message: "Registration successful",
       user,
       accessToken,
-      refreshToken
+      refreshToken,
     });
   } catch (error) {
     next(error);
@@ -80,12 +97,21 @@ export async function login(req, res, next) {
   try {
     const { username, password } = req.body || {};
 
-    if (!username || !password || typeof username !== "string" || typeof password !== "string") {
-      return res.status(400).json({ error: "Username and password must be valid strings" });
+    if (
+      !username ||
+      !password ||
+      typeof username !== "string" ||
+      typeof password !== "string"
+    ) {
+      return res
+        .status(400)
+        .json({ error: "Username and password must be valid strings" });
     }
 
     const db = await getDatabase();
-    const user = await db.get("SELECT * FROM users WHERE username = ?", [username]);
+    const user = await db.get("SELECT * FROM users WHERE username = ?", [
+      username,
+    ]);
 
     if (!user || !verifyPassword(password, user.password_hash)) {
       return res.status(401).json({ error: "Invalid credentials" });
@@ -98,14 +124,14 @@ export async function login(req, res, next) {
     // Save refresh token to database
     await db.run(
       "INSERT INTO refresh_tokens (token, user_id, created_at) VALUES (?, ?, ?)",
-      [refreshToken, user.id, new Date().toISOString()]
+      [refreshToken, user.id, new Date().toISOString()],
     );
 
     res.json({
       message: "Login successful",
       user: payload,
       accessToken,
-      refreshToken
+      refreshToken,
     });
   } catch (error) {
     next(error);
@@ -120,7 +146,9 @@ export async function refresh(req, res, next) {
     const { refreshToken } = req.body || {};
 
     if (!refreshToken || typeof refreshToken !== "string") {
-      return res.status(400).json({ error: "Refresh token is required and must be a string" });
+      return res
+        .status(400)
+        .json({ error: "Refresh token is required and must be a string" });
     }
 
     try {
@@ -128,13 +156,20 @@ export async function refresh(req, res, next) {
       const db = await getDatabase();
 
       // Check if refresh token exists in database (has not been rotated or revoked)
-      const storedToken = await db.get("SELECT token FROM refresh_tokens WHERE token = ?", [refreshToken]);
+      const storedToken = await db.get(
+        "SELECT token FROM refresh_tokens WHERE token = ?",
+        [refreshToken],
+      );
       if (!storedToken) {
-        return res.status(401).json({ error: "Invalid or expired refresh token" });
+        return res
+          .status(401)
+          .json({ error: "Invalid or expired refresh token" });
       }
 
       // Delete the consumed refresh token
-      await db.run("DELETE FROM refresh_tokens WHERE token = ?", [refreshToken]);
+      await db.run("DELETE FROM refresh_tokens WHERE token = ?", [
+        refreshToken,
+      ]);
 
       const payload = { id: decoded.id, username: decoded.username };
       const newAccessToken = generateAccessToken(payload);
@@ -143,15 +178,17 @@ export async function refresh(req, res, next) {
       // Insert new rotated refresh token
       await db.run(
         "INSERT INTO refresh_tokens (token, user_id, created_at) VALUES (?, ?, ?)",
-        [newRefreshToken, decoded.id, new Date().toISOString()]
+        [newRefreshToken, decoded.id, new Date().toISOString()],
       );
 
       res.json({
         accessToken: newAccessToken,
-        refreshToken: newRefreshToken
+        refreshToken: newRefreshToken,
       });
     } catch (error) {
-      return res.status(401).json({ error: "Invalid or expired refresh token" });
+      return res
+        .status(401)
+        .json({ error: "Invalid or expired refresh token" });
     }
   } catch (error) {
     next(error);

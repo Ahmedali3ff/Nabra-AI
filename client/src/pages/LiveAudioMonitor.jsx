@@ -1,11 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import {
-  Mic,
-  Play,
-  Square,
-  AlertTriangle,
-  Activity,
-} from "lucide-react";
+import { Mic, Play, Square, AlertTriangle, Activity } from "lucide-react";
 
 export default function LiveAudioMonitor() {
   const [recording, setRecording] = useState(false);
@@ -28,7 +22,9 @@ export default function LiveAudioMonitor() {
 
         if (current > 95) {
           setWarning("⚠ Clipping detected! Lower microphone input.");
-          setA11yAnnouncement("Audio clipping detected. Lower your microphone input volume.");
+          setA11yAnnouncement(
+            "Audio clipping detected. Lower your microphone input volume.",
+          );
         } else if (current > 90) {
           setWarning("⚠ Clipping detected! Lower microphone input.");
         } else if (current < 15) {
@@ -101,8 +97,8 @@ export default function LiveAudioMonitor() {
                 level > 90
                   ? "bg-red-500"
                   : level > 60
-                  ? "bg-green-500"
-                  : "bg-yellow-500"
+                    ? "bg-green-500"
+                    : "bg-yellow-500"
               }`}
               style={{ width: `${level}%` }}
             />
@@ -125,9 +121,7 @@ export default function LiveAudioMonitor() {
 
         <div className="grid grid-cols-20 gap-1 h-28 items-end mb-8">
           {Array.from({ length: 20 }).map((_, i) => {
-            const height = recording
-              ? Math.max(15, Math.random() * level)
-              : 10;
+            const height = recording ? Math.max(15, Math.random() * level) : 10;
 
             return (
               <div
@@ -146,8 +140,8 @@ export default function LiveAudioMonitor() {
             warning.includes("Clipping")
               ? "bg-red-100 text-red-700"
               : warning.includes("Silence")
-              ? "bg-yellow-100 text-yellow-700"
-              : "bg-green-100 text-green-700"
+                ? "bg-yellow-100 text-yellow-700"
+                : "bg-green-100 text-green-700"
           }`}
         >
           {warning.includes("Clipping") || warning.includes("Silence") ? (
@@ -172,27 +166,21 @@ export default function LiveAudioMonitor() {
 
         <div className="mt-8 grid md:grid-cols-3 gap-5">
           <div className="rounded-lg border p-5">
-            <h3 className="font-semibold mb-2">
-              Live Meter
-            </h3>
+            <h3 className="font-semibold mb-2">Live Meter</h3>
             <p className="text-sm text-gray-500">
               Shows current microphone volume in real time.
             </p>
           </div>
 
           <div className="rounded-lg border p-5">
-            <h3 className="font-semibold mb-2">
-              Peak Indicator
-            </h3>
+            <h3 className="font-semibold mb-2">Peak Indicator</h3>
             <p className="text-sm text-gray-500">
               Tracks the highest input level during recording.
             </p>
           </div>
 
           <div className="rounded-lg border p-5">
-            <h3 className="font-semibold mb-2">
-              Quality Warning
-            </h3>
+            <h3 className="font-semibold mb-2">Quality Warning</h3>
             <p className="text-sm text-gray-500">
               Alerts for clipping and silence to improve recording quality.
             </p>

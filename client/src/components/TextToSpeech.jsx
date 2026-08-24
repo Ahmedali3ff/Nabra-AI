@@ -65,34 +65,38 @@ const EMOTION_PRESETS = [
 const MAX_CHARS = 300;
 const DRAFT_KEY = "voiceforge_draft_text";
 
-export default function TextToSpeech({ onSpeak, disabled = false, status = "idle", onTextChange = () => {}, onSpoken = () => {} }) {
+export default function TextToSpeech({
+  onSpeak,
+  disabled = false,
+  status = "idle",
+  onTextChange = () => {},
+  onSpoken = () => {},
+}) {
   const [text, setText] = React.useState("");
   const [announcement, setAnnouncement] = React.useState("");
   const lastSpokenTextRef = React.useRef("");
-  
+
   const trimmedText = text.trim();
   const charsLeft = MAX_CHARS - text.length;
-const characterCount = trimmedText.length;
-const wordCount = trimmedText
-  ? trimmedText.split(/\s+/).length
-  : 0;
-const estimatedDuration = wordCount
-  ? ((wordCount / 150) * 60).toFixed(1)
-  : "0.0";
-let durationCategory = "Short";
-if (estimatedDuration > 15) {
-  durationCategory = "Medium";
-}
-if (estimatedDuration > 30) {
-  durationCategory = "Long";
-}
+  const characterCount = trimmedText.length;
+  const wordCount = trimmedText ? trimmedText.split(/\s+/).length : 0;
+  const estimatedDuration = wordCount
+    ? ((wordCount / 150) * 60).toFixed(1)
+    : "0.0";
+  let durationCategory = "Short";
+  if (estimatedDuration > 15) {
+    durationCategory = "Medium";
+  }
+  if (estimatedDuration > 30) {
+    durationCategory = "Long";
+  }
   async function submit() {
-  if (!trimmedText || disabled) return;
-  await onSpeak(trimmedText);
-  setText("");
-  onTextChange?.("");
-  onSpoken?.();
-}
+    if (!trimmedText || disabled) return;
+    await onSpeak(trimmedText);
+    setText("");
+    onTextChange?.("");
+    onSpoken?.();
+  }
   function handleKeyDown(event) {
     if (event.key === "Enter" && !event.shiftKey) {
       event.preventDefault();
@@ -104,7 +108,9 @@ if (estimatedDuration > 30) {
       <div className="mb-4 flex items-center justify-between gap-3">
         <div>
           <h2 className="text-lg font-bold">Type to speak</h2>
-          <p className="mt-1 text-sm text-ink/65 dark:text-muted">Press Enter to speak. Shift + Enter adds a new line.</p>
+          <p className="mt-1 text-sm text-ink/65 dark:text-muted">
+            Press Enter to speak. Shift + Enter adds a new line.
+          </p>
         </div>
       </div>
       <div
@@ -119,30 +125,49 @@ if (estimatedDuration > 30) {
 
       <textarea
         value={text}
-        onChange={(event) => { setText(event.target.value); onTextChange?.(event.target.value); }}
+        onChange={(event) => {
+          setText(event.target.value);
+          onTextChange?.(event.target.value);
+        }}
         onKeyDown={handleKeyDown}
         disabled={disabled}
         aria-label="Text to synthesize"
         aria-invalid={charsLeft < 0}
         aria-describedby="tts-char-hint"
-        className={["min-h-64 flex-1 resize-none rounded-md border bg-cloud p-4 text-lg leading-8 text-ink outline-none transition focus:ring-4 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-black dark:text-neutral-100 dark:placeholder:text-neutral-500",
+        className={[
+          "min-h-64 flex-1 resize-none rounded-md border bg-cloud p-4 text-lg leading-8 text-ink outline-none transition focus:ring-4 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-black dark:text-neutral-100 dark:placeholder:text-neutral-500",
           charsLeft < 0
             ? "border-red-400 focus:border-red-400 focus:ring-red-100 dark:border-red-700 dark:focus:ring-red-900/30"
-            : "border-ink/15 focus:border-moss focus:ring-mint dark:border-border dark:focus:border-glow dark:focus:ring-glow/25"
+            : "border-ink/15 focus:border-moss focus:ring-mint dark:border-border dark:focus:border-glow dark:focus:ring-glow/25",
         ].join(" ")}
         placeholder="Type what you want to say..."
         title="Type your message here and press Enter to speak"
       />
-      <div id="tts-char-hint" className="mt-1 flex justify-between text-xs text-neutral-400">
-        <span>{wordCount} words ({characterCount} chars)</span>
-        <span>Est: {estimatedDuration}s ({durationCategory})</span>
+      <div
+        id="tts-char-hint"
+        className="mt-1 flex justify-between text-xs text-neutral-400"
+      >
+        <span>
+          {wordCount} words ({characterCount} chars)
+        </span>
+        <span>
+          Est: {estimatedDuration}s ({durationCategory})
+        </span>
       </div>
       <button
         type="button"
         onClick={submit}
         disabled={disabled || !text.trim() || status === "speaking"}
-        title={status === "speaking" ? "Generating speech..." : "Speak the typed text"}
-        aria-label={status === "speaking" ? "Generating speech..." : "Speak the typed text"}
+        title={
+          status === "speaking"
+            ? "Generating speech..."
+            : "Speak the typed text"
+        }
+        aria-label={
+          status === "speaking"
+            ? "Generating speech..."
+            : "Speak the typed text"
+        }
         className="mt-4 inline-flex items-center justify-center gap-2 rounded-md bg-coral px-5 py-3 font-bold text-white transition hover:bg-coral/90 disabled:cursor-not-allowed disabled:opacity-50"
       >
         {status === "speaking" ? (

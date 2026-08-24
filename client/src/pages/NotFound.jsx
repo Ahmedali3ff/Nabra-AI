@@ -30,7 +30,7 @@ export default function NotFound({ onBackHome }) {
         <div className="bg-white dark:bg-surface border border-ink/10 dark:border-border rounded-2xl p-8 shadow-soft dark:shadow-soft-dk mb-8 relative overflow-hidden group">
           {/* Subtle background gradient glow on hover */}
           <div className="absolute inset-0 bg-gradient-to-br from-mint/10 to-coral/10 dark:from-glow/5 dark:to-coral/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-          
+
           <div className="relative z-10 flex flex-col items-center">
             {/* Animated Alert Icon */}
             <div className="inline-flex p-3 rounded-full bg-coral/10 text-coral dark:bg-coral/20 dark:text-coral mb-4 animate-pulse">
@@ -49,7 +49,8 @@ export default function NotFound({ onBackHome }) {
 
             {/* Friendly Message */}
             <p className="text-sm sm:text-base text-ink/70 dark:text-neutral-400 max-w-sm">
-              We searched high and low, but we couldn't find the page you're looking for. It might have been moved or doesn't exist.
+              We searched high and low, but we couldn't find the page you're
+              looking for. It might have been moved or doesn't exist.
             </p>
           </div>
         </div>

@@ -1,6 +1,17 @@
 // Renders the main call workspace for webcam preview, typed speech, output video, and virtual camera controls.
 import React from "react";
-import { Camera, CircleAlert, Sliders, ChevronDown, RotateCcw, Clock, Pin, Play, MessageSquare, Trash2 } from "lucide-react";
+import {
+  Camera,
+  CircleAlert,
+  Sliders,
+  ChevronDown,
+  RotateCcw,
+  Clock,
+  Pin,
+  Play,
+  MessageSquare,
+  Trash2,
+} from "lucide-react";
 import TextToSpeech from "../components/TextToSpeech.jsx";
 import VideoPreview from "../components/VideoPreview.jsx";
 import VirtualCamera from "../components/VirtualCamera.jsx";
@@ -13,7 +24,6 @@ import { useSpeechHistory } from "../hooks/useSpeechHistory.js";
 import { useToast, ToastContainer } from "../components/useToast.jsx";
 import { loadLanguage, persistLanguage } from "../utils/languages.js";
 import PrivacyModeToggle from "../components/PrivacyModeToggle.jsx";
-
 
 const QUICK_REPLIES = [
   { label: "Hello", phrase: "Hello" },
@@ -85,34 +95,42 @@ export default function Call() {
 
   const [activeProfile, setActiveProfile] = React.useState(null);
   const [language, setLanguage] = React.useState(loadLanguage);
-  
+
   const [activeText, setActiveText] = React.useState("");
   const [subtitlesEnabled, setSubtitlesEnabled] = React.useState(() => {
     try {
       return localStorage.getItem("voiceforge:subtitlesEnabled") !== "false";
-    } catch { return true; }
+    } catch {
+      return true;
+    }
   });
   const [subtitleFontSize, setSubtitleFontSize] = React.useState(() => {
     try {
       return localStorage.getItem("voiceforge:subtitleFontSize") || "medium";
-    } catch { return "medium"; }
+    } catch {
+      return "medium";
+    }
   });
   const [subtitleBgOpacity, setSubtitleBgOpacity] = React.useState(() => {
     try {
       return localStorage.getItem("voiceforge:subtitleBgOpacity") || "0.6";
-    } catch { return "0.6"; }
+    } catch {
+      return "0.6";
+    }
   });
 
   const [dbError, setDbError] = React.useState("");
   const [privacyMode, setPrivacyMode] = React.useState(false);
   const [avatarImage, setAvatarImage] = React.useState(null);
 
-
   const { speak, status, error, audioUrl, engine } = useTTS();
   const virtualCamera = useVirtualCamera(canvasRef);
   const [modelId, setModelId] = React.useState(() => {
     try {
-      return localStorage.getItem("voiceforge:selectedModelId") || "eleven_multilingual_v2";
+      return (
+        localStorage.getItem("voiceforge:selectedModelId") ||
+        "eleven_multilingual_v2"
+      );
     } catch {
       return "eleven_multilingual_v2";
     }
@@ -122,20 +140,18 @@ export default function Call() {
     setModelId(val);
     try {
       localStorage.setItem("voiceforge:selectedModelId", val);
-    } catch { /* storage unavailable */ }
+    } catch {
+      /* storage unavailable */
+    }
   };
 
-  const {
-    history,
-    favorites,
-    addMessage,
-    removeMessage,
-    toggleFavorite,
-  } = useSpeechHistory();
+  const { history, favorites, addMessage, removeMessage, toggleFavorite } =
+    useSpeechHistory();
   const safeHistory = Array.isArray(history) ? history : [];
-  const safeFavorites = favorites instanceof Set
-    ? favorites
-    : new Set(Array.isArray(favorites) ? favorites : []);
+  const safeFavorites =
+    favorites instanceof Set
+      ? favorites
+      : new Set(Array.isArray(favorites) ? favorites : []);
   const [activePanelTab, setActivePanelTab] = React.useState("quick-replies");
 
   // persist language safely
@@ -168,18 +184,20 @@ export default function Call() {
 
     return () => {
       isMounted = false;
-      window.removeEventListener("voiceforge:profileChanged", loadActiveProfile);
+      window.removeEventListener(
+        "voiceforge:profileChanged",
+        loadActiveProfile,
+      );
       window.removeEventListener("storage", loadActiveProfile);
     };
   }, []);
 
-
   const [isCalibrationOpen, setIsCalibrationOpen] = React.useState(false);
   const [calibration, setCalibration] = React.useState(() => {
-  try {
-    const savedX     = localStorage.getItem("voiceforge:calibrationXOffset");
-    const savedY     = localStorage.getItem("voiceforge:calibrationYOffset");
-    const savedScale = localStorage.getItem("voiceforge:calibrationScale");
+    try {
+      const savedX = localStorage.getItem("voiceforge:calibrationXOffset");
+      const savedY = localStorage.getItem("voiceforge:calibrationYOffset");
+      const savedScale = localStorage.getItem("voiceforge:calibrationScale");
 
       let x = savedX !== null ? parseInt(savedX, 10) : 0;
       let y = savedY !== null ? parseInt(savedY, 10) : 0;
@@ -213,7 +231,6 @@ export default function Call() {
       return { xOffset: 0, yOffset: 0, scale: 1.0 };
     }
   });
-
 
   // ---------------- SAFE CAMERA LOAD ----------------
   React.useEffect(() => {
@@ -278,9 +295,11 @@ export default function Call() {
       try {
         localStorage.setItem(
           `voiceforge:calibration${key.charAt(0).toUpperCase() + key.slice(1)}`,
-          parsedValue.toString()
+          parsedValue.toString(),
         );
-      } catch { /* storage unavailable – continue without persisting */ }
+      } catch {
+        /* storage unavailable – continue without persisting */
+      }
       return updated;
     });
   };
@@ -334,7 +353,12 @@ export default function Call() {
               Voice: {activeProfile?.name || "No profile selected"}
             </span>
             <div className="flex items-center gap-1.5 rounded-md bg-cloud px-3 py-1 text-ink dark:bg-black dark:text-neutral-200">
-              <label htmlFor="call-model-select" className="text-xs uppercase tracking-wider opacity-75 font-bold">Model:</label>
+              <label
+                htmlFor="call-model-select"
+                className="text-xs uppercase tracking-wider opacity-75 font-bold"
+              >
+                Model:
+              </label>
               <select
                 id="call-model-select"
                 value={modelId}
@@ -368,8 +392,16 @@ export default function Call() {
           id="toggle-calibration-btn"
           type="button"
           onClick={() => setIsCalibrationOpen(!isCalibrationOpen)}
-          title={isCalibrationOpen ? "Close calibration settings" : "Open calibration settings"}
-          aria-label={isCalibrationOpen ? "Close calibration settings" : "Open calibration settings"}
+          title={
+            isCalibrationOpen
+              ? "Close calibration settings"
+              : "Open calibration settings"
+          }
+          aria-label={
+            isCalibrationOpen
+              ? "Close calibration settings"
+              : "Open calibration settings"
+          }
           className="flex w-full items-center justify-between font-bold text-ink dark:text-neutral-100"
         >
           <div className="flex items-center gap-2">
@@ -386,16 +418,23 @@ export default function Call() {
         {isCalibrationOpen && (
           <div className="mt-4 border-t border-ink/10 pt-4 dark:border-border">
             <p className="text-sm text-ink/65 dark:text-neutral-400 mb-4">
-              Calibrate the audio-driven mouth position and size overlay to align with your camera.
+              Calibrate the audio-driven mouth position and size overlay to
+              align with your camera.
             </p>
             <div className="grid gap-4 sm:gap-6 sm:grid-cols-3">
               <div>
                 <div className="flex justify-between items-center mb-2">
-                  <label htmlFor="calibration-x-slider" className="text-sm font-bold text-ink dark:text-neutral-200">
+                  <label
+                    htmlFor="calibration-x-slider"
+                    className="text-sm font-bold text-ink dark:text-neutral-200"
+                  >
                     Horizontal Position (X Offset)
                   </label>
                   <span className="text-xs font-semibold px-2 py-0.5 rounded bg-cloud border border-ink/10 text-moss dark:bg-black dark:border-border dark:text-glow">
-                    {calibration.xOffset > 0 ? `+${calibration.xOffset}` : calibration.xOffset}px
+                    {calibration.xOffset > 0
+                      ? `+${calibration.xOffset}`
+                      : calibration.xOffset}
+                    px
                   </span>
                 </div>
                 <input
@@ -405,7 +444,12 @@ export default function Call() {
                   max="400"
                   step="1"
                   value={calibration.xOffset}
-                  onChange={(e) => handleCalibrationChange("xOffset", parseInt(e.target.value, 10))}
+                  onChange={(e) =>
+                    handleCalibrationChange(
+                      "xOffset",
+                      parseInt(e.target.value, 10),
+                    )
+                  }
                   title="Adjust horizontal position of the mouth overlay"
                   aria-label="Horizontal position slider for mouth calibration"
                   className="w-full h-2 rounded-lg bg-cloud border border-ink/10 appearance-none cursor-pointer accent-moss focus:outline-none dark:bg-neutral-800 dark:accent-glow"
@@ -413,11 +457,17 @@ export default function Call() {
               </div>
               <div>
                 <div className="flex justify-between items-center mb-2">
-                  <label htmlFor="calibration-y-slider" className="text-sm font-bold text-ink dark:text-neutral-200">
+                  <label
+                    htmlFor="calibration-y-slider"
+                    className="text-sm font-bold text-ink dark:text-neutral-200"
+                  >
                     Vertical Position (Y Offset)
                   </label>
                   <span className="text-xs font-semibold px-2 py-0.5 rounded bg-cloud border border-ink/10 text-moss dark:bg-black dark:border-border dark:text-glow">
-                    {calibration.yOffset > 0 ? `+${calibration.yOffset}` : calibration.yOffset}px
+                    {calibration.yOffset > 0
+                      ? `+${calibration.yOffset}`
+                      : calibration.yOffset}
+                    px
                   </span>
                 </div>
                 <input
@@ -427,7 +477,12 @@ export default function Call() {
                   max="150"
                   step="1"
                   value={calibration.yOffset}
-                  onChange={(e) => handleCalibrationChange("yOffset", parseInt(e.target.value, 10))}
+                  onChange={(e) =>
+                    handleCalibrationChange(
+                      "yOffset",
+                      parseInt(e.target.value, 10),
+                    )
+                  }
                   title="Adjust vertical position of the mouth overlay"
                   aria-label="Vertical position slider for mouth calibration"
                   className="w-full h-2 rounded-lg bg-cloud border border-ink/10 appearance-none cursor-pointer accent-moss focus:outline-none dark:bg-neutral-800 dark:accent-glow"
@@ -435,7 +490,10 @@ export default function Call() {
               </div>
               <div>
                 <div className="flex justify-between items-center mb-2">
-                  <label htmlFor="calibration-scale-slider" className="text-sm font-bold text-ink dark:text-neutral-200">
+                  <label
+                    htmlFor="calibration-scale-slider"
+                    className="text-sm font-bold text-ink dark:text-neutral-200"
+                  >
                     Mouth Size (Scale)
                   </label>
                   <span className="text-xs font-semibold px-2 py-0.5 rounded bg-cloud border border-ink/10 text-moss dark:bg-black dark:border-border dark:text-glow">
@@ -449,7 +507,9 @@ export default function Call() {
                   max="2.5"
                   step="0.1"
                   value={calibration.scale}
-                  onChange={(e) => handleCalibrationChange("scale", parseFloat(e.target.value))}
+                  onChange={(e) =>
+                    handleCalibrationChange("scale", parseFloat(e.target.value))
+                  }
                   title="Adjust size of the mouth overlay"
                   aria-label="Scale slider for mouth calibration"
                   className="w-full h-2 rounded-lg bg-cloud border border-ink/10 appearance-none cursor-pointer accent-moss focus:outline-none dark:bg-neutral-800 dark:accent-glow"
@@ -472,7 +532,7 @@ export default function Call() {
           </div>
         )}
       </section>
-      
+
       <section className="rounded-lg border border-ink/10 bg-white p-4 shadow-soft dark:border-border dark:bg-surface">
         <label
           htmlFor="output-language"
@@ -487,7 +547,10 @@ export default function Call() {
         <div className="flex items-center justify-between mb-4">
           <div>
             <h2 className="text-base font-bold">Subtitles Overlay Settings</h2>
-            <p className="text-xs text-neutral-400 dark:text-neutral-500">Overlay spoken words on the webcam video preview sent to the virtual camera.</p>
+            <p className="text-xs text-neutral-400 dark:text-neutral-500">
+              Overlay spoken words on the webcam video preview sent to the
+              virtual camera.
+            </p>
           </div>
           <label className="relative inline-flex items-center cursor-pointer">
             <input
@@ -495,7 +558,10 @@ export default function Call() {
               checked={subtitlesEnabled}
               onChange={(e) => {
                 setSubtitlesEnabled(e.target.checked);
-                localStorage.setItem("voiceforge:subtitlesEnabled", e.target.checked.toString());
+                localStorage.setItem(
+                  "voiceforge:subtitlesEnabled",
+                  e.target.checked.toString(),
+                );
               }}
               className="sr-only peer"
             />
@@ -505,11 +571,14 @@ export default function Call() {
             </span>
           </label>
         </div>
-        
+
         {subtitlesEnabled && (
           <div className="grid gap-4 sm:grid-cols-2 pt-3 border-t border-neutral-200 dark:border-neutral-700">
             <div>
-              <label htmlFor="sub-font-size" className="block text-xs font-semibold text-neutral-500 uppercase tracking-wider mb-2">
+              <label
+                htmlFor="sub-font-size"
+                className="block text-xs font-semibold text-neutral-500 uppercase tracking-wider mb-2"
+              >
                 Font Size
               </label>
               <select
@@ -517,7 +586,10 @@ export default function Call() {
                 value={subtitleFontSize}
                 onChange={(e) => {
                   setSubtitleFontSize(e.target.value);
-                  localStorage.setItem("voiceforge:subtitleFontSize", e.target.value);
+                  localStorage.setItem(
+                    "voiceforge:subtitleFontSize",
+                    e.target.value,
+                  );
                 }}
                 className="w-full rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-coral/45 dark:border-border dark:bg-black dark:text-neutral-200"
               >
@@ -526,9 +598,12 @@ export default function Call() {
                 <option value="large">Large (32px)</option>
               </select>
             </div>
-            
+
             <div>
-              <label htmlFor="sub-bg-opacity" className="block text-xs font-semibold text-neutral-500 uppercase tracking-wider mb-2">
+              <label
+                htmlFor="sub-bg-opacity"
+                className="block text-xs font-semibold text-neutral-500 uppercase tracking-wider mb-2"
+              >
                 Background Box Opacity
               </label>
               <select
@@ -536,7 +611,10 @@ export default function Call() {
                 value={subtitleBgOpacity}
                 onChange={(e) => {
                   setSubtitleBgOpacity(e.target.value);
-                  localStorage.setItem("voiceforge:subtitleBgOpacity", e.target.value);
+                  localStorage.setItem(
+                    "voiceforge:subtitleBgOpacity",
+                    e.target.value,
+                  );
                 }}
                 className="w-full rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-coral/45 dark:border-border dark:bg-black dark:text-neutral-200"
               >
@@ -662,7 +740,9 @@ export default function Call() {
                 }`}
               >
                 <Pin size={16} />
-                Pinned ({safeHistory.filter(m => m && safeFavorites.has(m.id)).length})
+                Pinned (
+                {safeHistory.filter((m) => m && safeFavorites.has(m.id)).length}
+                )
               </button>
               <button
                 type="button"
@@ -697,33 +777,43 @@ export default function Call() {
 
               {activePanelTab === "pinned" && (
                 <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
-                  {safeHistory.filter(m => m && safeFavorites.has(m.id)).length === 0 ? (
-                    <p className="text-sm text-ink/65 dark:text-neutral-400 py-4 text-center">No pinned phrases yet.</p>
+                  {safeHistory.filter((m) => m && safeFavorites.has(m.id))
+                    .length === 0 ? (
+                    <p className="text-sm text-ink/65 dark:text-neutral-400 py-4 text-center">
+                      No pinned phrases yet.
+                    </p>
                   ) : (
-                    safeHistory.filter(m => m && safeFavorites.has(m.id)).map((msg) => (
-                      <div key={msg.id} className="flex items-center justify-between p-2 rounded bg-cloud dark:bg-black border border-ink/10 dark:border-border">
-                        <span className="text-sm font-semibold truncate flex-1 mr-2">{msg.text}</span>
-                        <div className="flex items-center gap-1">
-                          <button
-                            type="button"
-                            onClick={() => handleSpeak(msg.text)}
-                            disabled={!activeProfile}
-                            title="Speak"
-                            className="p-1 rounded text-moss hover:bg-mint dark:text-glow dark:hover:bg-glow/20 disabled:opacity-50"
-                          >
-                            <Play size={16} fill="currentColor" />
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => toggleFavorite(msg.id)}
-                            title="Unpin"
-                            className="p-1 rounded text-amber-500 hover:bg-amber-100 dark:hover:bg-amber-500/15"
-                          >
-                            <Pin size={16} fill="currentColor" />
-                          </button>
+                    safeHistory
+                      .filter((m) => m && safeFavorites.has(m.id))
+                      .map((msg) => (
+                        <div
+                          key={msg.id}
+                          className="flex items-center justify-between p-2 rounded bg-cloud dark:bg-black border border-ink/10 dark:border-border"
+                        >
+                          <span className="text-sm font-semibold truncate flex-1 mr-2">
+                            {msg.text}
+                          </span>
+                          <div className="flex items-center gap-1">
+                            <button
+                              type="button"
+                              onClick={() => handleSpeak(msg.text)}
+                              disabled={!activeProfile}
+                              title="Speak"
+                              className="p-1 rounded text-moss hover:bg-mint dark:text-glow dark:hover:bg-glow/20 disabled:opacity-50"
+                            >
+                              <Play size={16} fill="currentColor" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => toggleFavorite(msg.id)}
+                              title="Unpin"
+                              className="p-1 rounded text-amber-500 hover:bg-amber-100 dark:hover:bg-amber-500/15"
+                            >
+                              <Pin size={16} fill="currentColor" />
+                            </button>
+                          </div>
                         </div>
-                      </div>
-                    ))
+                      ))
                   )}
                 </div>
               )}
@@ -731,11 +821,18 @@ export default function Call() {
               {activePanelTab === "history" && (
                 <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
                   {safeHistory.length === 0 ? (
-                    <p className="text-sm text-ink/65 dark:text-neutral-400 py-4 text-center">No history yet. Type above to speak!</p>
+                    <p className="text-sm text-ink/65 dark:text-neutral-400 py-4 text-center">
+                      No history yet. Type above to speak!
+                    </p>
                   ) : (
                     safeHistory.slice(0, 10).map((msg) => (
-                      <div key={msg.id} className="flex items-center justify-between p-2 rounded bg-cloud dark:bg-black border border-ink/10 dark:border-border">
-                        <span className="text-sm font-semibold truncate flex-1 mr-2">{msg.text}</span>
+                      <div
+                        key={msg.id}
+                        className="flex items-center justify-between p-2 rounded bg-cloud dark:bg-black border border-ink/10 dark:border-border"
+                      >
+                        <span className="text-sm font-semibold truncate flex-1 mr-2">
+                          {msg.text}
+                        </span>
                         <div className="flex items-center gap-1">
                           <button
                             type="button"
@@ -751,10 +848,19 @@ export default function Call() {
                             onClick={() => toggleFavorite(msg.id)}
                             title={safeFavorites.has(msg.id) ? "Unpin" : "Pin"}
                             className={`p-1 rounded hover:bg-neutral-100 dark:hover:bg-neutral-800 ${
-                              safeFavorites.has(msg.id) ? "text-amber-500" : "text-ink/40 dark:text-neutral-500"
+                              safeFavorites.has(msg.id)
+                                ? "text-amber-500"
+                                : "text-ink/40 dark:text-neutral-500"
                             }`}
                           >
-                            <Pin size={16} fill={safeFavorites.has(msg.id) ? "currentColor" : "none"} />
+                            <Pin
+                              size={16}
+                              fill={
+                                safeFavorites.has(msg.id)
+                                  ? "currentColor"
+                                  : "none"
+                              }
+                            />
                           </button>
                           <button
                             type="button"

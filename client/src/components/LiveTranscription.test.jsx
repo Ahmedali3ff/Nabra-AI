@@ -4,7 +4,7 @@ import React from "react";
 import LiveTranscription from "./LiveTranscription";
 
 // Mock matchMedia if needed by layout
-window.matchMedia = vi.fn().mockImplementation(query => ({
+window.matchMedia = vi.fn().mockImplementation((query) => ({
   matches: false,
   media: query,
   onchange: null,
@@ -20,7 +20,8 @@ describe("LiveTranscription component", () => {
   let OriginalSpeechRecognition;
 
   beforeEach(() => {
-    OriginalSpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    OriginalSpeechRecognition =
+      window.SpeechRecognition || window.webkitSpeechRecognition;
 
     mockRecognitionInstance = {
       start: vi.fn(),
@@ -33,7 +34,9 @@ describe("LiveTranscription component", () => {
       onend: null,
     };
 
-    window.SpeechRecognition = function() { return mockRecognitionInstance; };
+    window.SpeechRecognition = function () {
+      return mockRecognitionInstance;
+    };
     window.webkitSpeechRecognition = window.SpeechRecognition;
   });
 
@@ -52,7 +55,7 @@ describe("LiveTranscription component", () => {
   it("starts listening when 'Listen' button is clicked", () => {
     render(<LiveTranscription />);
     const listenButton = screen.getByText("Listen");
-    
+
     act(() => {
       fireEvent.click(listenButton);
     });
@@ -64,11 +67,11 @@ describe("LiveTranscription component", () => {
   it("stops listening when 'Stop' button is clicked", () => {
     render(<LiveTranscription />);
     const button = screen.getByText("Listen");
-    
+
     act(() => {
       fireEvent.click(button); // Start
     });
-    
+
     act(() => {
       fireEvent.click(screen.getByText("Stop")); // Stop
     });
@@ -79,7 +82,7 @@ describe("LiveTranscription component", () => {
 
   it("displays transcript history on 'result' event", () => {
     render(<LiveTranscription />);
-    
+
     act(() => {
       fireEvent.click(screen.getByText("Listen"));
     });
@@ -90,8 +93,8 @@ describe("LiveTranscription component", () => {
         mockRecognitionInstance.onresult({
           resultIndex: 0,
           results: [
-            [{ transcript: "Hello world " }, { isFinal: true }] // Wait, the structure is results[i][0].transcript and results[i].isFinal
-          ]
+            [{ transcript: "Hello world " }, { isFinal: true }], // Wait, the structure is results[i][0].transcript and results[i].isFinal
+          ],
         });
       }
     });
@@ -102,8 +105,8 @@ describe("LiveTranscription component", () => {
         mockRecognitionInstance.onresult({
           resultIndex: 0,
           results: [
-            Object.assign([ { transcript: "Hello world" } ], { isFinal: true })
-          ]
+            Object.assign([{ transcript: "Hello world" }], { isFinal: true }),
+          ],
         });
       }
     });
@@ -116,7 +119,9 @@ describe("LiveTranscription component", () => {
     delete window.webkitSpeechRecognition;
 
     render(<LiveTranscription />);
-    
-    expect(screen.getByText(/Speech recognition is not supported/)).toBeDefined();
+
+    expect(
+      screen.getByText(/Speech recognition is not supported/),
+    ).toBeDefined();
   });
 });

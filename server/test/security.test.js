@@ -29,8 +29,9 @@ test("Express server injects critical security headers", async (t) => {
   const permissionsPolicy = headers.get("permissions-policy");
   assert.ok(permissionsPolicy, "Permissions-Policy header should be present");
   assert.ok(
-    permissionsPolicy.includes("microphone=(self)") && permissionsPolicy.includes("camera=(self)"),
-    "Permissions-Policy should allow microphone and camera for self"
+    permissionsPolicy.includes("microphone=(self)") &&
+      permissionsPolicy.includes("camera=(self)"),
+    "Permissions-Policy should allow microphone and camera for self",
   );
 
   // Assert Cross-Origin-Opener-Policy (COOP) presence

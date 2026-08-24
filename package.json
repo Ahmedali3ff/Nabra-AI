@@ -14,7 +14,9 @@
     "dev:server": "npm run dev --workspace server",
     "build": "npm run build --workspace client",
     "start": "npm run start --workspace server",
-    "lint": "echo \"No lint errors found\""
+    "lint": "echo \"No lint errors found\"",
+    "format:check": "npx prettier --check .",
+    "format": "npx prettier --write ."
   },
   "devDependencies": {
     "concurrently": "^10.0.3"

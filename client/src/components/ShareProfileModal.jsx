@@ -65,7 +65,10 @@ export function ShareProfileModal({ profile, onClose }) {
 
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
-      if (previousFocusRef.current && typeof previousFocusRef.current.focus === "function") {
+      if (
+        previousFocusRef.current &&
+        typeof previousFocusRef.current.focus === "function"
+      ) {
         previousFocusRef.current.focus();
       }
     };
@@ -196,7 +199,9 @@ export function ShareProfileModal({ profile, onClose }) {
         className="relative w-full max-w-md overflow-hidden rounded-xl bg-white shadow-xl outline-none dark:bg-surface dark:text-neutral-100"
       >
         <div className="flex items-center justify-between border-b border-ink/10 p-4 dark:border-border">
-          <h2 id={HEADING_ID} className="text-xl font-bold">Share Voice Profile</h2>
+          <h2 id={HEADING_ID} className="text-xl font-bold">
+            Share Voice Profile
+          </h2>
           <button
             type="button"
             onClick={onClose}
@@ -212,13 +217,20 @@ export function ShareProfileModal({ profile, onClose }) {
             Peer-to-peer WebRTC voice profile transfer helper.
           </p>
           <div role="status" aria-live="polite" className="sr-only">
-            {step === "generating_offer" && "Generating secure WebRTC connection offer."}
-            {step === "waiting_for_answer" && "Offer generated. Ready for receiver scan."}
-            {step === "sending" && "Connected. Transferring voice profile data."}
-            {step === "completed" && "Voice profile transfer completed successfully."}
+            {step === "generating_offer" &&
+              "Generating secure WebRTC connection offer."}
+            {step === "waiting_for_answer" &&
+              "Offer generated. Ready for receiver scan."}
+            {step === "sending" &&
+              "Connected. Transferring voice profile data."}
+            {step === "completed" &&
+              "Voice profile transfer completed successfully."}
           </div>
           {error && (
-            <div role="alert" className="mb-4 rounded-md bg-coral/10 p-3 text-sm text-coral">
+            <div
+              role="alert"
+              className="mb-4 rounded-md bg-coral/10 p-3 text-sm text-coral"
+            >
               {error}
             </div>
           )}

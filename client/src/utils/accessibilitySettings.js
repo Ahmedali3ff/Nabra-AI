@@ -20,10 +20,7 @@ export function loadAccessibilitySettings() {
 
 export function persistAccessibilitySettings(settings) {
   try {
-    localStorage.setItem(
-      ACCESSIBILITY_SETTINGS_KEY,
-      JSON.stringify(settings)
-    );
+    localStorage.setItem(ACCESSIBILITY_SETTINGS_KEY, JSON.stringify(settings));
   } catch (err) {
     console.warn("Failed to save accessibility settings:", err);
   }

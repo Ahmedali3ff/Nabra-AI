@@ -14,9 +14,9 @@ export const DEFAULT_VOICE_SETTINGS = {
 export const VOICE_PRESETS = {
   neutral: {
     name: "Narrator / Neutral",
-    stability: 0.70,
-    temperature: 0.60,
-    style: 0.30,
+    stability: 0.7,
+    temperature: 0.6,
+    style: 0.3,
     dspPitch: 1.0,
     dspSpeed: 1.0,
     dspBass: 0.0,
@@ -25,10 +25,10 @@ export const VOICE_PRESETS = {
   },
   excited: {
     name: "Excited / Energetic",
-    stability: 0.40,
+    stability: 0.4,
     temperature: 0.95,
     style: 0.75,
-    dspPitch: 1.10,
+    dspPitch: 1.1,
     dspSpeed: 1.15,
     dspBass: -2.0,
     dspMid: 1.0,
@@ -37,9 +37,9 @@ export const VOICE_PRESETS = {
   robotic: {
     name: "Robotic / Flat",
     stability: 0.95,
-    temperature: 0.10,
+    temperature: 0.1,
     style: 0.05,
-    dspPitch: 0.90,
+    dspPitch: 0.9,
     dspSpeed: 0.95,
     dspBass: 2.0,
     dspMid: -3.0,
@@ -48,8 +48,8 @@ export const VOICE_PRESETS = {
   soft: {
     name: "Soft / Whispering",
     stability: 0.55,
-    temperature: 0.50,
-    style: 0.20,
+    temperature: 0.5,
+    style: 0.2,
     dspPitch: 1.05,
     dspSpeed: 0.85,
     dspBass: -4.0,
@@ -81,7 +81,7 @@ export function loadVoiceSettings() {
       parsed = JSON.parse(saved) || {};
     }
   } catch (error) {
-    console.warn('Failed to load voice settings:', error);
+    console.warn("Failed to load voice settings:", error);
   }
 
   const result = {};
@@ -110,9 +110,11 @@ export function persistVoiceSettings(settings) {
     localStorage.setItem(VOICE_SETTINGS_KEY, JSON.stringify(settings));
   } catch (error) {
     if (error?.name === "QuotaExceededError" || error?.code === 22) {
-      console.warn("localStorage quota exceeded. Voice settings persisted for current session only.");
+      console.warn(
+        "localStorage quota exceeded. Voice settings persisted for current session only.",
+      );
     } else {
-      console.warn('Failed to save voice settings:', error);
+      console.warn("Failed to save voice settings:", error);
     }
   }
 }
@@ -121,7 +123,7 @@ export function resetVoiceSettings() {
   try {
     localStorage.removeItem(VOICE_SETTINGS_KEY);
   } catch (error) {
-    console.warn('Failed to reset voice settings:', error);
+    console.warn("Failed to reset voice settings:", error);
   }
   return DEFAULT_VOICE_SETTINGS;
 }

@@ -7,7 +7,8 @@ process.env.NODE_ENV = "production";
 process.env.NO_SERVER_LISTEN = "true";
 process.env.STREAM_SECRET = "test-production-secret-voiceforge";
 process.env.JWT_SECRET = "test-production-jwt-access-secret-key-123456789";
-process.env.JWT_REFRESH_SECRET = "test-production-jwt-refresh-secret-key-123456789";
+process.env.JWT_REFRESH_SECRET =
+  "test-production-jwt-refresh-secret-key-123456789";
 const { default: app } = await import("../index.js?env=prod_" + Date.now());
 
 function makeRequest(path, method = "GET") {
@@ -29,7 +30,7 @@ function makeRequest(path, method = "GET") {
             server.close();
             resolve({ res, data });
           });
-        }
+        },
       );
       req.on("error", (err) => {
         server.close();

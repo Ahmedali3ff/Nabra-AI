@@ -41,7 +41,9 @@ export default function Contributors() {
         <p className="text-sm font-bold uppercase tracking-[0.18em] text-mint">
           Open Source Community
         </p>
-        <h2 className="mt-1 text-2xl font-bold">Project Creator & Contributors</h2>
+        <h2 className="mt-1 text-2xl font-bold">
+          Project Creator & Contributors
+        </h2>
         <p className="mt-1 text-sm text-neutral-400">
           The people who build and maintain VoiceForge on GitHub.
         </p>
@@ -70,7 +72,9 @@ export default function Contributors() {
             </div>
 
             <p className="text-sm text-ink/70 dark:text-muted">
-              Created VoiceForge to enable deaf and speech-impaired individuals to communicate fluently on video calls using AI voice cloning & virtual camera integration.
+              Created VoiceForge to enable deaf and speech-impaired individuals
+              to communicate fluently on video calls using AI voice cloning &
+              virtual camera integration.
             </p>
 
             <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2 pt-1">
@@ -113,17 +117,51 @@ export default function Contributors() {
             </div>
 
             <div className="flex flex-wrap items-center justify-center sm:justify-start gap-4 pt-2 text-xs font-semibold text-neutral-600 dark:text-neutral-400">
-              <a href="https://github.com/itzzavdheshh" target="_blank" rel="noopener noreferrer" className="hover:text-moss dark:hover:text-glow">GitHub</a>
+              <a
+                href="https://github.com/itzzavdheshh"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="hover:text-moss dark:hover:text-glow"
+              >
+                GitHub
+              </a>
               <span>•</span>
-              <a href="https://www.linkedin.com/in/aavdhesh" target="_blank" rel="noopener noreferrer" className="hover:text-moss dark:hover:text-glow">LinkedIn</a>
+              <a
+                href="https://www.linkedin.com/in/aavdhesh"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="hover:text-moss dark:hover:text-glow"
+              >
+                LinkedIn
+              </a>
               <span>•</span>
-              <a href="https://x.com/Itzzavdheshh" target="_blank" rel="noopener noreferrer" className="hover:text-moss dark:hover:text-glow">X (Twitter)</a>
+              <a
+                href="https://x.com/Itzzavdheshh"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="hover:text-moss dark:hover:text-glow"
+              >
+                X (Twitter)
+              </a>
               <span>•</span>
-              <a href="https://www.instagram.com/itzzavdheshh?igsi=MTFkNTM5OGljOHV5aQ==" target="_blank" rel="noopener noreferrer" className="hover:text-moss dark:hover:text-glow">Instagram</a>
+              <a
+                href="https://www.instagram.com/itzzavdheshh?igsi=MTFkNTM5OGljOHV5aQ=="
+                target="_blank"
+                rel="noopener noreferrer"
+                className="hover:text-moss dark:hover:text-glow"
+              >
+                Instagram
+              </a>
               <span>•</span>
-              <a href="https://discord.com/users/1385290408698839223" target="_blank" rel="noopener noreferrer" className="hover:text-moss dark:hover:text-glow">Discord</a>
+              <a
+                href="https://discord.com/users/1385290408698839223"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="hover:text-moss dark:hover:text-glow"
+              >
+                Discord
+              </a>
             </div>
-
           </div>
         </div>
       </section>
@@ -140,7 +178,10 @@ export default function Contributors() {
 
         {status === "rate_limited" && (
           <div className="flex flex-col items-center gap-3 text-center">
-            <p role="alert" className="text-sm text-yellow-600 dark:text-yellow-400">
+            <p
+              role="alert"
+              className="text-sm text-yellow-600 dark:text-yellow-400"
+            >
               GitHub API rate limit reached. Please wait a moment and try again.
             </p>
             <button

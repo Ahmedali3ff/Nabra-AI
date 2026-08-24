@@ -55,11 +55,11 @@ export class FileVoiceStore {
   async set(voiceId, data) {
     await this.initPromise;
     const { audioBuffer, ...meta } = data;
-    
+
     // Save buffer to disk
     const filePath = path.join(this.voicesDir, voiceId);
     await fs.writeFile(filePath, audioBuffer);
-    
+
     // Save metadata
     this.metadata.set(voiceId, meta);
     await this._saveDb();
@@ -69,7 +69,7 @@ export class FileVoiceStore {
     await this.initPromise;
     const meta = this.metadata.get(voiceId);
     if (!meta) return undefined;
-    
+
     try {
       const filePath = path.join(this.voicesDir, voiceId);
       const audioBuffer = await fs.readFile(filePath);
@@ -88,7 +88,7 @@ export class FileVoiceStore {
   async delete(voiceId) {
     await this.initPromise;
     if (!this.metadata.has(voiceId)) return false;
-    
+
     this.metadata.delete(voiceId);
     const filePath = path.join(this.voicesDir, voiceId);
     try {
@@ -98,7 +98,7 @@ export class FileVoiceStore {
         logger.error({ err, voiceId }, "Failed to delete voice file");
       }
     }
-    
+
     await this._saveDb();
     return true;
   }
@@ -124,12 +124,16 @@ export class FileVoiceStore {
     let changed = false;
 
     const envTtl = Number(process.env.VOICE_STORE_TTL_MS);
-    const effectiveTtl = Number.isFinite(envTtl) && envTtl > 0 ? Math.max(1000, envTtl) : null;
+    const effectiveTtl =
+      Number.isFinite(envTtl) && envTtl > 0 ? Math.max(1000, envTtl) : null;
 
     // Remove expired
     for (const [voiceId, entry] of this.metadata.entries()) {
       const isExpiredByTimestamp = entry.expiresAt <= now;
-      const isExpiredByTtlEnv = effectiveTtl && entry.createdAt && (now - entry.createdAt >= effectiveTtl);
+      const isExpiredByTtlEnv =
+        effectiveTtl &&
+        entry.createdAt &&
+        now - entry.createdAt >= effectiveTtl;
       if (isExpiredByTimestamp || isExpiredByTtlEnv) {
         this.metadata.delete(voiceId);
         changed = true;
@@ -140,7 +144,8 @@ export class FileVoiceStore {
     }
 
     const envMax = Number(process.env.VOICE_STORE_MAX);
-    const effectiveMax = Number.isFinite(envMax) && envMax > 0 ? envMax : this.maxVoices;
+    const effectiveMax =
+      Number.isFinite(envMax) && envMax > 0 ? envMax : this.maxVoices;
 
     // Enforce max size
     while (this.metadata.size > effectiveMax) {

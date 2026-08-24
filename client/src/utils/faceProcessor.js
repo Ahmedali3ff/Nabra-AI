@@ -16,22 +16,27 @@ export class FaceProcessor {
     if (this.isInitialized) return;
 
     try {
-      const localWasmPath = typeof window !== "undefined" && window.location.origin
-        ? `${window.location.origin}/wasm`
-        : "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.35/wasm";
+      const localWasmPath =
+        typeof window !== "undefined" && window.location.origin
+          ? `${window.location.origin}/wasm`
+          : "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.35/wasm";
 
-      const vision = await FilesetResolver.forVisionTasks(localWasmPath).catch(() =>
-        FilesetResolver.forVisionTasks("https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.35/wasm")
+      const vision = await FilesetResolver.forVisionTasks(localWasmPath).catch(
+        () =>
+          FilesetResolver.forVisionTasks(
+            "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.35/wasm",
+          ),
       );
 
-      const localModelPath = typeof window !== "undefined" && window.location.origin
-        ? `${window.location.origin}/models/face_landmarker.task`
-        : "https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task";
-      
+      const localModelPath =
+        typeof window !== "undefined" && window.location.origin
+          ? `${window.location.origin}/models/face_landmarker.task`
+          : "https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task";
+
       this.faceLandmarker = await FaceLandmarker.createFromOptions(vision, {
         baseOptions: {
           modelAssetPath: localModelPath,
-          delegate: "GPU"
+          delegate: "GPU",
         },
         outputFaceBlendshapes: false,
         runningMode: "VIDEO",
@@ -41,7 +46,10 @@ export class FaceProcessor {
       this.isInitialized = true;
       console.log("FaceLandmarker initialized successfully");
     } catch (error) {
-      console.warn("FaceLandmarker initialization skipped (offline fallback mode):", error?.message || error);
+      console.warn(
+        "FaceLandmarker initialization skipped (offline fallback mode):",
+        error?.message || error,
+      );
     }
   }
 
@@ -73,7 +81,7 @@ export class FaceProcessor {
    * and builds a [1, 6, 96, 96] Float32Array tensor for Wav2Lip ONNX.
    * Channels 0,1,2 = Target Face RGB.
    * Channels 3,4,5 = Masked Target Face RGB (lower half is 0).
-   * 
+   *
    * @param {HTMLCanvasElement} sourceCanvas The canvas containing the full frame
    * @param {Array} landmarks The detected face landmarks
    * @param {HTMLCanvasElement} targetCanvas The canvas to draw the crop onto

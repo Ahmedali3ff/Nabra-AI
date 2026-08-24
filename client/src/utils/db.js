@@ -58,7 +58,10 @@ function getDB(retried = false) {
           db.createObjectStore(STORE_NAME, { keyPath: "voice_id" });
         }
         if (!db.objectStoreNames.contains(TRANSCRIPT_STORE)) {
-          db.createObjectStore(TRANSCRIPT_STORE, { keyPath: "id", autoIncrement: true });
+          db.createObjectStore(TRANSCRIPT_STORE, {
+            keyPath: "id",
+            autoIncrement: true,
+          });
         }
         if (!db.objectStoreNames.contains(SESSION_STORE)) {
           db.createObjectStore(SESSION_STORE, { keyPath: "id" });
@@ -112,7 +115,7 @@ export async function getAllProfiles() {
 export async function getProfile(voiceId) {
   if (!voiceId) return null;
   const profiles = await getAllProfiles();
-  return profiles.find(p => p.voice_id === voiceId) || null;
+  return profiles.find((p) => p.voice_id === voiceId) || null;
 }
 
 export async function saveProfile(profile) {
@@ -127,7 +130,12 @@ export async function saveProfile(profile) {
     };
 
     request.onerror = (event) => {
-      reject(new Error("Failed to save profile: " + (event.target.error?.message || "Unknown error")));
+      reject(
+        new Error(
+          "Failed to save profile: " +
+            (event.target.error?.message || "Unknown error"),
+        ),
+      );
     };
   });
 }
@@ -144,7 +152,12 @@ export async function deleteProfile(voiceId) {
     };
 
     request.onerror = (event) => {
-      reject(new Error("Failed to delete profile: " + (event.target.error?.message || "Unknown error")));
+      reject(
+        new Error(
+          "Failed to delete profile: " +
+            (event.target.error?.message || "Unknown error"),
+        ),
+      );
     };
   });
 }
@@ -161,18 +174,25 @@ export async function clearStorage() {
     };
 
     request.onerror = (event) => {
-      reject(new Error("Failed to clear storage: " + (event.target.error?.message || "Unknown error")));
+      reject(
+        new Error(
+          "Failed to clear storage: " +
+            (event.target.error?.message || "Unknown error"),
+        ),
+      );
     };
   });
 }
 
 export async function saveTranscriptItem(entry) {
-
   const db = await getDB();
   return new Promise((resolve, reject) => {
     const transaction = db.transaction(TRANSCRIPT_STORE, "readwrite");
     const store = transaction.objectStore(TRANSCRIPT_STORE);
-    const item = { ...entry, timestamp: entry.timestamp || new Date().toISOString() };
+    const item = {
+      ...entry,
+      timestamp: entry.timestamp || new Date().toISOString(),
+    };
     const request = store.add(item);
 
     request.onsuccess = (event) => {
@@ -180,7 +200,12 @@ export async function saveTranscriptItem(entry) {
     };
 
     request.onerror = (event) => {
-      reject(new Error("Failed to save transcript: " + (event.target.error?.message || "Unknown error")));
+      reject(
+        new Error(
+          "Failed to save transcript: " +
+            (event.target.error?.message || "Unknown error"),
+        ),
+      );
     };
   });
 }
@@ -199,7 +224,12 @@ export async function getAllTranscripts() {
     };
 
     request.onerror = (event) => {
-      reject(new Error("Failed to retrieve transcripts: " + (event.target.error?.message || "Unknown error")));
+      reject(
+        new Error(
+          "Failed to retrieve transcripts: " +
+            (event.target.error?.message || "Unknown error"),
+        ),
+      );
     };
   });
 }
@@ -216,7 +246,12 @@ export async function clearAllTranscripts() {
     };
 
     request.onerror = (event) => {
-      reject(new Error("Failed to clear transcripts: " + (event.target.error?.message || "Unknown error")));
+      reject(
+        new Error(
+          "Failed to clear transcripts: " +
+            (event.target.error?.message || "Unknown error"),
+        ),
+      );
     };
   });
 }

@@ -8,15 +8,15 @@ import {
   cloneVoice,
   streamSpeech,
   clampNumber,
-  parseBoundedNumber
+  parseBoundedNumber,
 } from "../controllers/voiceController.js";
 
 test("speak rejects blank text", async () => {
   const request = createRequest({
     body: {
       text: "   ",
-      voice_id: "voice_1"
-    }
+      voice_id: "voice_1",
+    },
   });
 
   const response = createResponse();
@@ -26,15 +26,15 @@ test("speak rejects blank text", async () => {
   assert.equal(response.statusCode, 400);
   assert.equal(
     response.jsonBody.error,
-    "text is required and must not be blank."
+    "text is required and must not be blank.",
   );
 });
 
 test("speak rejects missing voice_id", async () => {
   const request = createRequest({
     body: {
-      text: "Hello"
-    }
+      text: "Hello",
+    },
   });
 
   const response = createResponse();
@@ -44,7 +44,7 @@ test("speak rejects missing voice_id", async () => {
   assert.equal(response.statusCode, 400);
   assert.equal(
     response.jsonBody.error,
-    "voice_id is required and must not be blank."
+    "voice_id is required and must not be blank.",
   );
 });
 
@@ -52,8 +52,8 @@ test("speak rejects text longer than 300 characters", async () => {
   const request = createRequest({
     body: {
       text: "a".repeat(301),
-      voice_id: "voice_1"
-    }
+      voice_id: "voice_1",
+    },
   });
 
   const response = createResponse();
@@ -68,8 +68,8 @@ test("speak rejects unsupported language code", async () => {
     body: {
       text: "Hello",
       voice_id: "voice_1",
-      language_code: "invalid-language"
-    }
+      language_code: "invalid-language",
+    },
   });
 
   const response = createResponse();
@@ -86,9 +86,9 @@ test("speak rejects invalid voice_settings temperature", async () => {
       text: "Hello",
       voice_id: "voice_1",
       voice_settings: {
-        temperature: 10
-      }
-    }
+        temperature: 10,
+      },
+    },
   });
 
   const response = createResponse();
@@ -101,8 +101,8 @@ test("speak rejects invalid voice_settings temperature", async () => {
 test("cloneVoice rejects missing audio file", async () => {
   const request = createRequest({
     body: {
-      name: "Test voice"
-    }
+      name: "Test voice",
+    },
   });
 
   const response = createResponse();
@@ -117,8 +117,8 @@ test("streamSpeech rejects tampered speech token", async () => {
   const speakRequest = createRequest({
     body: {
       text: "Hello",
-      voice_id: "voice_1"
-    }
+      voice_id: "voice_1",
+    },
   });
 
   const speakResponse = createResponse();
@@ -130,8 +130,8 @@ test("streamSpeech rejects tampered speech token", async () => {
 
   const streamRequest = createRequest({
     query: {
-      t: tamperedToken
-    }
+      t: tamperedToken,
+    },
   });
 
   const streamResponse = createResponse();
@@ -145,8 +145,8 @@ test("streamSpeech rejects tampered speech token", async () => {
 test("streamSpeech rejects invalid ciphertext token", async () => {
   const request = createRequest({
     query: {
-      t: "invalid-token"
-    }
+      t: "invalid-token",
+    },
   });
 
   const response = createResponse();
@@ -187,25 +187,23 @@ test("cloneVoice enforces maximum voice store size and evicts oldest first", asy
     else process.env.NODE_ENV = oldEnv;
   });
 
-  const {
-    cloneVoice,
-    speak,
-    streamSpeech,
-    __getVoiceStoreSize,
-    voiceStore
-  } = await import("../controllers/voiceController.js?max=" + Date.now());
+  const { cloneVoice, speak, streamSpeech, __getVoiceStoreSize, voiceStore } =
+    await import("../controllers/voiceController.js?max=" + Date.now());
 
   await voiceStore.clear();
   const voiceIds = [];
 
   for (let i = 0; i < 3; i++) {
     const request = createRequest({
-      body: { name: `voice-${i}` }
+      body: { name: `voice-${i}` },
     });
 
     request.file = {
-      buffer: Buffer.concat([Buffer.from("RIFF....WAVE"), Buffer.from(`audio-${i}`)]),
-      mimetype: "audio/webm"
+      buffer: Buffer.concat([
+        Buffer.from("RIFF....WAVE"),
+        Buffer.from(`audio-${i}`),
+      ]),
+      mimetype: "audio/webm",
     };
 
     const response = createResponse();
@@ -213,7 +211,10 @@ test("cloneVoice enforces maximum voice store size and evicts oldest first", asy
     await invoke(cloneVoice, request, response);
 
     assert.ok(response.jsonBody.voice_id);
-    voiceIds.push({ voice_id: response.jsonBody.voice_id, owner_token: response.jsonBody.owner_token });
+    voiceIds.push({
+      voice_id: response.jsonBody.voice_id,
+      owner_token: response.jsonBody.owner_token,
+    });
   }
 
   // The store must never exceed the configured cap.
@@ -226,7 +227,11 @@ test("cloneVoice enforces maximum voice store size and evicts oldest first", asy
   const [firstVoice] = voiceIds;
 
   const speakRequest = createRequest({
-    body: { text: "Hello", voice_id: firstVoice.voice_id, owner_token: firstVoice.owner_token }
+    body: {
+      text: "Hello",
+      voice_id: firstVoice.voice_id,
+      owner_token: firstVoice.owner_token,
+    },
   });
   const speakResponse = createResponse();
   await invoke(speak, speakRequest, speakResponse);
@@ -234,7 +239,7 @@ test("cloneVoice enforces maximum voice store size and evicts oldest first", asy
   let streamStatusCode = speakResponse.statusCode;
   if (speakResponse.jsonBody?.speechId) {
     const streamRequest = createRequest({
-      query: { t: speakResponse.jsonBody.speechId }
+      query: { t: speakResponse.jsonBody.speechId },
     });
     const streamResponse = createResponse();
     await invoke(streamSpeech, streamRequest, streamResponse);
@@ -244,7 +249,7 @@ test("cloneVoice enforces maximum voice store size and evicts oldest first", asy
   assert.equal(
     streamStatusCode,
     404,
-    "the oldest voice should have been evicted once the store exceeded its cap"
+    "the oldest voice should have been evicted once the store exceeded its cap",
   );
 });
 
@@ -287,22 +292,17 @@ test("cloneVoice removes expired voices after TTL", async (t) => {
     else process.env.NODE_ENV = oldEnv;
   });
 
-  const {
-    cloneVoice,
-    speak,
-    streamSpeech,
-    __getVoiceStoreSize,
-    voiceStore
-  } = await import("../controllers/voiceController.js?ttl=" + Date.now());
+  const { cloneVoice, speak, streamSpeech, __getVoiceStoreSize, voiceStore } =
+    await import("../controllers/voiceController.js?ttl=" + Date.now());
 
   await voiceStore.clear();
 
   const cloneRequest = createRequest({
-    body: { name: "temporary voice" }
+    body: { name: "temporary voice" },
   });
   cloneRequest.file = {
     buffer: Buffer.concat([Buffer.from("RIFF....WAVE"), Buffer.from("audio")]),
-    mimetype: "audio/webm"
+    mimetype: "audio/webm",
   };
 
   const cloneResponse = createResponse();
@@ -319,7 +319,11 @@ test("cloneVoice removes expired voices after TTL", async (t) => {
   // speak() itself never checks the voice store, so this still succeeds;
   // streamSpeech is what enforces the TTL via pruneVoiceStore().
   const speakRequest = createRequest({
-    body: { text: "Hello", voice_id: expiredVoiceId, owner_token: expiredOwnerToken }
+    body: {
+      text: "Hello",
+      voice_id: expiredVoiceId,
+      owner_token: expiredOwnerToken,
+    },
   });
   const speakResponse = createResponse();
   await invoke(speak, speakRequest, speakResponse);
@@ -327,22 +331,18 @@ test("cloneVoice removes expired voices after TTL", async (t) => {
   let streamStatusCode = speakResponse.statusCode;
   if (speakResponse.jsonBody?.speechId) {
     const streamRequest = createRequest({
-      query: { t: speakResponse.jsonBody.speechId }
+      query: { t: speakResponse.jsonBody.speechId },
     });
     const streamResponse = createResponse();
     await invoke(streamSpeech, streamRequest, streamResponse);
     streamStatusCode = streamResponse.statusCode;
   }
 
-  assert.equal(
-    streamStatusCode,
-    404,
-    "expired voice should no longer resolve"
-  );
+  assert.equal(streamStatusCode, 404, "expired voice should no longer resolve");
   assert.equal(
     __getVoiceStoreSize(),
     0,
-    "expired entry should actually be removed from the store, not just unreachable"
+    "expired entry should actually be removed from the store, not just unreachable",
   );
 });
 
@@ -374,13 +374,10 @@ test("cloneVoice prunes only expired voices and preserves recent ones", async (t
     else process.env.NODE_ENV = oldEnv;
   });
 
-  const {
-    cloneVoice,
-    speak,
-    streamSpeech,
-    __getVoiceStoreSize,
-    voiceStore
-  } = await import("../controllers/voiceController.js?ttl-preserve=" + Date.now());
+  const { cloneVoice, speak, streamSpeech, __getVoiceStoreSize, voiceStore } =
+    await import(
+      "../controllers/voiceController.js?ttl-preserve=" + Date.now()
+    );
 
   await voiceStore.clear();
 
@@ -388,7 +385,13 @@ test("cloneVoice prunes only expired voices and preserves recent ones", async (t
   Date.now = () => baseTime;
 
   const oldRequest = createRequest({ body: { name: "old voice" } });
-  oldRequest.file = { buffer: Buffer.concat([Buffer.from("RIFF....WAVE"), Buffer.from("audio-old")]), mimetype: "audio/webm" };
+  oldRequest.file = {
+    buffer: Buffer.concat([
+      Buffer.from("RIFF....WAVE"),
+      Buffer.from("audio-old"),
+    ]),
+    mimetype: "audio/webm",
+  };
   const oldResponse = createResponse();
   await invoke(cloneVoice, oldRequest, oldResponse);
   const oldVoiceId = oldResponse.jsonBody.voice_id;
@@ -399,7 +402,13 @@ test("cloneVoice prunes only expired voices and preserves recent ones", async (t
   Date.now = () => baseTime + 30_000;
 
   const newRequest = createRequest({ body: { name: "new voice" } });
-  newRequest.file = { buffer: Buffer.concat([Buffer.from("RIFF....WAVE"), Buffer.from("audio-new")]), mimetype: "audio/webm" };
+  newRequest.file = {
+    buffer: Buffer.concat([
+      Buffer.from("RIFF....WAVE"),
+      Buffer.from("audio-new"),
+    ]),
+    mimetype: "audio/webm",
+  };
   const newResponse = createResponse();
   await invoke(cloneVoice, newRequest, newResponse);
   assert.ok(newResponse.jsonBody.voice_id);
@@ -410,18 +419,24 @@ test("cloneVoice prunes only expired voices and preserves recent ones", async (t
   Date.now = () => baseTime + 65_000;
 
   const triggerRequest = createRequest({ body: { name: "trigger prune" } });
-  triggerRequest.file = { buffer: Buffer.concat([Buffer.from("RIFF....WAVE"), Buffer.from("audio-trigger")]), mimetype: "audio/webm" };
+  triggerRequest.file = {
+    buffer: Buffer.concat([
+      Buffer.from("RIFF....WAVE"),
+      Buffer.from("audio-trigger"),
+    ]),
+    mimetype: "audio/webm",
+  };
   const triggerResponse = createResponse();
   await invoke(cloneVoice, triggerRequest, triggerResponse);
 
   assert.equal(
     __getVoiceStoreSize(),
     2,
-    "pruning should remove only the expired voice (old) and retain both new and trigger voices"
+    "pruning should remove only the expired voice (old) and retain both new and trigger voices",
   );
 
   const speakRequest = createRequest({
-    body: { text: "Hello", voice_id: oldVoiceId, owner_token: oldOwnerToken }
+    body: { text: "Hello", voice_id: oldVoiceId, owner_token: oldOwnerToken },
   });
   const speakResponse = createResponse();
   await invoke(speak, speakRequest, speakResponse);
@@ -429,7 +444,7 @@ test("cloneVoice prunes only expired voices and preserves recent ones", async (t
   let streamStatusCode = speakResponse.statusCode;
   if (speakResponse.jsonBody?.speechId) {
     const streamRequest = createRequest({
-      query: { t: speakResponse.jsonBody.speechId }
+      query: { t: speakResponse.jsonBody.speechId },
     });
     const streamResponse = createResponse();
     await invoke(streamSpeech, streamRequest, streamResponse);
@@ -439,7 +454,7 @@ test("cloneVoice prunes only expired voices and preserves recent ones", async (t
   assert.equal(
     streamStatusCode,
     404,
-    "the old voice should have been pruned after expiration"
+    "the old voice should have been pruned after expiration",
   );
 });
 

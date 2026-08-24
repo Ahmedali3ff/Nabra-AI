@@ -1,5 +1,12 @@
 import React from "react";
-import { ExternalLink, Trash2, CircleAlert, Share2, Download, Upload } from "lucide-react";
+import {
+  ExternalLink,
+  Trash2,
+  CircleAlert,
+  Share2,
+  Download,
+  Upload,
+} from "lucide-react";
 import {
   deleteVoiceProfile,
   getSavedProfiles,
@@ -70,7 +77,10 @@ export default function Settings() {
 
   const [modelId, setModelId] = React.useState(() => {
     try {
-      return localStorage.getItem("voiceforge:selectedModelId") || "eleven_multilingual_v2";
+      return (
+        localStorage.getItem("voiceforge:selectedModelId") ||
+        "eleven_multilingual_v2"
+      );
     } catch {
       return "eleven_multilingual_v2";
     }
@@ -85,15 +95,21 @@ export default function Settings() {
     }
   }
 
-  const defaultSettings = { stability: 0.45, similarity_boost: 0.8, style: 0.2 };
+  const defaultSettings = {
+    stability: 0.45,
+    similarity_boost: 0.8,
+    style: 0.2,
+  };
   const [voiceSettings, setVoiceSettings] = React.useState(() => {
     try {
-      return JSON.parse(localStorage.getItem("voiceforge:voiceSettings")) || defaultSettings;
+      return (
+        JSON.parse(localStorage.getItem("voiceforge:voiceSettings")) ||
+        defaultSettings
+      );
     } catch {
       return defaultSettings;
     }
   });
-
 
   function saveVoiceSettings(newSettings) {
     setVoiceSettings(newSettings);
@@ -113,19 +129,27 @@ export default function Settings() {
   const cleanupPreview = React.useCallback(() => {
     setPlayingPreset(null);
     if (sourceRef.current) {
-      try { sourceRef.current.disconnect(); } catch (e) {}
+      try {
+        sourceRef.current.disconnect();
+      } catch (e) {}
       sourceRef.current = null;
     }
     if (bassFilterRef.current) {
-      try { bassFilterRef.current.disconnect(); } catch (e) {}
+      try {
+        bassFilterRef.current.disconnect();
+      } catch (e) {}
       bassFilterRef.current = null;
     }
     if (midFilterRef.current) {
-      try { midFilterRef.current.disconnect(); } catch (e) {}
+      try {
+        midFilterRef.current.disconnect();
+      } catch (e) {}
       midFilterRef.current = null;
     }
     if (trebleFilterRef.current) {
-      try { trebleFilterRef.current.disconnect(); } catch (e) {}
+      try {
+        trebleFilterRef.current.disconnect();
+      } catch (e) {}
       trebleFilterRef.current = null;
     }
     if (pitchShifterRef.current) {
@@ -140,9 +164,13 @@ export default function Settings() {
 
   const stopPreview = React.useCallback(() => {
     if (audioRef.current) {
-      try { audioRef.current.pause(); } catch (e) {}
+      try {
+        audioRef.current.pause();
+      } catch (e) {}
     }
-    try { window.speechSynthesis.cancel(); } catch (e) {}
+    try {
+      window.speechSynthesis.cancel();
+    } catch (e) {}
     cleanupPreview();
   }, [cleanupPreview]);
 
@@ -157,15 +185,19 @@ export default function Settings() {
       stopPreview();
       if (playingPreset === presetKey) return;
     }
-    
-    const activeProfileId = localStorage.getItem("voiceforge:activeVoiceId") || (profiles[0]?.voice_id);
+
+    const activeProfileId =
+      localStorage.getItem("voiceforge:activeVoiceId") || profiles[0]?.voice_id;
     if (!activeProfileId) {
-      showToast("Please clone or select a voice profile first to hear previews.", "error");
+      showToast(
+        "Please clone or select a voice profile first to hear previews.",
+        "error",
+      );
       return;
     }
-    
+
     setPlayingPreset(presetKey);
-    
+
     try {
       const response = await fetch("/api/voice/speak", {
         method: "POST",
@@ -177,72 +209,76 @@ export default function Settings() {
           voice_settings: {
             stability: preset.stability,
             style: preset.style,
-            temperature: preset.temperature
-          }
-        })
+            temperature: preset.temperature,
+          },
+        }),
       });
-      
+
       if (!response.ok) {
         throw new Error("Speech synthesis failed");
       }
-      
+
       const payload = await response.json();
       const audioUrl = payload.audioUrl;
-      
+
       if (!audioContextRef.current) {
-        audioContextRef.current = new (window.AudioContext || window.webkitAudioContext)();
+        audioContextRef.current = new (
+          window.AudioContext || window.webkitAudioContext
+        )();
       }
       const audioCtx = audioContextRef.current;
       if (audioCtx.state === "suspended") {
         await audioCtx.resume();
       }
-      
+
       const audio = new Audio(audioUrl);
       audioRef.current = audio;
       audio.playbackRate = preset.dspSpeed;
-      
+
       const source = audioCtx.createMediaElementSource(audio);
       sourceRef.current = source;
-      
+
       const bass = audioCtx.createBiquadFilter();
       bass.type = "lowshelf";
       bass.frequency.value = 200;
       bass.gain.value = preset.dspBass;
       bassFilterRef.current = bass;
-      
+
       const mid = audioCtx.createBiquadFilter();
       mid.type = "peaking";
       mid.frequency.value = 1000;
       mid.Q.value = 1.0;
       mid.gain.value = preset.dspMid;
       midFilterRef.current = mid;
-      
+
       const treble = audioCtx.createBiquadFilter();
       treble.type = "highshelf";
       treble.frequency.value = 4000;
       treble.gain.value = preset.dspTreble;
       trebleFilterRef.current = treble;
-      
+
       const shifter = new PitchShifter(audioCtx);
       shifter.setPitch(preset.dspPitch);
       pitchShifterRef.current = shifter;
-      
+
       source.connect(bass);
       bass.connect(mid);
       mid.connect(treble);
       treble.connect(shifter.input);
       shifter.output.connect(audioCtx.destination);
-      
+
       audio.onended = () => {
         cleanupPreview();
       };
-      
+
       await audio.play();
     } catch (err) {
       console.error("Failed to play preset preview:", err);
       try {
         window.speechSynthesis.cancel();
-        const utterance = new SpeechSynthesisUtterance("Testing VoiceForge presets.");
+        const utterance = new SpeechSynthesisUtterance(
+          "Testing VoiceForge presets.",
+        );
         utterance.lang = language;
         utterance.pitch = preset.dspPitch;
         utterance.rate = preset.dspSpeed;
@@ -431,7 +467,10 @@ export default function Settings() {
 
       // Commit profiles to IndexedDB
       for (const profileData of profilesToSave) {
-        await saveVoiceProfile({ voice_id: profileData.voice_id, name: profileData.name }, profileData.audioBlob);
+        await saveVoiceProfile(
+          { voice_id: profileData.voice_id, name: profileData.name },
+          profileData.audioBlob,
+        );
       }
 
       // 4. Update localStorage keys (faithfully reproducing empty/null values)
@@ -440,10 +479,14 @@ export default function Settings() {
         const num = parseFloat(raw);
         if (isNaN(num)) return null;
         switch (key) {
-          case "calibrationXOffset": return Math.max(-400, Math.min(400, Math.round(num))).toString();
-          case "calibrationYOffset": return Math.max(-250, Math.min(150, Math.round(num))).toString();
-          case "calibrationScale": return Math.max(0.5, Math.min(2.5, num)).toString();
-          default: return raw;
+          case "calibrationXOffset":
+            return Math.max(-400, Math.min(400, Math.round(num))).toString();
+          case "calibrationYOffset":
+            return Math.max(-250, Math.min(150, Math.round(num))).toString();
+          case "calibrationScale":
+            return Math.max(0.5, Math.min(2.5, num)).toString();
+          default:
+            return raw;
         }
       }
 
@@ -492,16 +535,16 @@ export default function Settings() {
           reader.readAsDataURL(profile.audioBlob);
         });
       }
-      
+
       const vfpData = {
         type: "voiceforge_profile",
         version: 1,
         voice_id: profile.voice_id,
         name: profile.name,
         createdAt: profile.createdAt,
-        audioDataUrl: base64Audio
+        audioDataUrl: base64Audio,
       };
-      
+
       const jsonContent = JSON.stringify(vfpData, null, 2);
       const blob = new Blob([jsonContent], { type: "application/json" });
       const url = URL.createObjectURL(blob);
@@ -545,7 +588,7 @@ export default function Settings() {
       const arr = parsed.audioDataUrl.split(",");
       const mimeMatch = arr[0].match(/:(.*?);/);
       const mime = mimeMatch ? mimeMatch[1] : "audio/wav";
-      
+
       if (!mime.startsWith("audio/")) {
         throw new Error("Embedded file is not a valid audio format.");
       }
@@ -558,10 +601,13 @@ export default function Settings() {
       }
       const audioBlob = new Blob([u8arr], { type: mime });
 
-      await saveVoiceProfile({
-        voice_id: parsed.voice_id,
-        name: parsed.name
-      }, audioBlob);
+      await saveVoiceProfile(
+        {
+          voice_id: parsed.voice_id,
+          name: parsed.name,
+        },
+        audioBlob,
+      );
 
       showToast(`Imported ${parsed.name} successfully!`, "success");
       event.target.value = "";
@@ -585,9 +631,11 @@ export default function Settings() {
   }
 
   async function removeAllProfiles() {
-    const confirmOverwrite = window.confirm("Are you sure you want to delete all saved voice profiles? This action cannot be undone and will free up storage space.");
+    const confirmOverwrite = window.confirm(
+      "Are you sure you want to delete all saved voice profiles? This action cannot be undone and will free up storage space.",
+    );
     if (!confirmOverwrite) return;
-    
+
     try {
       const next = await clearAllVoiceProfiles();
       setProfiles(next);
@@ -620,7 +668,6 @@ export default function Settings() {
 
       <section className="rounded-lg border border-ink/10 bg-white p-5 shadow-soft dark:border-border dark:bg-surface dark:text-neutral-100 dark:shadow-soft-dk">
         <div className="flex flex-col gap-3 lg:flex-row lg:items-end">
-
           <label className="flex-1 text-sm font-bold" htmlFor="api-key">
             ElevenLabs API key
             <input
@@ -657,11 +704,16 @@ export default function Settings() {
 
       <section className="rounded-lg border border-ink/10 bg-white p-5 shadow-soft dark:border-border dark:bg-surface dark:text-neutral-100 dark:shadow-soft-dk">
         <h2 className="text-xl font-bold">Voice Synthesis Settings</h2>
-        <p className="mt-1 text-sm text-ink/65 mb-5">Adjust how ElevenLabs generates your cloned speech.</p>
-        
+        <p className="mt-1 text-sm text-ink/65 mb-5">
+          Adjust how ElevenLabs generates your cloned speech.
+        </p>
+
         <div className="space-y-4">
           <div>
-            <label className="block text-sm font-bold mb-2 text-ink dark:text-neutral-100" htmlFor="model-select">
+            <label
+              className="block text-sm font-bold mb-2 text-ink dark:text-neutral-100"
+              htmlFor="model-select"
+            >
               ElevenLabs Model (Latency & Language)
             </label>
             <select
@@ -670,62 +722,112 @@ export default function Settings() {
               onChange={(e) => saveModelId(e.target.value)}
               className="min-h-11 w-full rounded-md border border-ink/15 bg-cloud px-3 text-ink outline-none focus:border-moss focus:ring-4 focus:ring-mint dark:border-border dark:bg-black dark:text-neutral-100 dark:focus:border-glow dark:focus:ring-glow/25"
             >
-              <option value="eleven_flash_v2_5">Eleven Flash v2.5 (Ultra-low latency - Recommended for live calls)</option>
-              <option value="eleven_turbo_v2_5">Eleven Turbo v2.5 (Low latency - High quality)</option>
-              <option value="eleven_multilingual_v2">Eleven Multilingual v2 (Standard Multilingual)</option>
-              <option value="eleven_monolingual_v1">Eleven Monolingual v1 (Standard English)</option>
+              <option value="eleven_flash_v2_5">
+                Eleven Flash v2.5 (Ultra-low latency - Recommended for live
+                calls)
+              </option>
+              <option value="eleven_turbo_v2_5">
+                Eleven Turbo v2.5 (Low latency - High quality)
+              </option>
+              <option value="eleven_multilingual_v2">
+                Eleven Multilingual v2 (Standard Multilingual)
+              </option>
+              <option value="eleven_monolingual_v1">
+                Eleven Monolingual v1 (Standard English)
+              </option>
             </select>
             <p className="text-xs text-ink/50 mt-1 dark:text-neutral-400">
-              Flash and Turbo models generate audio much faster, reducing conversation delays.
+              Flash and Turbo models generate audio much faster, reducing
+              conversation delays.
             </p>
           </div>
 
           <div>
-            <label className="flex justify-between text-sm font-bold" htmlFor="stability">
+            <label
+              className="flex justify-between text-sm font-bold"
+              htmlFor="stability"
+            >
               <span>Stability</span>
               <span className="text-ink/65">{voiceSettings.stability}</span>
             </label>
             <input
               id="stability"
               type="range"
-              min="0" max="1" step="0.01"
+              min="0"
+              max="1"
+              step="0.01"
               value={voiceSettings.stability}
-              onChange={(e) => saveVoiceSettings({ ...voiceSettings, stability: parseFloat(e.target.value) })}
+              onChange={(e) =>
+                saveVoiceSettings({
+                  ...voiceSettings,
+                  stability: parseFloat(e.target.value),
+                })
+              }
               className="w-full mt-2"
             />
-            <p className="text-xs text-ink/50 mt-1">Lower values are more expressive; higher values are more consistent.</p>
+            <p className="text-xs text-ink/50 mt-1">
+              Lower values are more expressive; higher values are more
+              consistent.
+            </p>
           </div>
-          
+
           <div>
-            <label className="flex justify-between text-sm font-bold" htmlFor="similarity">
+            <label
+              className="flex justify-between text-sm font-bold"
+              htmlFor="similarity"
+            >
               <span>Similarity Boost</span>
-              <span className="text-ink/65">{voiceSettings.similarity_boost}</span>
+              <span className="text-ink/65">
+                {voiceSettings.similarity_boost}
+              </span>
             </label>
             <input
               id="similarity"
               type="range"
-              min="0" max="1" step="0.01"
+              min="0"
+              max="1"
+              step="0.01"
               value={voiceSettings.similarity_boost}
-              onChange={(e) => saveVoiceSettings({ ...voiceSettings, similarity_boost: parseFloat(e.target.value) })}
+              onChange={(e) =>
+                saveVoiceSettings({
+                  ...voiceSettings,
+                  similarity_boost: parseFloat(e.target.value),
+                })
+              }
               className="w-full mt-2"
             />
-            <p className="text-xs text-ink/50 mt-1">Higher values make the voice closer to the original but may introduce artifacts.</p>
+            <p className="text-xs text-ink/50 mt-1">
+              Higher values make the voice closer to the original but may
+              introduce artifacts.
+            </p>
           </div>
 
           <div>
-            <label className="flex justify-between text-sm font-bold" htmlFor="style">
+            <label
+              className="flex justify-between text-sm font-bold"
+              htmlFor="style"
+            >
               <span>Style Exaggeration</span>
               <span className="text-ink/65">{voiceSettings.style}</span>
             </label>
             <input
               id="style"
               type="range"
-              min="0" max="1" step="0.01"
+              min="0"
+              max="1"
+              step="0.01"
               value={voiceSettings.style}
-              onChange={(e) => saveVoiceSettings({ ...voiceSettings, style: parseFloat(e.target.value) })}
+              onChange={(e) =>
+                saveVoiceSettings({
+                  ...voiceSettings,
+                  style: parseFloat(e.target.value),
+                })
+              }
               className="w-full mt-2"
             />
-            <p className="text-xs text-ink/50 mt-1">Higher values exaggerate the style of the reference audio.</p>
+            <p className="text-xs text-ink/50 mt-1">
+              Higher values exaggerate the style of the reference audio.
+            </p>
           </div>
         </div>
       </section>
@@ -829,9 +931,7 @@ export default function Settings() {
       )}
 
       {isTransferOpen && (
-        <TransferSetupModal
-          onClose={() => setIsTransferOpen(false)}
-        />
+        <TransferSetupModal onClose={() => setIsTransferOpen(false)} />
       )}
       <ToastContainer toasts={toasts} />
     </div>
