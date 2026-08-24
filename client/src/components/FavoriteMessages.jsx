@@ -7,13 +7,18 @@ export function FavoriteMessages({ history, favorites, onReuse, onUnpin }) {
   const [expanded, setExpanded] = useState(false);
   const [sortBy, setSortBy] = useState("recent");
 
+  const safeHistory = Array.isArray(history) ? history : [];
+  const safeFavorites = favorites instanceof Set
+    ? favorites
+    : new Set(Array.isArray(favorites) ? favorites : []);
+
   const pinned = React.useMemo(() => {
-    const items = history.filter((message) => favorites.has(message.id));
+    const items = safeHistory.filter((message) => message && safeFavorites.has(message.id));
     if (sortBy === "alpha") {
-      return [...items].sort((a, b) => a.text.localeCompare(b.text));
+      return [...items].sort((a, b) => (a.text || "").localeCompare(b.text || ""));
     }
     return items;
-  }, [history, favorites, sortBy]);
+  }, [safeHistory, safeFavorites, sortBy]);
 
   if (pinned.length === 0) return null;
 

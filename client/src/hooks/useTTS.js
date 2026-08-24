@@ -10,10 +10,27 @@ export default function useTTS() {
   const prevBlobRef = React.useRef("");
   const mountedRef = React.useRef(true);
 
-  const speak = React.useCallback(async (text, voiceId, languageCode = "en") => {
+  const speak = React.useCallback(async (textOrOptions, voiceIdParam, languageCodeParam = "en") => {
+    let text = "";
+    let voiceId = "";
+    let languageCode = "en";
+    let onSpeakingChange = null;
+
+    if (typeof textOrOptions === "object" && textOrOptions !== null) {
+      text = textOrOptions.text || "";
+      voiceId = textOrOptions.voiceId || textOrOptions.voice_id || "";
+      languageCode = textOrOptions.language_code || textOrOptions.languageCode || "en";
+      onSpeakingChange = textOrOptions.onSpeakingChange;
+    } else {
+      text = textOrOptions || "";
+      voiceId = voiceIdParam || "";
+      languageCode = languageCodeParam || "en";
+    }
+
     const controller = new AbortController();
     setError("");
     setStatus("speaking");
+    if (typeof onSpeakingChange === "function") onSpeakingChange(true);
 
     try {
       const voiceSettings = loadVoiceSettings();
@@ -37,6 +54,7 @@ export default function useTTS() {
       });
 
       if (controller.signal.aborted) {
+        if (typeof onSpeakingChange === "function") onSpeakingChange(false);
         return { aborted: true };
       }
 
@@ -65,6 +83,7 @@ export default function useTTS() {
           const created = URL.createObjectURL(blob);
           if (!mountedRef.current) {
             URL.revokeObjectURL(created);
+            if (typeof onSpeakingChange === "function") onSpeakingChange(false);
             return { audioUrl: "", blobUrl: "" };
           }
           blobUrl = created;
@@ -73,14 +92,19 @@ export default function useTTS() {
         // Blob capture failed — fallback to direct URL
       }
 
-      if (!mountedRef.current) return { audioUrl: "", blobUrl: "" };
+      if (!mountedRef.current) {
+        if (typeof onSpeakingChange === "function") onSpeakingChange(false);
+        return { audioUrl: "", blobUrl: "" };
+      }
 
       if (prevBlobRef.current) URL.revokeObjectURL(prevBlobRef.current);
       prevBlobRef.current = blobUrl;
       setAudioUrl(blobUrl || nextAudioUrl);
       setStatus("ready");
+      if (typeof onSpeakingChange === "function") onSpeakingChange(false);
       return { audioUrl: blobUrl || nextAudioUrl, blobUrl };
     } catch (ttsError) {
+      if (typeof onSpeakingChange === "function") onSpeakingChange(false);
       if (ttsError?.name === "AbortError") {
         return;
       }

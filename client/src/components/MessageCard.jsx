@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { Copy, Pin, Play, RotateCcw, Trash2 } from "lucide-react";
 
 function formatTime(timestamp) {
@@ -25,21 +25,8 @@ export function MessageCard({
   audioUrl,
   onDownload,
 }) {
-  const { id, text, timestamp, tags } = message;
-  const timeLabel = useRelativeTime(timestamp);
-
-  const [isAddingTag, setIsAddingTag] = useState(false);
-  const [newTagText, setNewTagText] = useState("");
-
-  const handleAddTagSubmit = (e) => {
-    e.preventDefault();
-    const tag = newTagText.trim();
-    if (!tag) return;
-    if (tag.length > 15) return;
-    onAddTag(id, tag);
-    setNewTagText("");
-    setIsAddingTag(false);
-  };
+  const { id, text, timestamp } = message;
+  const timeLabel = formatTime(timestamp);
 
   return (
     <article

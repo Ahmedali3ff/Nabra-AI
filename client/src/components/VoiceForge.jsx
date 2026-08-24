@@ -1,4 +1,4 @@
-import React, { useCallback, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { Copy, Eraser, Mic2 } from "lucide-react";
 import { FavoriteMessages } from "./FavoriteMessages";
 import { QuickReplies } from "./QuickReplies";
@@ -20,6 +20,8 @@ export default function VoiceForge() {
 
   const [announcement, setAnnouncement] = useState("");
   const textareaRef = useRef(null);
+  const speakCounterRef = useRef(0);
+  const audioMapRef = useRef(new Map());
 
   const { speak: ttsSpeak } = useTTS();
 
@@ -262,7 +264,7 @@ const handleDeleteMessage = useCallback((id) => {
           onUnpin={toggleFavorite}
         />
 
-        <QuickReplies onSelect={handleQuickReply} />
+        <QuickReplies onSelect={handleQuickReply} showToast={showToast} />
 
         <div className="flex flex-1 flex-col gap-3 overflow-auto p-5 dark:bg-black">
           <div className="flex items-center justify-between">

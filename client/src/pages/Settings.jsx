@@ -27,8 +27,29 @@ export default function Settings() {
   const [apiKey, setApiKey] = React.useState(
     localStorage.getItem("voiceforge:elevenlabsApiKey") || "",
   );
-  const [profiles, setProfiles] = React.useState(getSavedProfiles());
+  const [profiles, setProfiles] = React.useState([]);
   const [dbError, setDbError] = React.useState("");
+
+  React.useEffect(() => {
+    let mounted = true;
+    async function loadProfiles() {
+      try {
+        const loaded = await getSavedProfiles();
+        if (mounted) {
+          setProfiles(Array.isArray(loaded) ? loaded : []);
+        }
+      } catch (err) {
+        if (mounted) setDbError("Failed to load saved profiles");
+      }
+    }
+    loadProfiles();
+
+    window.addEventListener("voiceforge:profileChanged", loadProfiles);
+    return () => {
+      mounted = false;
+      window.removeEventListener("voiceforge:profileChanged", loadProfiles);
+    };
+  }, []);
   const { toasts, showToast } = useToast();
 
   const [sharingProfile, setSharingProfile] = React.useState(null);
@@ -729,7 +750,7 @@ export default function Settings() {
               <Upload size={14} />
               P2P Transfer
             </button>
-            {profiles.length > 0 && (
+            {Array.isArray(profiles) && profiles.length > 0 && (
               <button
                 type="button"
                 onClick={removeAllProfiles}
@@ -741,45 +762,50 @@ export default function Settings() {
           </div>
         </div>
         <div className="mt-4 divide-y divide-ink/10 rounded-md border border-ink/10 dark:divide-border dark:border-border">
-          {profiles.length === 0 && (
-            <p className="p-4 text-sm text-ink/65 dark:text-muted">
-              No saved profiles yet.
-            </p>
-          )}
-          {profiles.map((profile) => (
-            <div
-              key={profile.voice_id}
-              className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between"
-            >
-              <div>
-                <p className="font-bold">{profile.name}</p>
-                <p className="mt-1 break-all text-sm text-ink/60 dark:text-muted">
-                  {profile.voice_id}
+          {(() => {
+            const safeProfiles = Array.isArray(profiles) ? profiles : [];
+            if (safeProfiles.length === 0) {
+              return (
+                <p className="p-4 text-sm text-ink/65 dark:text-muted">
+                  No saved profiles yet.
                 </p>
+              );
+            }
+            return safeProfiles.map((profile) => (
+              <div
+                key={profile.voice_id}
+                className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between"
+              >
+                <div>
+                  <p className="font-bold">{profile.name}</p>
+                  <p className="mt-1 break-all text-sm text-ink/60 dark:text-muted">
+                    {profile.voice_id}
+                  </p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setSharingProfile(profile)}
+                    title={`Share voice profile "${profile.name}"`}
+                    className="inline-flex items-center justify-center gap-1.5 rounded-md border border-ink/15 px-3 py-1.5 text-xs font-bold text-ink hover:border-moss dark:border-border dark:text-neutral-200"
+                  >
+                    <Share2 size={14} />
+                    Share
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => removeProfile(profile.voice_id)}
+                    title={`Delete voice profile "${profile.name}"`}
+                    aria-label={`Delete voice profile "${profile.name}"`}
+                    className="inline-flex items-center justify-center gap-1.5 rounded-md border border-coral/40 px-3 py-1.5 text-xs font-bold text-coral hover:bg-coral hover:text-white"
+                  >
+                    <Trash2 size={14} aria-hidden="true" />
+                    Delete
+                  </button>
+                </div>
               </div>
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => setSharingProfile(profile)}
-                  title={`Share voice profile "${profile.name}"`}
-                  className="inline-flex items-center justify-center gap-1.5 rounded-md border border-ink/15 px-3 py-1.5 text-xs font-bold text-ink hover:border-moss dark:border-border dark:text-neutral-200"
-                >
-                  <Share2 size={14} />
-                  Share
-                </button>
-                <button
-                  type="button"
-                  onClick={() => removeProfile(profile.voice_id)}
-                  title={`Delete voice profile "${profile.name}"`}
-                  aria-label={`Delete voice profile "${profile.name}"`}
-                  className="inline-flex items-center justify-center gap-1.5 rounded-md border border-coral/40 px-3 py-1.5 text-xs font-bold text-coral hover:bg-coral hover:text-white"
-                >
-                  <Trash2 size={14} aria-hidden="true" />
-                  Delete
-                </button>
-              </div>
-            </div>
-          ))}
+            ));
+          })()}
         </div>
       </section>
 

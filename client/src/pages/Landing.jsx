@@ -1,5 +1,5 @@
-// adding landing page
 import { useEffect, useRef } from "react";
+import { Phone, Mail, MessageCircle, Globe, ExternalLink } from "lucide-react";
 
 const waveBarCount = 5;
 
@@ -213,6 +213,70 @@ export default function VoiceForgeLanding({ onNavigate }) {
                 </div>
               </div>
             </article>
+          </div>
+        </section>
+
+        {/* Creator Section */}
+        <section className="mx-auto max-w-5xl px-4 py-8 sm:px-6 lg:px-8">
+          <div className="rounded-3xl border border-[#53e894]/30 bg-gradient-to-br from-[#161616] to-[#0d0d0d] p-8 md:p-10 shadow-2xl">
+            <div className="flex flex-col md:flex-row items-center gap-8">
+              <img
+                src="/owner.jpg"
+                alt="Avdhesh Kumar Dadhich"
+                className="h-32 w-32 rounded-full object-cover ring-4 ring-[#53e894]/40 shadow-xl shrink-0"
+                onError={(e) => {
+                  e.target.onerror = null;
+                  e.target.src = "https://github.com/itzzavdheshh.png";
+                }}
+              />
+              <div className="flex-1 text-center md:text-left space-y-3">
+                <div className="inline-flex items-center gap-2 rounded-full bg-[#53e894]/10 px-3 py-1 text-xs font-bold text-[#53e894]">
+                  Creator & Lead Architect
+                </div>
+                <h3 className="text-3xl font-extrabold text-white">
+                  Avdhesh Kumar Dadhich
+                </h3>
+                <p className="text-sm leading-relaxed text-[#bbcabc]">
+                  Created VoiceForge under the MIT License to redefine assistive communication. Get in touch directly via phone, WhatsApp, or email, or connect across social channels.
+                </p>
+
+                <div className="flex flex-wrap items-center justify-center md:justify-start gap-3 pt-2">
+                  <a
+                    href="https://wa.me/917690863039?text=Hi%20Avdhesh%2C%20I%20came%20from%20VoiceForge!"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-500 px-4 py-2 text-xs font-bold text-black hover:bg-emerald-400 transition"
+                  >
+                    <MessageCircle size={15} />
+                    <span>WhatsApp</span>
+                  </a>
+                  <a
+                    href="tel:+917690863039"
+                    className="inline-flex items-center gap-1.5 rounded-lg bg-blue-600 px-4 py-2 text-xs font-bold text-white hover:bg-blue-500 transition"
+                  >
+                    <Phone size={15} />
+                    <span>Call 7690863039</span>
+                  </a>
+                  <a
+                    href="mailto:aavdhesh.dadhich@gmail.com"
+                    className="inline-flex items-center gap-1.5 rounded-lg bg-purple-600 px-4 py-2 text-xs font-bold text-white hover:bg-purple-500 transition"
+                  >
+                    <Mail size={15} />
+                    <span>Direct Mail</span>
+                  </a>
+                  <a
+                    href="https://voice-forge-client.vercel.app/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 rounded-lg bg-white/10 px-4 py-2 text-xs font-bold text-[#53e894] hover:bg-white/15 transition"
+                  >
+                    <Globe size={15} />
+                    <span>Live App</span>
+                    <ExternalLink size={12} />
+                  </a>
+                </div>
+              </div>
+            </div>
           </div>
         </section>
 

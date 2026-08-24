@@ -2,6 +2,7 @@
 import React from "react";
 import { useTheme } from "./ThemeContext";
 import { useEffect, useRef } from "react";
+import { Loader2 } from "lucide-react";
 import { AudioProcessor } from "../utils/audioProcessor";
 import { FaceProcessor } from "../utils/faceProcessor";
 

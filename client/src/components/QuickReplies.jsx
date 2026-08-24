@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
-import { Check, X, Pencil } from "lucide-react";
+import { Check, X, Pencil, Plus, Edit3 } from "lucide-react";
+import { useToast } from "./useToast.jsx";
 
 const QUICK_REPLIES = [
   { label: "Hello", phrase: "Hello" },
@@ -25,7 +26,9 @@ function generateId() {
 
 const STORAGE_KEY = "vf_quick_replies";
 
-export function QuickReplies({ onSelect, showToast }) {
+export function QuickReplies({ onSelect, showToast: propShowToast }) {
+  const toastCtx = useToast();
+  const notify = propShowToast || toastCtx?.showToast || (() => {});
   const [replies, setReplies] = useState(() => {
     try {
       const saved = localStorage.getItem(STORAGE_KEY);
@@ -95,20 +98,14 @@ export function QuickReplies({ onSelect, showToast }) {
   const handleAdd = (e) => {
     e.preventDefault();
     const cleanPhrase = newPhrase.trim();
-    
 
     if (cleanPhrase.length > 120) {
-      showToast("Phrase is too long (max 120 characters)", "error");
-      return;
-    }
-
-    if (cleanPhrase.length > 120) {
-      showToast("Phrase is too long (max 120 characters)", "error");
+      notify("Phrase is too long (max 120 characters)", "error");
       return;
     }
 
     if (!cleanPhrase) {
-      showToast("Phrase cannot be empty", "error");
+      notify("Phrase cannot be empty", "error");
       return;
     }
 
@@ -117,7 +114,7 @@ export function QuickReplies({ onSelect, showToast }) {
     );
 
     if (isDuplicate) {
-      showToast("This quick reply already exists", "error");
+      notify("This quick reply already exists", "error");
       return;
     }
 
@@ -131,12 +128,12 @@ export function QuickReplies({ onSelect, showToast }) {
     setNewPhrase("");
     setNewCategory("General");
     setIsAdding(false);
-    showToast("Quick reply added", "success");
+    notify("Quick reply added", "success");
   };
 
   const handleDelete = (idToDelete) => {
     setReplies((prev) => prev.filter((r) => r.id !== idToDelete));
-    showToast("Quick reply deleted", "success");
+    notify("Quick reply deleted", "success");
   };
   const handleEdit = (oldPhrase) => {
   const cleanPhrase = editedValue.trim();
@@ -147,18 +144,16 @@ export function QuickReplies({ onSelect, showToast }) {
     reply.phrase.toLowerCase() !== normalizedOldPhrase
   );
 
-
-
   if (!cleanPhrase) {
-    showToast("Phrase cannot be empty", "error");
+    notify("Phrase cannot be empty", "error");
     return;
   }
   if (cleanPhrase.length > 120) {
-    showToast("Phrase is too long (max 120 characters)", "error");
+    notify("Phrase is too long (max 120 characters)", "error");
     return;
   }
   if (isDuplicate) {
-    showToast("This quick reply already exists", "error");
+    notify("This quick reply already exists", "error");
     return;
   }
 
@@ -176,7 +171,7 @@ export function QuickReplies({ onSelect, showToast }) {
 
   setEditingPhrase(null);
   setEditedValue("");
-  showToast("Quick reply updated", "success");
+  notify("Quick reply updated", "success");
 };
 const handleEditKeyDown = (e, oldPhrase) => {
   if (e.key === "Enter") {
@@ -223,11 +218,11 @@ const handleEditKeyDown = (e, oldPhrase) => {
 
     const cleanPhrase = editingReplyData.phrase.trim();
     if (cleanPhrase.length > 120) {
-      showToast("Phrase is too long (max 120 characters)", "error");
+      notify("Phrase is too long (max 120 characters)", "error");
       return;
     }
     if (!cleanPhrase) {
-      showToast("Phrase cannot be empty", "error");
+      notify("Phrase cannot be empty", "error");
       return;
     }
 
@@ -238,7 +233,7 @@ const handleEditKeyDown = (e, oldPhrase) => {
     );
 
     if (isDuplicate) {
-      showToast("This quick reply already exists", "error");
+      notify("This quick reply already exists", "error");
       return;
     }
 
@@ -258,7 +253,7 @@ const handleEditKeyDown = (e, oldPhrase) => {
 
     setEditingReplyId(null);
     setEditingReplyData(null);
-    showToast("Quick reply updated", "success");
+    notify("Quick reply updated", "success");
   };
 
   const safeReplies = Array.isArray(replies) ? replies : [];
@@ -296,12 +291,42 @@ const handleEditKeyDown = (e, oldPhrase) => {
       aria-labelledby="qr-heading"
       className="flex-shrink-0 border-b border-neutral-200 px-4 py-3 dark:border-border dark:bg-black"
     >
-      <h3
-        id="qr-heading"
-        className="mb-2 text-[11px] font-semibold uppercase tracking-widest text-neutral-400 dark:text-neutral-500"
-      >
-        Quick replies
-      </h3>
+      <div className="mb-2 flex items-center justify-between">
+        <h3
+          id="qr-heading"
+          className="text-[11px] font-semibold uppercase tracking-widest text-neutral-400 dark:text-neutral-500"
+        >
+          Quick replies
+        </h3>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => {
+              setIsAdding(!isAdding);
+              if (isEditing) setIsEditing(false);
+            }}
+            className="inline-flex items-center gap-1 text-xs font-semibold text-blue-600 hover:text-blue-700 dark:text-blue-400"
+            title="Add quick reply"
+          >
+            <Plus size={13} />
+            <span>Add</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setIsEditing(!isEditing);
+              if (isAdding) setIsAdding(false);
+            }}
+            className={`inline-flex items-center gap-1 text-xs transition ${
+              isEditing ? "font-bold text-amber-600 dark:text-amber-400" : "text-neutral-500 hover:text-neutral-700 dark:text-neutral-400"
+            }`}
+            title="Manage quick replies"
+          >
+            <Edit3 size={13} />
+            <span>{isEditing ? "Done" : "Manage"}</span>
+          </button>
+        </div>
+      </div>
 
       {/* Category Tabs */}
       <div
@@ -441,7 +466,7 @@ const handleEditKeyDown = (e, oldPhrase) => {
     </button>
 
     <button
-      onClick={() => handleDelete(phrase)}
+      onClick={() => handleDelete(id)}
       aria-label={`Delete quick reply: ${phrase}`}
     >
       <X size={12} />

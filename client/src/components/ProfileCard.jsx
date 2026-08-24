@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
-import { Play, Pause, Share2, Trash2 } from "lucide-react";
+import { Play, Pause, Share2, Trash2, Download } from "lucide-react";
 
-export function ProfileCard({ profile, onDelete, onShare }) {
+export function ProfileCard({ profile, onDelete, onShare, onExport = () => {} }) {
   const [isPlaying, setIsPlaying] = useState(false);
   const [audioUrl, setAudioUrl] = useState(null);
   const audioRef = React.useRef(null);

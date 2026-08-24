@@ -662,7 +662,7 @@ export default function Call() {
                 }`}
               >
                 <Pin size={16} />
-                Pinned ({history.filter(m => favorites.has(m.id)).length})
+                Pinned ({safeHistory.filter(m => m && safeFavorites.has(m.id)).length})
               </button>
               <button
                 type="button"
@@ -749,12 +749,12 @@ export default function Call() {
                           <button
                             type="button"
                             onClick={() => toggleFavorite(msg.id)}
-                            title={favorites.has(msg.id) ? "Unpin" : "Pin"}
+                            title={safeFavorites.has(msg.id) ? "Unpin" : "Pin"}
                             className={`p-1 rounded hover:bg-neutral-100 dark:hover:bg-neutral-800 ${
-                              favorites.has(msg.id) ? "text-amber-500" : "text-ink/40 dark:text-neutral-500"
+                              safeFavorites.has(msg.id) ? "text-amber-500" : "text-ink/40 dark:text-neutral-500"
                             }`}
                           >
-                            <Pin size={16} fill={favorites.has(msg.id) ? "currentColor" : "none"} />
+                            <Pin size={16} fill={safeFavorites.has(msg.id) ? "currentColor" : "none"} />
                           </button>
                           <button
                             type="button"

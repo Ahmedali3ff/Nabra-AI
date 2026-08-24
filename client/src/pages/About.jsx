@@ -1,3 +1,6 @@
+import React from "react";
+import { Phone, Mail, MessageCircle, Globe, Shield, Heart, ExternalLink } from "lucide-react";
+
 const techStack = [
   { name: "React 18", color: "bg-blue-500/10 text-blue-400 border border-blue-500/20" },
   { name: "Vite 5", color: "bg-purple-500/10 text-purple-400 border border-purple-500/20" },
@@ -13,7 +16,7 @@ const steps = [
   {
     number: "01",
     title: "Record Your Voice",
-    description: "Record a short 10-second consent-based reference clip. VoiceForge sends it to ElevenLabs to create a unique voice profile stored locally in your browser.",
+    description: "Record a short 10-second reference clip. VoiceForge creates a unique voice profile stored locally in your browser.",
   },
   {
     number: "02",
@@ -29,9 +32,10 @@ const steps = [
 
 export default function About({ onNavigate }) {
   return (
-    <div className="min-h-screen bg-background text-foreground px-4 py-12 max-w-4xl mx-auto">
+    <div className="min-h-screen bg-background text-foreground px-4 py-12 max-w-4xl mx-auto space-y-16">
 
-      <section className="mb-16 text-center">
+      {/* Header */}
+      <section className="text-center">
         <h1 className="text-4xl font-bold mb-4">About VoiceForge</h1>
         <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
           An open-source assistive communication platform that helps deaf and
@@ -41,7 +45,125 @@ export default function About({ onNavigate }) {
         </p>
       </section>
 
-      <section className="mb-16">
+      {/* Creator Profile Section */}
+      <section className="rounded-2xl border border-moss/20 bg-moss/5 p-6 sm:p-8 dark:border-glow/20 dark:bg-glow/5">
+        <div className="flex flex-col md:flex-row items-center gap-6">
+          <div className="relative shrink-0">
+            <img
+              src="/owner.jpg"
+              alt="Avdhesh Kumar Dadhich"
+              className="h-28 w-28 rounded-full object-cover ring-4 ring-moss/30 dark:ring-glow/40 shadow-xl"
+              onError={(e) => {
+                e.target.onerror = null;
+                e.target.src = "https://github.com/itzzavdheshh.png";
+              }}
+            />
+            <span className="absolute bottom-1 right-1 h-5 w-5 rounded-full bg-emerald-500 ring-4 ring-white dark:ring-black" title="Online / Available" />
+          </div>
+          
+          <div className="flex-1 text-center md:text-left space-y-2">
+            <div className="flex flex-wrap items-center justify-center md:justify-start gap-2">
+              <h2 className="text-2xl font-bold">Avdhesh Kumar Dadhich</h2>
+              <span className="rounded-full bg-moss/20 px-3 py-0.5 text-xs font-semibold text-moss dark:bg-glow/20 dark:text-glow">
+                Creator & Lead Maintainer
+              </span>
+            </div>
+
+            <p className="text-sm text-muted-foreground leading-relaxed">
+              Software developer & open-source creator passionate about building accessible AI interfaces, local-first web applications, and real-time speech tools.
+            </p>
+
+            {/* Live site link */}
+            <a
+              href="https://voice-forge-client.vercel.app/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 text-sm font-semibold text-blue-600 hover:underline dark:text-blue-400"
+            >
+              <Globe size={15} />
+              <span>https://voice-forge-client.vercel.app/</span>
+              <ExternalLink size={13} />
+            </a>
+
+            {/* Direct Contact Options */}
+            <div className="pt-2 flex flex-wrap items-center justify-center md:justify-start gap-2">
+              <a
+                href="https://wa.me/917690863039?text=Hi%20Avdhesh%2C%20I%20came%20from%20VoiceForge!"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-600 text-white px-3.5 py-1.5 text-xs font-semibold hover:bg-emerald-700 transition"
+              >
+                <MessageCircle size={14} />
+                <span>WhatsApp (+91 7690863039)</span>
+              </a>
+
+              <a
+                href="tel:+917690863039"
+                className="inline-flex items-center gap-1.5 rounded-lg bg-blue-600 text-white px-3.5 py-1.5 text-xs font-semibold hover:bg-blue-700 transition"
+              >
+                <Phone size={14} />
+                <span>Call 7690863039</span>
+              </a>
+
+              <a
+                href="mailto:aavdhesh.dadhich@gmail.com"
+                className="inline-flex items-center gap-1.5 rounded-lg bg-purple-600 text-white px-3.5 py-1.5 text-xs font-semibold hover:bg-purple-700 transition"
+              >
+                <Mail size={14} />
+                <span>Direct Mail</span>
+              </a>
+            </div>
+
+            {/* Social Badges */}
+            <div className="pt-2 flex flex-wrap items-center justify-center md:justify-start gap-4 text-xs font-medium text-muted-foreground">
+              <a
+                href="https://github.com/itzzavdheshh"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="hover:text-foreground transition underline underline-offset-2"
+              >
+                GitHub
+              </a>
+              <a
+                href="https://www.linkedin.com/in/aavdhesh"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="hover:text-foreground transition underline underline-offset-2"
+              >
+                LinkedIn
+              </a>
+              <a
+                href="https://x.com/Itzzavdheshh"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="hover:text-foreground transition underline underline-offset-2"
+              >
+                X / Twitter
+              </a>
+              <a
+                href="https://www.instagram.com/itzzavdheshh?igsi=MTFkNTM5OGljOHV5aQ=="
+                target="_blank"
+                rel="noopener noreferrer"
+                className="hover:text-foreground transition underline underline-offset-2"
+              >
+                Instagram
+              </a>
+              <a
+                href="https://discord.com/users/1385290408698839223"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="hover:text-foreground transition underline underline-offset-2"
+              >
+                Discord
+              </a>
+            </div>
+
+          </div>
+        </div>
+      </section>
+
+      {/* Why VoiceForge Exists */}
+      <section>
         <h2 className="text-2xl font-semibold mb-4">Why VoiceForge Exists</h2>
         <p className="text-muted-foreground leading-relaxed">
           Deaf and speech-impaired people on video calls are often pushed into
@@ -52,7 +174,8 @@ export default function About({ onNavigate }) {
         </p>
       </section>
 
-      <section className="mb-16">
+      {/* How it works */}
+      <section>
         <h2 className="text-2xl font-semibold mb-8">How It Works</h2>
         <div className="grid gap-6 sm:grid-cols-3">
           {steps.map((step) => (
@@ -65,7 +188,8 @@ export default function About({ onNavigate }) {
         </div>
       </section>
 
-      <section className="mb-16">
+      {/* Tech Stack */}
+      <section>
         <h2 className="text-2xl font-semibold mb-6">Tech Stack</h2>
         <div className="flex flex-wrap gap-3">
           {techStack.map((tech) => (
@@ -76,8 +200,9 @@ export default function About({ onNavigate }) {
         </div>
       </section>
 
-      <section className="mb-12 rounded-xl border border-border bg-card p-6">
-        <h2 className="text-xl font-semibold mb-2">Software Version & Release Info</h2>
+      {/* License & Release Info */}
+      <section className="rounded-xl border border-border bg-card p-6">
+        <h2 className="text-xl font-semibold mb-2">Software License & Release Info</h2>
         <div className="flex flex-wrap items-center justify-between text-sm text-muted-foreground gap-4">
           <div>
             <span className="font-bold text-foreground">VoiceForge v1.0.0</span> (Stable Release)
@@ -91,16 +216,16 @@ export default function About({ onNavigate }) {
         </div>
       </section>
 
+      {/* Open Source */}
       <section className="rounded-xl border border-border bg-card p-8 text-center">
         <h2 className="text-2xl font-semibold mb-3">Open Source and Community</h2>
         <p className="text-muted-foreground mb-6 max-w-xl mx-auto">
-          VoiceForge is built in the open under the MIT license. Whether you are
-          fixing a bug, suggesting a feature, or improving accessibility, all
-          contributions are welcome.
+          VoiceForge is built in the open by <strong>Avdhesh Kumar Dadhich</strong> under the MIT license. Whether you are
+          fixing a bug, suggesting a feature, or improving accessibility, all contributions are welcome.
         </p>
         <div className="flex flex-col sm:flex-row gap-3 justify-center">
           <a
-            href="https://github.com/itzzavdhesh/VoiceForge"
+            href="https://github.com/itzzavdheshh/VoiceForge"
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center justify-center gap-2 rounded-lg bg-primary text-primary-foreground px-5 py-2.5 text-sm font-medium hover:opacity-90 transition-opacity"
