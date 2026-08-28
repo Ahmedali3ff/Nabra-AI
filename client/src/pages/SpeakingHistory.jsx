@@ -1,12 +1,5 @@
 import React, { useEffect, useState } from "react";
-import {
-  Copy,
-  Trash2,
-  Star,
-  Volume2,
-  Clock,
-  Mic2,
-} from "lucide-react";
+import { Copy, Trash2, Star, Volume2, Clock, Mic2 } from "lucide-react";
 
 const defaultHistory = [
   {
@@ -29,24 +22,25 @@ export default function SpeakingHistory() {
   const [history, setHistory] = useState([]);
 
   useEffect(() => {
-    const saved = localStorage.getItem("voiceforge-history");
-
-    if (saved) {
-      setHistory(JSON.parse(saved));
-    } else {
+    try {
+      const saved = localStorage.getItem("voiceforge-history");
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        setHistory(Array.isArray(parsed) ? parsed : defaultHistory);
+      } else {
+        setHistory(defaultHistory);
+        localStorage.setItem(
+          "voiceforge-history",
+          JSON.stringify(defaultHistory),
+        );
+      }
+    } catch {
       setHistory(defaultHistory);
-      localStorage.setItem(
-        "voiceforge-history",
-        JSON.stringify(defaultHistory)
-      );
     }
   }, []);
 
   useEffect(() => {
-    localStorage.setItem(
-      "voiceforge-history",
-      JSON.stringify(history)
-    );
+    localStorage.setItem("voiceforge-history", JSON.stringify(history));
   }, [history]);
 
   const copyText = async (text) => {
@@ -62,33 +56,30 @@ export default function SpeakingHistory() {
   const toggleFavorite = (id) => {
     setHistory((prev) =>
       prev.map((item) =>
-        item.id === id
-          ? { ...item, favorite: !item.favorite }
-          : item
-      )
+        item.id === id ? { ...item, favorite: !item.favorite } : item,
+      ),
     );
   };
 
   const deleteItem = (id) => {
     if (!window.confirm("Delete this history item?")) return;
 
-    setHistory((prev) =>
-      prev.filter((item) => item.id !== id)
-    );
+    setHistory((prev) => prev.filter((item) => item.id !== id));
   };
 
   const clearAllHistory = () => {
-    if (!window.confirm("Are you sure you want to clear all speaking history?")) return;
+    if (!window.confirm("Are you sure you want to clear all speaking history?"))
+      return;
     setHistory([]);
   };
+
+  const safeHistory = Array.isArray(history) ? history : [];
 
   return (
     <div className="max-w-6xl mx-auto px-6 py-8">
       <div className="flex justify-between items-center mb-2">
-        <h1 className="text-3xl font-bold">
-          Speaking History Timeline
-        </h1>
-        {history.length > 0 && (
+        <h1 className="text-3xl font-bold">Speaking History Timeline</h1>
+        {safeHistory.length > 0 && (
           <button
             onClick={clearAllHistory}
             className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-red-300 text-red-600 hover:bg-red-50 text-sm font-semibold transition"
@@ -104,7 +95,7 @@ export default function SpeakingHistory() {
       </p>
 
       <div className="space-y-5">
-        {history.map((item) => (
+        {safeHistory.map((item) => (
           <div
             key={item.id}
             className="rounded-xl border bg-white dark:bg-neutral-900 shadow-sm p-5"
@@ -165,7 +156,7 @@ export default function SpeakingHistory() {
           </div>
         ))}
 
-        {history.length === 0 && (
+        {safeHistory.length === 0 && (
           <div className="text-center py-10 text-gray-500">
             No speaking history available.
           </div>

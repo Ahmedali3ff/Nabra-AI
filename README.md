@@ -20,6 +20,7 @@ VoiceForge is a browser-based assistive video tool that lets a user type during 
 - [Roadmap](#roadmap)
 - [License](#license)
 - [About](#about)
+- [Troubleshooting & FAQ](docs/TROUBLESHOOTING.md)
 
 ---
 
@@ -86,11 +87,11 @@ npm run dev
 
 ## Environment Variables
 
-| Variable | Required | Description |
-| --- | --- | --- |
-| `ELEVENLABS_API_KEY` | Yes | Server-side API key used for voice cloning and TTS requests. |
-| `PORT` | No | Express API port. Defaults to `3001`. |
-| `CLIENT_URL` | No | Trusted frontend origin for the CORS policy. In production, set this to your deployed frontend URL (e.g. `https://voice-forge-client.vercel.app`). Defaults to `http://localhost:5173`. Requests from any other origin will be rejected. |
+| Variable             | Required | Description                                                                                                                                                                                                                              |
+| -------------------- | -------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `ELEVENLABS_API_KEY` | Yes      | Server-side API key used for voice cloning and TTS requests.                                                                                                                                                                             |
+| `PORT`               | No       | Express API port. Defaults to `3001`.                                                                                                                                                                                                    |
+| `CLIENT_URL`         | No       | Trusted frontend origin for the CORS policy. In production, set this to your deployed frontend URL (e.g. `https://voice-forge-client.vercel.app`). Defaults to `http://localhost:5173`. Requests from any other origin will be rejected. |
 
 ## Using VoiceForge In A Call
 
@@ -164,4 +165,5 @@ Go to Settings > Devices > Camera and select **OBS Virtual Camera**.
 ## License
 
 MIT
+
 # TODO: feat: add an "interrupt / stop speech" button (#448)

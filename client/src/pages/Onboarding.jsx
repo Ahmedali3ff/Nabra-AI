@@ -1,8 +1,12 @@
 // Renders the first-time setup flow for recording and cloning a reference voice.
 import React, { useRef, useEffect } from "react";
-import { CheckCircle2, Loader2, CircleAlert, ArrowRight } from "lucide-react";
-import React from "react";
-import { CheckCircle2, Loader2, CircleAlert, ArrowRight, RotateCcw } from "lucide-react";
+import {
+  CheckCircle2,
+  Loader2,
+  CircleAlert,
+  ArrowRight,
+  RotateCcw,
+} from "lucide-react";
 import VoiceRecorder from "../components/VoiceRecorder.jsx";
 import useVoiceClone from "../hooks/useVoiceClone.js";
 import { useToast, ToastContainer } from "../components/useToast.jsx";
@@ -17,7 +21,15 @@ import {
 /**
  * A labelled range slider for a voice parameter.
  */
-function VoiceSlider({ id, label, description, value, onChange, min = 0, max = 1 }) {
+function VoiceSlider({
+  id,
+  label,
+  description,
+  value,
+  onChange,
+  min = 0,
+  max = 1,
+}) {
   return (
     <div className="space-y-1.5">
       <label
@@ -214,97 +226,68 @@ export default function Onboarding({ onReady }) {
   const { cloneVoice, status, error: apiError } = useVoiceClone();
   const { toasts, showToast } = useToast();
   const isCloning = status === "cloning";
-<<<<<<< HEAD
-  const [serverStatus, setServerStatus] = React.useState({ isMock: false, space: "" });
-=======
   const [serverStatus, setServerStatus] = React.useState({
     isMock: false,
+    space: "",
     hasServerKey: false,
   });
->>>>>>> 7eeb8da (refactor: reuse voice name length constants)
 
   React.useEffect(() => {
-    fetch("/api/voice/status")
-      .then((res) => res.json())
-      .then((data) => setServerStatus(data))
-      .catch((err) => console.error("Failed to fetch server status:", err));
-  }, []);
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 5000); // 5-second timeout
 
-  const recordingDuration = recording?.duration || 0;
+    fetch(`${API_BASE_URL}/api/voice/status`, { signal: controller.signal })
+      .then(async (res) => {
+        clearTimeout(timeoutId);
 
-const MIN_NAME_LENGTH = 3;
-const MAX_NAME_LENGTH = 100;
+        if (!res.ok) {
+          throw new Error(`HTTP ${res.status}`);
+        }
 
-export default function Onboarding({ onReady }) {
-  const [recording, setRecording] = React.useState(null);
-  const [recordingDuration, setRecordingDuration] = React.useState(0);
+        const contentType = res.headers.get("content-type");
+        if (!contentType?.includes("application/json")) {
+          throw new Error("Server returned non-JSON response");
+        }
 
-  function handleRecordingReady(blob, duration = 0) {
-    setRecording(blob);
-    setRecordingDuration(duration);
-  }
+        return res.json();
+      })
+      .then((data) => {
+        setServerStatus(data);
+      })
+      .catch((err) => {
+        if (err.name === "AbortError") {
+          console.error(
+            "Failed to fetch server status (timeout or cancelled):",
+            err,
+          );
+        } else {
+          console.error("Failed to fetch server status:", err);
+        }
+        // Do NOT call setServerStatus here — leave previous/default state intact
+      });
 
-  const [voiceName, setVoiceName] = React.useState("VoiceForge Voice");
-  const [successProfile, setSuccessProfile] = React.useState(null);
-  const { cloneVoice, status, error: apiError } = useVoiceClone();
-  const { toasts, showToast } = useToast();
-  const isCloning = status === "cloning";
-  const [serverStatus, setServerStatus] = React.useState({ isMock: false, space: "" });
-
-  React.useEffect(() => {
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 5000); // 5-second timeout
-
-  fetch(`${API_BASE_URL}/api/voice/status`, { signal: controller.signal })
-    .then(async (res) => {
+    return () => {
       clearTimeout(timeoutId);
-
-      if (!res.ok) {
-        throw new Error(`HTTP ${res.status}`);
-      }
-
-      const contentType = res.headers.get("content-type");
-      if (!contentType?.includes("application/json")) {
-        throw new Error("Server returned non-JSON response");
-      }
-
-      return res.json();
-    })
-    .then((data) => {
-      setServerStatus(data);
-    })
-    .catch((err) => {
-      if (err.name === "AbortError") {
-        console.error("Failed to fetch server status (timeout or cancelled):", err);
-      } else {
-        console.error("Failed to fetch server status:", err);
-      }
-      // Do NOT call setServerStatus here — leave previous/default state intact
-    });
-
-  return () => {
-    clearTimeout(timeoutId);
-    controller.abort();
-  };
-}, []);
+      controller.abort();
+    };
+  }, []);
   const hasKey = React.useMemo(() => {
     return serverStatus.isMock || Boolean(serverStatus.space);
   }, [serverStatus]);
-  
-  const nameError = React.useMemo(() => {
-  const trimmed = voiceName.trim();
-  if (trimmed.length === 0) {
-    return "Voice name is required.";
-  }
-  if (trimmed.length < MIN_NAME_LENGTH) {
-    return `Voice name must be at least ${MIN_NAME_LENGTH} characters.`;
-  }
-  if (trimmed.length > MAX_NAME_LENGTH) {
-    return `Voice name must be ${MAX_NAME_LENGTH} characters or fewer.`;
-  }
-  return "";
-}, [voiceName]);
 
+  const nameError = React.useMemo(() => {
+    const trimmed = voiceName.trim();
+    if (trimmed.length === 0) {
+      return "Voice name is required.";
+    }
+    if (trimmed.length < MIN_NAME_LENGTH) {
+      return `Voice name must be at least ${MIN_NAME_LENGTH} characters.`;
+    }
+    if (trimmed.length > MAX_NAME_LENGTH) {
+      return `Voice name must be ${MAX_NAME_LENGTH} characters or fewer.`;
+    }
+    return "";
+  }, [voiceName]);
 
   // Track the highest milestone step the user is allowed to navigate to
   const [maxUnlockedStep, setMaxUnlockedStep] = React.useState(() => {
@@ -316,10 +299,10 @@ export default function Onboarding({ onReady }) {
   const [activeStep, setActiveStep] = React.useState(() => {
     const savedStep = localStorage.getItem("voiceforge:onboardingStep");
     const savedMax = localStorage.getItem("voiceforge:maxUnlockedStep");
-    
+
     const parsedStep = savedStep ? parseInt(savedStep, 10) : 1;
     const parsedMax = savedMax ? parseInt(savedMax, 10) : 1;
-    
+
     // Clamp initialization target securely underneath the highest unlocked milestone
     return Math.min(parsedStep, parsedMax);
   });
@@ -327,19 +310,22 @@ export default function Onboarding({ onReady }) {
   const stepContent = {
     1: {
       title: "Create your voice profile",
-      description: "Record a short, consent-based reference clip. VoiceForge sends it via the Chatterbox engine on Hugging Face through your local server and saves the returned voice ID in this browser.",
-      labels: ["Record", "Clone", "Next"]
+      description:
+        "Record a short, consent-based reference clip. VoiceForge sends it via the Chatterbox engine on Hugging Face through your local server and saves the returned voice ID in this browser.",
+      labels: ["Record", "Clone", "Next"],
     },
     2: {
       title: "Configure voice settings",
-      description: "Fine-tune your workspace properties, adjust stability and clarity parameters, and establish your initial system instructions.",
-      labels: ["Stability", "Clarity", "Next"]
+      description:
+        "Fine-tune your workspace properties, adjust stability and clarity parameters, and establish your initial system instructions.",
+      labels: ["Stability", "Clarity", "Next"],
     },
     3: {
       title: "Finalize setup & test",
-      description: "Review your configurations, connect your local server pipeline, and prepare to place your very first AI companion voice call.",
-      labels: ["Review", "Pipeline", "Launch"]
-    }
+      description:
+        "Review your configurations, connect your local server pipeline, and prepare to place your very first AI companion voice call.",
+      labels: ["Review", "Pipeline", "Launch"],
+    },
   };
 
   // Persist values to localStorage on step changes
@@ -348,29 +334,21 @@ export default function Onboarding({ onReady }) {
   }, [activeStep]);
 
   React.useEffect(() => {
-    localStorage.setItem("voiceforge:maxUnlockedStep", maxUnlockedStep.toString());
+    localStorage.setItem(
+      "voiceforge:maxUnlockedStep",
+      maxUnlockedStep.toString(),
+    );
   }, [maxUnlockedStep]);
 
-  const recordingDuration = recording?.duration ?? 0;
-
-  function handleRecordingReady(blob, payload) {
-    setRecording(normalizeRecordingResult(blob, payload));
-  }
-
   async function handleClone() {
-    // 1. Strict validation guards: recording and a valid name are required.
     if (!hasKey || !recording) return;
-    if (recordingDuration < 10) return;
-    if (nameError) return; // block on empty / whitespace / over-limit name
-
-  function handleRecordingReady(blob, payload) {
-    setRecording(normalizeRecordingResult(blob, payload));
-  }
-
-  async function handleClone() {
-    if (!recording || !recording.isValid) return;
-    const profile = await cloneVoice(recording.blob, voiceName);
-    setSuccessProfile(profile);
+    if (nameError) return;
+    try {
+      const profile = await cloneVoice(recording, voiceName);
+      setSuccessProfile(profile);
+    } catch (err) {
+      console.error("Clone failed:", err);
+    }
   }
 
   return (
@@ -379,15 +357,13 @@ export default function Onboarding({ onReady }) {
         <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
           <div>
             <p className="text-sm font-bold uppercase tracking-[0.18em] text-mint">
-              Step 1 of 3
+              Step {activeStep} of 3
             </p>
             <h2 className="mt-2 text-3xl font-bold">
-              Create your voice profile
+              {stepContent[activeStep]?.title}
             </h2>
             <p className="mt-3 max-w-3xl text-base leading-7 text-white/75">
-              Record a short, consent-based reference clip. VoiceForge sends it
-              to ElevenLabs through your local server and saves the returned
-              voice ID in this browser.
+              {stepContent[activeStep]?.description}
             </p>
           </div>
           <div className="flex items-center gap-3">
@@ -402,13 +378,14 @@ export default function Onboarding({ onReady }) {
               className="grid w-full max-w-sm grid-cols-3 gap-2"
               aria-label="Onboarding progress"
             >
-            {["Record", "Clone", "Call"].map((step, index) => (
-              <div
-                key={step}
-                className={`h-2 rounded-full ${index === 0 ? "bg-coral" : "bg-white/25"}`}
-                title={step}
-              />
-            ))}
+              {["Record", "Settings", "Call"].map((step, index) => (
+                <div
+                  key={step}
+                  className={`h-2 rounded-full transition-all ${index + 1 <= activeStep ? "bg-coral" : "bg-white/25"}`}
+                  title={step}
+                />
+              ))}
+            </div>
           </div>
         </div>
       </section>
@@ -418,18 +395,29 @@ export default function Onboarding({ onReady }) {
         <>
           {!hasKey && (
             <div className="flex items-center gap-2 rounded-md border border-coral/40 bg-coral/10 p-4 text-sm font-semibold text-ink dark:text-neutral-100">
-              <CircleAlert size={18} aria-hidden="true" className="shrink-0 text-coral" />
+              <CircleAlert
+                size={18}
+                aria-hidden="true"
+                className="shrink-0 text-coral"
+              />
               <span>
-              No voice engine available. Ensure your local server is running on port 3001. Check your{" "}
-                <strong>.env</strong> file and the README.
+                No voice engine available. Ensure your local server is running
+                on port 3001. Check your <strong>.env</strong> file and the
+                README.
               </span>
             </div>
           )}
 
-          <VoiceRecorder onRecordingReady={handleRecordingReady} disabled={isCloning} />
+          <VoiceRecorder
+            onRecordingReady={handleRecordingReady}
+            disabled={isCloning}
+          />
 
           <section className="rounded-lg border border-ink/10 bg-white p-5 shadow-soft dark:border-border dark:bg-surface dark:shadow-soft-dk">
-            <label className="block text-sm font-bold text-ink dark:text-neutral-100" htmlFor="voice-name">
+            <label
+              className="block text-sm font-bold text-ink dark:text-neutral-100"
+              htmlFor="voice-name"
+            >
               Voice profile name
             </label>
             <div className="mt-2 flex flex-col gap-3 sm:flex-row">
@@ -453,7 +441,13 @@ export default function Onboarding({ onReady }) {
               <button
                 type="button"
                 onClick={handleClone}
-                disabled={isCloning || !hasKey || !recording || recordingDuration < 10 || Boolean(nameError)}
+                disabled={
+                  isCloning ||
+                  !hasKey ||
+                  !recording ||
+                  recordingDuration < 10 ||
+                  Boolean(nameError)
+                }
                 className="inline-flex min-h-11 items-center justify-center gap-2 rounded-md bg-coral px-5 font-bold text-white transition hover:bg-coral/90 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {isCloning && <Loader2 className="animate-spin" size={18} />}
@@ -467,7 +461,10 @@ export default function Onboarding({ onReady }) {
               className="mt-1.5 flex items-center justify-between gap-2 text-xs"
             >
               {nameError ? (
-                <p className="flex items-center gap-1 font-semibold text-coral" role="alert">
+                <p
+                  className="flex items-center gap-1 font-semibold text-coral"
+                  role="alert"
+                >
                   <CircleAlert size={13} aria-hidden="true" />
                   {nameError}
                 </p>
@@ -490,16 +487,22 @@ export default function Onboarding({ onReady }) {
 
             {/* Render actual API errors transparently instead of swallowing failures */}
             {apiError && (
-              <p className="mt-3 text-sm font-semibold text-coral flex items-center gap-1.5" role="alert">
+              <p
+                className="mt-3 text-sm font-semibold text-coral flex items-center gap-1.5"
+                role="alert"
+              >
                 <CircleAlert size={16} />
                 {apiError}
               </p>
             )}
-            
+
             {(successProfile || maxUnlockedStep >= 2) && (
               <div className="mt-4 flex flex-col gap-3 rounded-md bg-mint p-4 sm:flex-row sm:items-center sm:justify-between dark:bg-glow/15">
                 <p className="inline-flex items-center gap-2 font-bold text-ink dark:text-neutral-50">
-                  <CheckCircle2 size={20} className="text-moss dark:text-glow" />
+                  <CheckCircle2
+                    size={20}
+                    className="text-moss dark:text-glow"
+                  />
                   Voice profile setup verified!
                 </p>
                 <button
@@ -520,23 +523,39 @@ export default function Onboarding({ onReady }) {
       {activeStep === 2 && (
         <Step2VoiceSettings
           onBack={() => setActiveStep(1)}
-          onContinue={() => { setMaxUnlockedStep(3); setActiveStep(3); }}
+          onContinue={() => {
+            setMaxUnlockedStep(3);
+            setActiveStep(3);
+          }}
         />
       )}
 
       {/* STEP 3: PIPELINE DEPLOYMENT CHECKLIST */}
       {activeStep === 3 && (
         <section className="rounded-lg border border-ink/10 bg-white p-6 shadow-soft dark:border-border dark:bg-surface">
-          <h3 className="text-xl font-bold text-ink dark:text-neutral-100">Ready for Activation</h3>
-          <p className="mt-2 text-sm text-neutral-500">Your custom voice template setup is complete.</p>
+          <h3 className="text-xl font-bold text-ink dark:text-neutral-100">
+            Ready for Activation
+          </h3>
+          <p className="mt-2 text-sm text-neutral-500">
+            Your custom voice template setup is complete.
+          </p>
           <div className="my-6 p-12 border-2 border-dashed border-ink/10 rounded-md text-center text-neutral-400">
-            Pipeline deployment status diagnostics verify operational conditions are ideal.
+            Pipeline deployment status diagnostics verify operational conditions
+            are ideal.
           </div>
           <div className="flex justify-between items-center border-t pt-4">
-            <button type="button" onClick={() => setActiveStep(2)} className="text-sm font-bold text-ink dark:text-neutral-300 hover:underline">
+            <button
+              type="button"
+              onClick={() => setActiveStep(2)}
+              className="text-sm font-bold text-ink dark:text-neutral-300 hover:underline"
+            >
               ← Back to Settings
             </button>
-            <button type="button" onClick={onReady} className="rounded-md bg-black px-5 py-2 font-bold text-white dark:bg-glow dark:text-black">
+            <button
+              type="button"
+              onClick={onReady}
+              className="rounded-md bg-black px-5 py-2 font-bold text-white dark:bg-glow dark:text-black"
+            >
               Complete Setup & Go to Call
             </button>
           </div>

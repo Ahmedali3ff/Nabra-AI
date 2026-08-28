@@ -1,4 +1,6 @@
-import React from "react";
+import React, { useState, useEffect, useRef } from "react";
+import { Check, X, Pencil, Plus, Edit3 } from "lucide-react";
+import { useToast } from "./useToast.jsx";
 
 const QUICK_REPLIES = [
   { label: "Hello", phrase: "Hello" },
@@ -10,9 +12,23 @@ const QUICK_REPLIES = [
   { label: "No thanks", phrase: "No, thank you" },
 ];
 
+const CATEGORIES = ["General", "Questions", "Responses", "Social"];
+const DEFAULT_QUICK_REPLIES = QUICK_REPLIES.map((r, i) => ({
+  id: `qr-${i}`,
+  label: r.label,
+  phrase: r.phrase,
+  category: "General",
+}));
+
+function generateId() {
+  return "qr-" + Math.random().toString(36).substring(2, 11);
+}
+
 const STORAGE_KEY = "vf_quick_replies";
 
-export function QuickReplies({ onSelect, showToast }) {
+export function QuickReplies({ onSelect, showToast: propShowToast }) {
+  const toastCtx = useToast();
+  const notify = propShowToast || toastCtx?.showToast || (() => {});
   const [replies, setReplies] = useState(() => {
     try {
       const saved = localStorage.getItem(STORAGE_KEY);
@@ -30,7 +46,10 @@ export function QuickReplies({ onSelect, showToast }) {
         return parsed.map((item) => ({
           ...item,
           id: item.id || generateId(),
-          category: item.category && CATEGORIES.includes(item.category) ? item.category : "General",
+          category:
+            item.category && CATEGORIES.includes(item.category)
+              ? item.category
+              : "General",
         }));
       }
       return DEFAULT_QUICK_REPLIES;
@@ -48,6 +67,8 @@ export function QuickReplies({ onSelect, showToast }) {
   const [editedValue, setEditedValue] = useState("");
   const [selectedCategoryTab, setSelectedCategoryTab] = useState("All");
   const [newCategory, setNewCategory] = useState("General");
+  const [draggedItem, setDraggedItem] = useState(null);
+  const tablistRef = useRef(null);
 
   useEffect(() => {
     try {
@@ -80,20 +101,14 @@ export function QuickReplies({ onSelect, showToast }) {
   const handleAdd = (e) => {
     e.preventDefault();
     const cleanPhrase = newPhrase.trim();
-    
 
     if (cleanPhrase.length > 120) {
-      showToast("Phrase is too long (max 120 characters)", "error");
-      return;
-    }
-
-    if (cleanPhrase.length > 120) {
-      showToast("Phrase is too long (max 120 characters)", "error");
+      notify("Phrase is too long (max 120 characters)", "error");
       return;
     }
 
     if (!cleanPhrase) {
-      showToast("Phrase cannot be empty", "error");
+      notify("Phrase cannot be empty", "error");
       return;
     }
 
@@ -102,7 +117,7 @@ export function QuickReplies({ onSelect, showToast }) {
     );
 
     if (isDuplicate) {
-      showToast("This quick reply already exists", "error");
+      notify("This quick reply already exists", "error");
       return;
     }
 
@@ -116,63 +131,61 @@ export function QuickReplies({ onSelect, showToast }) {
     setNewPhrase("");
     setNewCategory("General");
     setIsAdding(false);
-    showToast("Quick reply added", "success");
+    notify("Quick reply added", "success");
   };
 
   const handleDelete = (idToDelete) => {
     setReplies((prev) => prev.filter((r) => r.id !== idToDelete));
-    showToast("Quick reply deleted", "success");
+    notify("Quick reply deleted", "success");
   };
   const handleEdit = (oldPhrase) => {
-  const cleanPhrase = editedValue.trim();
-  const normalizedOldPhrase = oldPhrase.toLowerCase();
-  const isDuplicate = replies.some(
-    (reply) =>
-      reply.phrase.toLowerCase() === cleanPhrase.toLowerCase() &&
-    reply.phrase.toLowerCase() !== normalizedOldPhrase
-  );
+    const cleanPhrase = editedValue.trim();
+    const normalizedOldPhrase = oldPhrase.toLowerCase();
+    const isDuplicate = replies.some(
+      (reply) =>
+        reply.phrase.toLowerCase() === cleanPhrase.toLowerCase() &&
+        reply.phrase.toLowerCase() !== normalizedOldPhrase,
+    );
 
+    if (!cleanPhrase) {
+      notify("Phrase cannot be empty", "error");
+      return;
+    }
+    if (cleanPhrase.length > 120) {
+      notify("Phrase is too long (max 120 characters)", "error");
+      return;
+    }
+    if (isDuplicate) {
+      notify("This quick reply already exists", "error");
+      return;
+    }
 
+    setReplies((prev) =>
+      prev.map((reply) =>
+        reply.phrase === oldPhrase
+          ? {
+              ...reply,
+              phrase: cleanPhrase,
+              label: cleanPhrase,
+            }
+          : reply,
+      ),
+    );
 
-  if (!cleanPhrase) {
-    showToast("Phrase cannot be empty", "error");
-    return;
-  }
-  if (cleanPhrase.length > 120) {
-    showToast("Phrase is too long (max 120 characters)", "error");
-    return;
-  }
-  if (isDuplicate) {
-    showToast("This quick reply already exists", "error");
-    return;
-  }
-
-  setReplies((prev) =>
-    prev.map((reply) =>
-      reply.phrase === oldPhrase
-        ? {
-            ...reply,
-            phrase: cleanPhrase,
-            label: cleanPhrase,
-          }
-        : reply
-    )
-  );
-
-  setEditingPhrase(null);
-  setEditedValue("");
-  showToast("Quick reply updated", "success");
-};
-const handleEditKeyDown = (e, oldPhrase) => {
-  if (e.key === "Enter") {
-    handleEdit(oldPhrase);
-  }
-
-  if (e.key === "Escape") {
     setEditingPhrase(null);
     setEditedValue("");
-  }
-};
+    notify("Quick reply updated", "success");
+  };
+  const handleEditKeyDown = (e, oldPhrase) => {
+    if (e.key === "Enter") {
+      handleEdit(oldPhrase);
+    }
+
+    if (e.key === "Escape") {
+      setEditingPhrase(null);
+      setEditedValue("");
+    }
+  };
 
   const handleEditStart = (id, reply) => {
     setIsAdding(false);
@@ -188,26 +201,7 @@ const handleEditKeyDown = (e, oldPhrase) => {
     if (draggedItem === null) return;
     const oldIndex = replies.findIndex((r) => r.id === draggedItem);
     const newIndex = replies.findIndex((r) => r.id === targetId);
-    
-    if (oldIndex !== -1 && newIndex !== -1) {
-      const newReplies = [...replies];
-      const [removed] = newReplies.splice(oldIndex, 1);
-      newReplies.splice(newIndex, 0, removed);
-      setReplies(newReplies);
-    }
-    setDraggedItem(null);
-  };
 
-  const handleDragOver = (e) => {
-    e.preventDefault();
-  };
-
-  const handleDrop = (e, targetId) => {
-    e.preventDefault();
-    if (draggedItem === null) return;
-    const oldIndex = replies.findIndex((r) => r.id === draggedItem);
-    const newIndex = replies.findIndex((r) => r.id === targetId);
-    
     if (oldIndex !== -1 && newIndex !== -1) {
       const newReplies = [...replies];
       const [removed] = newReplies.splice(oldIndex, 1);
@@ -227,11 +221,11 @@ const handleEditKeyDown = (e, oldPhrase) => {
 
     const cleanPhrase = editingReplyData.phrase.trim();
     if (cleanPhrase.length > 120) {
-      showToast("Phrase is too long (max 120 characters)", "error");
+      notify("Phrase is too long (max 120 characters)", "error");
       return;
     }
     if (!cleanPhrase) {
-      showToast("Phrase cannot be empty", "error");
+      notify("Phrase cannot be empty", "error");
       return;
     }
 
@@ -242,7 +236,7 @@ const handleEditKeyDown = (e, oldPhrase) => {
     );
 
     if (isDuplicate) {
-      showToast("This quick reply already exists", "error");
+      notify("This quick reply already exists", "error");
       return;
     }
 
@@ -262,14 +256,16 @@ const handleEditKeyDown = (e, oldPhrase) => {
 
     setEditingReplyId(null);
     setEditingReplyData(null);
-    showToast("Quick reply updated", "success");
+    notify("Quick reply updated", "success");
   };
 
-  const filteredReplies = replies.filter((reply) => {
+  const safeReplies = Array.isArray(replies) ? replies : [];
+  const filteredReplies = safeReplies.filter((reply) => {
+    if (!reply) return false;
     if (selectedCategoryTab === "All") return true;
     return reply.category === selectedCategoryTab;
   });
-  const allCats = ["All", ...categories];
+  const allCats = ["All", ...CATEGORIES];
 
   const handleTabKeyDown = (e) => {
     const currentIndex = allCats.indexOf(selectedCategoryTab);
@@ -298,30 +294,41 @@ const handleEditKeyDown = (e, oldPhrase) => {
       aria-labelledby="qr-heading"
       className="flex-shrink-0 border-b border-neutral-200 px-4 py-3 dark:border-border dark:bg-black"
     >
-      <h3
-        id="qr-heading"
-        className="mb-2 text-[11px] font-semibold uppercase tracking-widest text-neutral-400 dark:text-neutral-500"
-      >
-        Quick replies
-      </h3>
-
-      <div className="flex flex-wrap gap-2" role="group" aria-label="Quick reply phrases">
-        {QUICK_REPLIES.map(({ label, phrase }) => (
+      <div className="mb-2 flex items-center justify-between">
+        <h3
+          id="qr-heading"
+          className="text-[11px] font-semibold uppercase tracking-widest text-neutral-400 dark:text-neutral-500"
+        >
+          Quick replies
+        </h3>
+        <div className="flex items-center gap-2">
           <button
-            key={phrase}
-            onClick={() => onSelect(phrase)}
-            className={[
-              "rounded-full border border-neutral-200 bg-neutral-50 px-3 py-1.5",
-              "text-sm text-neutral-700 transition-all duration-150",
-              "hover:-translate-y-px hover:border-blue-400 hover:bg-blue-50 hover:text-blue-700",
-              "focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-1",
-              "active:translate-y-0 active:scale-95",
-              "dark:border-border dark:bg-surface dark:text-neutral-300",
-              "dark:hover:border-blue-500 dark:hover:bg-blue-500/15 dark:hover:text-blue-300 dark:focus:ring-offset-black",
-            ].join(" ")}
-            aria-label={`Quick reply: ${phrase}`}
+            type="button"
+            onClick={() => {
+              setIsAdding(!isAdding);
+              if (isEditing) setIsEditing(false);
+            }}
+            className="inline-flex items-center gap-1 text-xs font-semibold text-blue-600 hover:text-blue-700 dark:text-blue-400"
+            title="Add quick reply"
           >
-            {isEditing ? "Done" : "Customize"}
+            <Plus size={13} />
+            <span>Add</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setIsEditing(!isEditing);
+              if (isAdding) setIsAdding(false);
+            }}
+            className={`inline-flex items-center gap-1 text-xs transition ${
+              isEditing
+                ? "font-bold text-amber-600 dark:text-amber-400"
+                : "text-neutral-500 hover:text-neutral-700 dark:text-neutral-400"
+            }`}
+            title="Manage quick replies"
+          >
+            <Edit3 size={13} />
+            <span>{isEditing ? "Done" : "Manage"}</span>
           </button>
         </div>
       </div>
@@ -351,7 +358,11 @@ const handleEditKeyDown = (e, oldPhrase) => {
         ))}
       </div>
 
-      <div className="flex flex-wrap items-center gap-2" role="group" aria-label="Quick reply phrases">
+      <div
+        className="flex flex-wrap items-center gap-2"
+        role="group"
+        aria-label="Quick reply phrases"
+      >
         {filteredReplies.map(({ id, label, phrase, category }) => {
           const isCurrentlyEditing = editingReplyId === id;
 
@@ -388,7 +399,11 @@ const handleEditKeyDown = (e, oldPhrase) => {
                     className="bg-transparent text-xs text-neutral-500 dark:text-neutral-400 focus:outline-none border-l border-neutral-200 dark:border-neutral-700 pl-1.5 mr-1 cursor-pointer"
                   >
                     {CATEGORIES.map((cat) => (
-                      <option key={cat} value={cat} className="dark:bg-neutral-900 dark:text-neutral-100">
+                      <option
+                        key={cat}
+                        value={cat}
+                        className="dark:bg-neutral-900 dark:text-neutral-100"
+                      >
                         {cat}
                       </option>
                     ))}
@@ -423,54 +438,54 @@ const handleEditKeyDown = (e, oldPhrase) => {
                   "text-sm text-neutral-700 dark:border-border dark:bg-surface dark:text-neutral-300",
                 ].join(" ")}
               >
-              {editingPhrase === phrase ? (
-  <>
-    <input
-      value={editedValue}
-      onChange={(e) => setEditedValue(e.target.value)}
-      onKeyDown={(e) => handleEditKeyDown(e, phrase)}
-      className="bg-transparent text-sm outline-none"
-      autoFocus
-    />
+                {editingPhrase === phrase ? (
+                  <>
+                    <input
+                      value={editedValue}
+                      onChange={(e) => setEditedValue(e.target.value)}
+                      onKeyDown={(e) => handleEditKeyDown(e, phrase)}
+                      className="bg-transparent text-sm outline-none"
+                      autoFocus
+                    />
 
-    <button
-      onClick={() => handleEdit(phrase)}
-      aria-label="Save quick reply"
-    >
-      <Check size={12} />
-    </button>
-    <button
-  onClick={() => {
-    setEditingPhrase(null);
-    setEditedValue("");
-  }}
-  aria-label="Cancel edit"
->
-  <X size={12} />
-</button>
-  </>
-) : (
-  <>
-    <span className="truncate max-w-[150px]">{label}</span>
+                    <button
+                      onClick={() => handleEdit(phrase)}
+                      aria-label="Save quick reply"
+                    >
+                      <Check size={12} />
+                    </button>
+                    <button
+                      onClick={() => {
+                        setEditingPhrase(null);
+                        setEditedValue("");
+                      }}
+                      aria-label="Cancel edit"
+                    >
+                      <X size={12} />
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <span className="truncate max-w-[150px]">{label}</span>
 
-    <button
-      onClick={() => {
-        setEditingPhrase(phrase);
-        setEditedValue(label);
-      }}
-      aria-label="Edit quick reply"
-    >
-      <Pencil size={12} />
-    </button>
+                    <button
+                      onClick={() => {
+                        setEditingPhrase(phrase);
+                        setEditedValue(label);
+                      }}
+                      aria-label="Edit quick reply"
+                    >
+                      <Pencil size={12} />
+                    </button>
 
-    <button
-      onClick={() => handleDelete(phrase)}
-      aria-label={`Delete quick reply: ${phrase}`}
-    >
-      <X size={12} />
-    </button>
-  </>
-)}
+                    <button
+                      onClick={() => handleDelete(id)}
+                      aria-label={`Delete quick reply: ${phrase}`}
+                    >
+                      <X size={12} />
+                    </button>
+                  </>
+                )}
               </div>
             );
           }
@@ -516,7 +531,11 @@ const handleEditKeyDown = (e, oldPhrase) => {
               className="bg-transparent text-xs text-neutral-500 dark:text-neutral-400 focus:outline-none border-l border-neutral-200 dark:border-neutral-700 pl-1.5 mr-1 cursor-pointer"
             >
               {CATEGORIES.map((cat) => (
-                <option key={cat} value={cat} className="dark:bg-neutral-900 dark:text-neutral-100">
+                <option
+                  key={cat}
+                  value={cat}
+                  className="dark:bg-neutral-900 dark:text-neutral-100"
+                >
                   {cat}
                 </option>
               ))}

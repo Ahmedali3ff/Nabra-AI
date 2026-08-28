@@ -42,12 +42,14 @@ export default function KeyboardShortcutsModal({ isOpen, onClose }) {
   const filteredGroups = React.useMemo(() => {
     if (!query.trim()) return SHORTCUTS;
     const q = query.toLowerCase();
-    return SHORTCUTS.map(group => ({
+    return SHORTCUTS.map((group) => ({
       ...group,
       shortcuts: group.shortcuts.filter(
-        s => s.description.toLowerCase().includes(q) || s.keys.some(k => k.toLowerCase().includes(q))
-      )
-    })).filter(g => g.shortcuts.length > 0);
+        (s) =>
+          s.description.toLowerCase().includes(q) ||
+          s.keys.some((k) => k.toLowerCase().includes(q)),
+      ),
+    })).filter((g) => g.shortcuts.length > 0);
   }, [query]);
 
   React.useEffect(() => {
@@ -190,7 +192,10 @@ export default function KeyboardShortcutsModal({ isOpen, onClose }) {
           ))}
         </div>
         <div className="flex items-center justify-between border-t border-ink/10 px-6 py-3 dark:border-border">
-          <p id="keyboard-shortcuts-desc" className="text-xs text-ink/40 dark:text-neutral-500">
+          <p
+            id="keyboard-shortcuts-desc"
+            className="text-xs text-ink/40 dark:text-neutral-500"
+          >
             Press{" "}
             <kbd className="rounded border border-ink/15 bg-ink/5 px-1 font-mono text-[10px] dark:border-border dark:bg-white/5">
               ?

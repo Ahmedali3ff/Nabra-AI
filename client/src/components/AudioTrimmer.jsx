@@ -7,7 +7,7 @@ export function AudioTrimmer({ audioBlob, onTrimComplete }) {
   const [audioBuffer, setAudioBuffer] = useState(null);
   const [duration, setDuration] = useState(0);
   const [peaks, setPeaks] = useState([]);
-  
+
   const [startRatio, setStartRatio] = useState(0.0);
   const [endRatio, setEndRatio] = useState(1.0);
   const [dragging, setDragging] = useState(null); // 'start' | 'end' | null
@@ -364,7 +364,9 @@ export function AudioTrimmer({ audioBlob, onTrimComplete }) {
             type="button"
             onClick={isPlaying ? stopPreview : startPreview}
             className={`inline-flex items-center gap-1 rounded-md px-3 py-1.5 text-xs font-bold text-white transition ${
-              isPlaying ? "bg-neutral-600 hover:bg-neutral-700" : "bg-moss hover:bg-moss/90"
+              isPlaying
+                ? "bg-neutral-600 hover:bg-neutral-700"
+                : "bg-moss hover:bg-moss/90"
             }`}
           >
             {isPlaying ? (

@@ -1,7 +1,13 @@
 // Provides a small client-side API for uploading a recording and saving cloned voice profiles.
 import React from "react";
-import { getAllProfiles, saveProfile, deleteProfile, clearStorage } from "../utils/db.js";
+import {
+  getAllProfiles,
+  saveProfile,
+  deleteProfile,
+  clearStorage,
+} from "../utils/db.js";
 import { API_BASE_URL } from "../utils/apiConfig.js";
+import { authFetch } from "../utils/auth.js";
 
 // Fix (Issue 2): must match the server-side Multer limit in server/middleware/upload.js.
 const MAX_UPLOAD_BYTES = 12 * 1024 * 1024; // 12 MB
@@ -25,7 +31,7 @@ export async function saveVoiceProfile(profile, audioBlob = null) {
     // memory during the clone flow.
     ownerToken: profile.ownerToken || profile.owner_token || null,
     createdAt: new Date().toISOString(),
-    audioBlob // Store the binary reference audio Blob
+    audioBlob, // Store the binary reference audio Blob
   };
   await saveProfile(nextProfile);
 
@@ -42,7 +48,7 @@ export async function saveVoiceProfile(profile, audioBlob = null) {
     }
     await authFetch("/api/voices", {
       method: "POST",
-      body: formData
+      body: formData,
     });
   } catch (err) {
     console.error("Failed to sync voice profile to database:", err);
@@ -57,7 +63,7 @@ export async function deleteVoiceProfile(voiceId) {
   await deleteProfile(voiceId);
   try {
     await authFetch(`/api/voices/${voiceId}`, {
-      method: "DELETE"
+      method: "DELETE",
     });
   } catch (err) {
     console.error("Failed to delete voice profile from server:", err);
@@ -139,7 +145,8 @@ export default function useVoiceClone() {
         // 429 (Too Many Requests) indicates a clone is already in progress.
         if (response.status === 429) {
           throw new Error(
-            payload.error || "A voice clone request is already in progress. Please wait for it to complete before requesting another clone."
+            payload.error ||
+              "A voice clone request is already in progress. Please wait for it to complete before requesting another clone.",
           );
         }
         throw new Error(payload.error || "Voice cloning failed.");
@@ -148,11 +155,14 @@ export default function useVoiceClone() {
       // Fix (Broken Voice Synthesis): forward the owner_token returned by
       // the server into saveVoiceProfile so it lands in the stored profile
       // (see ownerToken field above) instead of being silently dropped.
-      const profile = await saveVoiceProfile({
-        voice_id: payload.voice_id,
-        owner_token: payload.owner_token,
-        name: payload.name || name
-      }, audioBlob);
+      const profile = await saveVoiceProfile(
+        {
+          voice_id: payload.voice_id,
+          owner_token: payload.owner_token,
+          name: payload.name || name,
+        },
+        audioBlob,
+      );
 
       setStatus("success");
       return profile;

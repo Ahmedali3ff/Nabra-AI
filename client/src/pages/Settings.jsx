@@ -1,26 +1,86 @@
-// Lets users manage browser-stored voice profiles and configure voice synthesis settings.
 import React from "react";
-import { ExternalLink, Trash2 } from "lucide-react";
+import {
+  ExternalLink,
+  Trash2,
+  CircleAlert,
+  Share2,
+  Download,
+  Upload,
+} from "lucide-react";
 import {
   deleteVoiceProfile,
   getSavedProfiles,
   clearAllVoiceProfiles,
+  saveVoiceProfile,
 } from "../hooks/useVoiceClone.js";
+import {
+  loadLanguage,
+  persistLanguage,
+  getLanguageByCode,
+  LANGUAGE_STORAGE_KEY,
+} from "../utils/languages.js";
+import {
+  loadVoiceSettings,
+  persistVoiceSettings,
+  VOICE_PRESETS,
+} from "../utils/voiceSettings.js";
+import { useToast, ToastContainer } from "../components/useToast.jsx";
+import { PitchShifter } from "../utils/pitchShifter.js";
+import ShareProfileModal from "../components/ShareProfileModal.jsx";
+import ReceiveProfileModal from "../components/ReceiveProfileModal.jsx";
+import TransferSetupModal from "../components/TransferSetupModal.jsx";
 
 export default function Settings() {
   const [apiKey, setApiKey] = React.useState(
     localStorage.getItem("voiceforge:elevenlabsApiKey") || "",
   );
-  const [profiles, setProfiles] = React.useState(getSavedProfiles());
+  const [profiles, setProfiles] = React.useState([]);
+  const [dbError, setDbError] = React.useState("");
 
-  const defaultSettings = DEFAULT_VOICE_SETTINGS;
-  const [voiceSettings, setVoiceSettings] = React.useState(loadVoiceSettings);
+  React.useEffect(() => {
+    let mounted = true;
+    async function loadProfiles() {
+      try {
+        const loaded = await getSavedProfiles();
+        if (mounted) {
+          setProfiles(Array.isArray(loaded) ? loaded : []);
+        }
+      } catch (err) {
+        if (mounted) setDbError("Failed to load saved profiles");
+      }
+    }
+    loadProfiles();
+
+    window.addEventListener("voiceforge:profileChanged", loadProfiles);
+    return () => {
+      mounted = false;
+      window.removeEventListener("voiceforge:profileChanged", loadProfiles);
+    };
+  }, []);
+  const { toasts, showToast } = useToast();
+
+  const [sharingProfile, setSharingProfile] = React.useState(null);
+  const [isReceiving, setIsReceiving] = React.useState(false);
+  const [isTransferOpen, setIsTransferOpen] = React.useState(false);
+
+  const saveApiKey = () => {
+    try {
+      localStorage.setItem("voiceforge:elevenlabsApiKey", apiKey);
+      showToast("ElevenLabs API key saved successfully", "success");
+    } catch (err) {
+      showToast("Failed to save API key", "error");
+    }
+  };
+
   const [language, setLanguage] = React.useState(loadLanguage);
   const selectedLangObj = getLanguageByCode(language);
 
   const [modelId, setModelId] = React.useState(() => {
     try {
-      return localStorage.getItem("voiceforge:selectedModelId") || "eleven_multilingual_v2";
+      return (
+        localStorage.getItem("voiceforge:selectedModelId") ||
+        "eleven_multilingual_v2"
+      );
     } catch {
       return "eleven_multilingual_v2";
     }
@@ -35,15 +95,21 @@ export default function Settings() {
     }
   }
 
-  const defaultSettings = { stability: 0.45, similarity_boost: 0.8, style: 0.2 };
+  const defaultSettings = {
+    stability: 0.45,
+    similarity_boost: 0.8,
+    style: 0.2,
+  };
   const [voiceSettings, setVoiceSettings] = React.useState(() => {
     try {
-      return JSON.parse(localStorage.getItem("voiceforge:voiceSettings")) || defaultSettings;
+      return (
+        JSON.parse(localStorage.getItem("voiceforge:voiceSettings")) ||
+        defaultSettings
+      );
     } catch {
       return defaultSettings;
     }
   });
-
 
   function saveVoiceSettings(newSettings) {
     setVoiceSettings(newSettings);
@@ -63,19 +129,27 @@ export default function Settings() {
   const cleanupPreview = React.useCallback(() => {
     setPlayingPreset(null);
     if (sourceRef.current) {
-      try { sourceRef.current.disconnect(); } catch (e) {}
+      try {
+        sourceRef.current.disconnect();
+      } catch (e) {}
       sourceRef.current = null;
     }
     if (bassFilterRef.current) {
-      try { bassFilterRef.current.disconnect(); } catch (e) {}
+      try {
+        bassFilterRef.current.disconnect();
+      } catch (e) {}
       bassFilterRef.current = null;
     }
     if (midFilterRef.current) {
-      try { midFilterRef.current.disconnect(); } catch (e) {}
+      try {
+        midFilterRef.current.disconnect();
+      } catch (e) {}
       midFilterRef.current = null;
     }
     if (trebleFilterRef.current) {
-      try { trebleFilterRef.current.disconnect(); } catch (e) {}
+      try {
+        trebleFilterRef.current.disconnect();
+      } catch (e) {}
       trebleFilterRef.current = null;
     }
     if (pitchShifterRef.current) {
@@ -90,9 +164,13 @@ export default function Settings() {
 
   const stopPreview = React.useCallback(() => {
     if (audioRef.current) {
-      try { audioRef.current.pause(); } catch (e) {}
+      try {
+        audioRef.current.pause();
+      } catch (e) {}
     }
-    try { window.speechSynthesis.cancel(); } catch (e) {}
+    try {
+      window.speechSynthesis.cancel();
+    } catch (e) {}
     cleanupPreview();
   }, [cleanupPreview]);
 
@@ -107,15 +185,19 @@ export default function Settings() {
       stopPreview();
       if (playingPreset === presetKey) return;
     }
-    
-    const activeProfileId = localStorage.getItem("voiceforge:activeVoiceId") || (profiles[0]?.voice_id);
+
+    const activeProfileId =
+      localStorage.getItem("voiceforge:activeVoiceId") || profiles[0]?.voice_id;
     if (!activeProfileId) {
-      showToast("Please clone or select a voice profile first to hear previews.", "error");
+      showToast(
+        "Please clone or select a voice profile first to hear previews.",
+        "error",
+      );
       return;
     }
-    
+
     setPlayingPreset(presetKey);
-    
+
     try {
       const response = await fetch("/api/voice/speak", {
         method: "POST",
@@ -127,72 +209,76 @@ export default function Settings() {
           voice_settings: {
             stability: preset.stability,
             style: preset.style,
-            temperature: preset.temperature
-          }
-        })
+            temperature: preset.temperature,
+          },
+        }),
       });
-      
+
       if (!response.ok) {
         throw new Error("Speech synthesis failed");
       }
-      
+
       const payload = await response.json();
       const audioUrl = payload.audioUrl;
-      
+
       if (!audioContextRef.current) {
-        audioContextRef.current = new (window.AudioContext || window.webkitAudioContext)();
+        audioContextRef.current = new (
+          window.AudioContext || window.webkitAudioContext
+        )();
       }
       const audioCtx = audioContextRef.current;
       if (audioCtx.state === "suspended") {
         await audioCtx.resume();
       }
-      
+
       const audio = new Audio(audioUrl);
       audioRef.current = audio;
       audio.playbackRate = preset.dspSpeed;
-      
+
       const source = audioCtx.createMediaElementSource(audio);
       sourceRef.current = source;
-      
+
       const bass = audioCtx.createBiquadFilter();
       bass.type = "lowshelf";
       bass.frequency.value = 200;
       bass.gain.value = preset.dspBass;
       bassFilterRef.current = bass;
-      
+
       const mid = audioCtx.createBiquadFilter();
       mid.type = "peaking";
       mid.frequency.value = 1000;
       mid.Q.value = 1.0;
       mid.gain.value = preset.dspMid;
       midFilterRef.current = mid;
-      
+
       const treble = audioCtx.createBiquadFilter();
       treble.type = "highshelf";
       treble.frequency.value = 4000;
       treble.gain.value = preset.dspTreble;
       trebleFilterRef.current = treble;
-      
+
       const shifter = new PitchShifter(audioCtx);
       shifter.setPitch(preset.dspPitch);
       pitchShifterRef.current = shifter;
-      
+
       source.connect(bass);
       bass.connect(mid);
       mid.connect(treble);
       treble.connect(shifter.input);
       shifter.output.connect(audioCtx.destination);
-      
+
       audio.onended = () => {
         cleanupPreview();
       };
-      
+
       await audio.play();
     } catch (err) {
       console.error("Failed to play preset preview:", err);
       try {
         window.speechSynthesis.cancel();
-        const utterance = new SpeechSynthesisUtterance("Testing VoiceForge presets.");
+        const utterance = new SpeechSynthesisUtterance(
+          "Testing VoiceForge presets.",
+        );
         utterance.lang = language;
         utterance.pitch = preset.dspPitch;
         utterance.rate = preset.dspSpeed;
@@ -381,7 +467,10 @@ export default function Settings() {
 
       // Commit profiles to IndexedDB
       for (const profileData of profilesToSave) {
-        await saveProfile(profileData);
+        await saveVoiceProfile(
+          { voice_id: profileData.voice_id, name: profileData.name },
+          profileData.audioBlob,
+        );
       }
 
       // 4. Update localStorage keys (faithfully reproducing empty/null values)
@@ -390,10 +479,14 @@ export default function Settings() {
         const num = parseFloat(raw);
         if (isNaN(num)) return null;
         switch (key) {
-          case "calibrationXOffset": return Math.max(-400, Math.min(400, Math.round(num))).toString();
-          case "calibrationYOffset": return Math.max(-250, Math.min(150, Math.round(num))).toString();
-          case "calibrationScale": return Math.max(0.5, Math.min(2.5, num)).toString();
-          default: return raw;
+          case "calibrationXOffset":
+            return Math.max(-400, Math.min(400, Math.round(num))).toString();
+          case "calibrationYOffset":
+            return Math.max(-250, Math.min(150, Math.round(num))).toString();
+          case "calibrationScale":
+            return Math.max(0.5, Math.min(2.5, num)).toString();
+          default:
+            return raw;
         }
       }
 
@@ -442,16 +535,16 @@ export default function Settings() {
           reader.readAsDataURL(profile.audioBlob);
         });
       }
-      
+
       const vfpData = {
         type: "voiceforge_profile",
         version: 1,
         voice_id: profile.voice_id,
         name: profile.name,
         createdAt: profile.createdAt,
-        audioDataUrl: base64Audio
+        audioDataUrl: base64Audio,
       };
-      
+
       const jsonContent = JSON.stringify(vfpData, null, 2);
       const blob = new Blob([jsonContent], { type: "application/json" });
       const url = URL.createObjectURL(blob);
@@ -495,7 +588,7 @@ export default function Settings() {
       const arr = parsed.audioDataUrl.split(",");
       const mimeMatch = arr[0].match(/:(.*?);/);
       const mime = mimeMatch ? mimeMatch[1] : "audio/wav";
-      
+
       if (!mime.startsWith("audio/")) {
         throw new Error("Embedded file is not a valid audio format.");
       }
@@ -508,10 +601,13 @@ export default function Settings() {
       }
       const audioBlob = new Blob([u8arr], { type: mime });
 
-      await saveVoiceProfile({
-        voice_id: parsed.voice_id,
-        name: parsed.name
-      }, audioBlob);
+      await saveVoiceProfile(
+        {
+          voice_id: parsed.voice_id,
+          name: parsed.name,
+        },
+        audioBlob,
+      );
 
       showToast(`Imported ${parsed.name} successfully!`, "success");
       event.target.value = "";
@@ -535,9 +631,11 @@ export default function Settings() {
   }
 
   async function removeAllProfiles() {
-    const confirmOverwrite = window.confirm("Are you sure you want to delete all saved voice profiles? This action cannot be undone and will free up storage space.");
+    const confirmOverwrite = window.confirm(
+      "Are you sure you want to delete all saved voice profiles? This action cannot be undone and will free up storage space.",
+    );
     if (!confirmOverwrite) return;
-    
+
     try {
       const next = await clearAllVoiceProfiles();
       setProfiles(next);
@@ -566,10 +664,10 @@ export default function Settings() {
           <CircleAlert size={18} aria-hidden="true" />
           <span>Database error: {dbError}</span>
         </div>
+      )}
 
       <section className="rounded-lg border border-ink/10 bg-white p-5 shadow-soft dark:border-border dark:bg-surface dark:text-neutral-100 dark:shadow-soft-dk">
         <div className="flex flex-col gap-3 lg:flex-row lg:items-end">
-
           <label className="flex-1 text-sm font-bold" htmlFor="api-key">
             ElevenLabs API key
             <input
@@ -606,11 +704,16 @@ export default function Settings() {
 
       <section className="rounded-lg border border-ink/10 bg-white p-5 shadow-soft dark:border-border dark:bg-surface dark:text-neutral-100 dark:shadow-soft-dk">
         <h2 className="text-xl font-bold">Voice Synthesis Settings</h2>
-        <p className="mt-1 text-sm text-ink/65 mb-5">Adjust how ElevenLabs generates your cloned speech.</p>
-        
+        <p className="mt-1 text-sm text-ink/65 mb-5">
+          Adjust how ElevenLabs generates your cloned speech.
+        </p>
+
         <div className="space-y-4">
           <div>
-            <label className="block text-sm font-bold mb-2 text-ink dark:text-neutral-100" htmlFor="model-select">
+            <label
+              className="block text-sm font-bold mb-2 text-ink dark:text-neutral-100"
+              htmlFor="model-select"
+            >
               ElevenLabs Model (Latency & Language)
             </label>
             <select
@@ -619,108 +722,192 @@ export default function Settings() {
               onChange={(e) => saveModelId(e.target.value)}
               className="min-h-11 w-full rounded-md border border-ink/15 bg-cloud px-3 text-ink outline-none focus:border-moss focus:ring-4 focus:ring-mint dark:border-border dark:bg-black dark:text-neutral-100 dark:focus:border-glow dark:focus:ring-glow/25"
             >
-              <option value="eleven_flash_v2_5">Eleven Flash v2.5 (Ultra-low latency - Recommended for live calls)</option>
-              <option value="eleven_turbo_v2_5">Eleven Turbo v2.5 (Low latency - High quality)</option>
-              <option value="eleven_multilingual_v2">Eleven Multilingual v2 (Standard Multilingual)</option>
-              <option value="eleven_monolingual_v1">Eleven Monolingual v1 (Standard English)</option>
+              <option value="eleven_flash_v2_5">
+                Eleven Flash v2.5 (Ultra-low latency - Recommended for live
+                calls)
+              </option>
+              <option value="eleven_turbo_v2_5">
+                Eleven Turbo v2.5 (Low latency - High quality)
+              </option>
+              <option value="eleven_multilingual_v2">
+                Eleven Multilingual v2 (Standard Multilingual)
+              </option>
+              <option value="eleven_monolingual_v1">
+                Eleven Monolingual v1 (Standard English)
+              </option>
             </select>
             <p className="text-xs text-ink/50 mt-1 dark:text-neutral-400">
-              Flash and Turbo models generate audio much faster, reducing conversation delays.
+              Flash and Turbo models generate audio much faster, reducing
+              conversation delays.
             </p>
           </div>
 
           <div>
-            <label className="flex justify-between text-sm font-bold" htmlFor="stability">
+            <label
+              className="flex justify-between text-sm font-bold"
+              htmlFor="stability"
+            >
               <span>Stability</span>
               <span className="text-ink/65">{voiceSettings.stability}</span>
             </label>
             <input
               id="stability"
               type="range"
-              min="0" max="1" step="0.01"
+              min="0"
+              max="1"
+              step="0.01"
               value={voiceSettings.stability}
-              onChange={(e) => saveVoiceSettings({ ...voiceSettings, stability: parseFloat(e.target.value) })}
+              onChange={(e) =>
+                saveVoiceSettings({
+                  ...voiceSettings,
+                  stability: parseFloat(e.target.value),
+                })
+              }
               className="w-full mt-2"
             />
-            <p className="text-xs text-ink/50 mt-1">Lower values are more expressive; higher values are more consistent.</p>
+            <p className="text-xs text-ink/50 mt-1">
+              Lower values are more expressive; higher values are more
+              consistent.
+            </p>
           </div>
-          
+
           <div>
-            <label className="flex justify-between text-sm font-bold" htmlFor="similarity">
+            <label
+              className="flex justify-between text-sm font-bold"
+              htmlFor="similarity"
+            >
               <span>Similarity Boost</span>
-              <span className="text-ink/65">{voiceSettings.similarity_boost}</span>
+              <span className="text-ink/65">
+                {voiceSettings.similarity_boost}
+              </span>
             </label>
             <input
               id="similarity"
               type="range"
-              min="0" max="1" step="0.01"
+              min="0"
+              max="1"
+              step="0.01"
               value={voiceSettings.similarity_boost}
-              onChange={(e) => saveVoiceSettings({ ...voiceSettings, similarity_boost: parseFloat(e.target.value) })}
+              onChange={(e) =>
+                saveVoiceSettings({
+                  ...voiceSettings,
+                  similarity_boost: parseFloat(e.target.value),
+                })
+              }
               className="w-full mt-2"
             />
-            <p className="text-xs text-ink/50 mt-1">Higher values make the voice closer to the original but may introduce artifacts.</p>
+            <p className="text-xs text-ink/50 mt-1">
+              Higher values make the voice closer to the original but may
+              introduce artifacts.
+            </p>
           </div>
 
           <div>
-            <label className="flex justify-between text-sm font-bold" htmlFor="style">
+            <label
+              className="flex justify-between text-sm font-bold"
+              htmlFor="style"
+            >
               <span>Style Exaggeration</span>
               <span className="text-ink/65">{voiceSettings.style}</span>
             </label>
             <input
               id="style"
               type="range"
-              min="0" max="1" step="0.01"
+              min="0"
+              max="1"
+              step="0.01"
               value={voiceSettings.style}
-              onChange={(e) => saveVoiceSettings({ ...voiceSettings, style: parseFloat(e.target.value) })}
+              onChange={(e) =>
+                saveVoiceSettings({
+                  ...voiceSettings,
+                  style: parseFloat(e.target.value),
+                })
+              }
               className="w-full mt-2"
             />
-            <p className="text-xs text-ink/50 mt-1">Higher values exaggerate the style of the reference audio.</p>
+            <p className="text-xs text-ink/50 mt-1">
+              Higher values exaggerate the style of the reference audio.
+            </p>
           </div>
         </div>
       </section>
 
       <section className="rounded-lg border border-ink/10 bg-white p-5 shadow-soft dark:border-border dark:bg-surface dark:text-neutral-100 dark:shadow-soft-dk">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <h2 className="text-xl font-bold">Saved voice profiles</h2>
-          {profiles.length > 0 && (
+          <div className="flex flex-wrap items-center gap-2">
             <button
               type="button"
-              onClick={removeAllProfiles}
-              className="text-sm font-bold text-coral hover:underline"
+              onClick={() => setIsReceiving(true)}
+              className="inline-flex items-center gap-1.5 rounded-md border border-ink/15 bg-cloud px-3 py-1.5 text-xs font-bold text-ink hover:border-moss dark:border-border dark:bg-black dark:text-neutral-200"
             >
-              Clear All Profiles
+              <Download size={14} />
+              Receive Profile
             </button>
-          )}
-        </div>
-        <div className="mt-4 divide-y divide-ink/10 rounded-md border border-ink/10 dark:divide-border dark:border-border">
-          {profiles.length === 0 && (
-            <p className="p-4 text-sm text-ink/65 dark:text-muted">
-              No saved profiles yet.
-            </p>
-          )}
-          {profiles.map((profile) => (
-            <div
-              key={profile.voice_id}
-              className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between"
+            <button
+              type="button"
+              onClick={() => setIsTransferOpen(true)}
+              className="inline-flex items-center gap-1.5 rounded-md border border-ink/15 bg-cloud px-3 py-1.5 text-xs font-bold text-ink hover:border-moss dark:border-border dark:bg-black dark:text-neutral-200"
             >
-              <div>
-                <p className="font-bold">{profile.name}</p>
-                <p className="mt-1 break-all text-sm text-ink/60 dark:text-muted">
-                  {profile.voice_id}
-                </p>
-              </div>
+              <Upload size={14} />
+              P2P Transfer
+            </button>
+            {Array.isArray(profiles) && profiles.length > 0 && (
               <button
                 type="button"
-                onClick={() => removeProfile(profile.voice_id)}
-                title={`Delete voice profile "${profile.name}"`}
-                aria-label={`Delete voice profile "${profile.name}"`}
-                className="inline-flex items-center justify-center gap-2 rounded-md border border-coral/40 px-3 py-2 font-bold text-coral hover:bg-coral hover:text-white"
+                onClick={removeAllProfiles}
+                className="text-xs font-bold text-coral hover:underline ml-2"
               >
-                <Trash2 size={16} aria-hidden="true" />
-                Delete
+                Clear All
               </button>
-            </div>
-          ))}
+            )}
+          </div>
+        </div>
+        <div className="mt-4 divide-y divide-ink/10 rounded-md border border-ink/10 dark:divide-border dark:border-border">
+          {(() => {
+            const safeProfiles = Array.isArray(profiles) ? profiles : [];
+            if (safeProfiles.length === 0) {
+              return (
+                <p className="p-4 text-sm text-ink/65 dark:text-muted">
+                  No saved profiles yet.
+                </p>
+              );
+            }
+            return safeProfiles.map((profile) => (
+              <div
+                key={profile.voice_id}
+                className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between"
+              >
+                <div>
+                  <p className="font-bold">{profile.name}</p>
+                  <p className="mt-1 break-all text-sm text-ink/60 dark:text-muted">
+                    {profile.voice_id}
+                  </p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setSharingProfile(profile)}
+                    title={`Share voice profile "${profile.name}"`}
+                    className="inline-flex items-center justify-center gap-1.5 rounded-md border border-ink/15 px-3 py-1.5 text-xs font-bold text-ink hover:border-moss dark:border-border dark:text-neutral-200"
+                  >
+                    <Share2 size={14} />
+                    Share
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => removeProfile(profile.voice_id)}
+                    title={`Delete voice profile "${profile.name}"`}
+                    aria-label={`Delete voice profile "${profile.name}"`}
+                    className="inline-flex items-center justify-center gap-1.5 rounded-md border border-coral/40 px-3 py-1.5 text-xs font-bold text-coral hover:bg-coral hover:text-white"
+                  >
+                    <Trash2 size={14} aria-hidden="true" />
+                    Delete
+                  </button>
+                </div>
+              </div>
+            ));
+          })()}
         </div>
       </section>
 
@@ -744,9 +931,7 @@ export default function Settings() {
       )}
 
       {isTransferOpen && (
-        <TransferSetupModal
-          onClose={() => setIsTransferOpen(false)}
-        />
+        <TransferSetupModal onClose={() => setIsTransferOpen(false)} />
       )}
       <ToastContainer toasts={toasts} />
     </div>

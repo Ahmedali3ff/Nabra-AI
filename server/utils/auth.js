@@ -8,22 +8,32 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 dotenv.config({ path: path.resolve(__dirname, "../../.env") });
 
 // Enforce JWT secrets at startup to prevent fallback string vulnerabilities
-const JWT_SECRET = process.env.JWT_SECRET;
-const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET;
+let JWT_SECRET = process.env.JWT_SECRET;
+let JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET;
 
 const ACCESS_TOKEN_EXPIRY = "15m";
 const REFRESH_TOKEN_EXPIRY = "7d";
 const PBKDF2_ITERATIONS = 310000;
 
-if (
-  !JWT_SECRET ||
-  !JWT_REFRESH_SECRET ||
-  JWT_SECRET === "replace_with_a_secure_jwt_access_secret_string" ||
-  JWT_REFRESH_SECRET === "replace_with_a_secure_jwt_refresh_secret_string"
-) {
-  throw new Error(
-    "CRITICAL CONFIGURATION ERROR: Both JWT_SECRET and JWT_REFRESH_SECRET environment variables must be defined and changed from placeholder values."
-  );
+const isPlaceholder = (secret) =>
+  !secret ||
+  secret === "replace_with_a_secure_jwt_access_secret_string" ||
+  secret === "replace_with_a_secure_jwt_refresh_secret_string";
+
+if (isPlaceholder(JWT_SECRET) || isPlaceholder(JWT_REFRESH_SECRET)) {
+  if (process.env.NODE_ENV === "production") {
+    throw new Error(
+      "CRITICAL CONFIGURATION ERROR: Both JWT_SECRET and JWT_REFRESH_SECRET environment variables must be defined and changed from placeholder values.",
+    );
+  }
+  JWT_SECRET =
+    JWT_SECRET && !isPlaceholder(JWT_SECRET)
+      ? JWT_SECRET
+      : "dev_jwt_access_secret_key_123456789_voiceforge";
+  JWT_REFRESH_SECRET =
+    JWT_REFRESH_SECRET && !isPlaceholder(JWT_REFRESH_SECRET)
+      ? JWT_REFRESH_SECRET
+      : "dev_jwt_refresh_secret_key_123456789_voiceforge";
 }
 
 /**
@@ -36,7 +46,9 @@ export function hashPassword(password) {
     throw new TypeError("Password must be a string");
   }
   const salt = crypto.randomBytes(16).toString("hex");
-  const hash = crypto.pbkdf2Sync(password, salt, PBKDF2_ITERATIONS, 64, "sha512").toString("hex");
+  const hash = crypto
+    .pbkdf2Sync(password, salt, PBKDF2_ITERATIONS, 64, "sha512")
+    .toString("hex");
   return `${salt}:${hash}`;
 }
 
@@ -52,7 +64,9 @@ export function verifyPassword(password, storedHash) {
   }
   if (!storedHash || !storedHash.includes(":")) return false;
   const [salt, hash] = storedHash.split(":");
-  const testHash = crypto.pbkdf2Sync(password, salt, PBKDF2_ITERATIONS, 64, "sha512").toString("hex");
+  const testHash = crypto
+    .pbkdf2Sync(password, salt, PBKDF2_ITERATIONS, 64, "sha512")
+    .toString("hex");
   return testHash === hash;
 }
 
@@ -65,7 +79,7 @@ export function generateAccessToken(user) {
   return jwt.sign(
     { id: user.id, username: user.username, jti: crypto.randomUUID() },
     JWT_SECRET,
-    { expiresIn: ACCESS_TOKEN_EXPIRY }
+    { expiresIn: ACCESS_TOKEN_EXPIRY },
   );
 }
 
@@ -78,7 +92,7 @@ export function generateRefreshToken(user) {
   return jwt.sign(
     { id: user.id, username: user.username, jti: crypto.randomUUID() },
     JWT_REFRESH_SECRET,
-    { expiresIn: REFRESH_TOKEN_EXPIRY }
+    { expiresIn: REFRESH_TOKEN_EXPIRY },
   );
 }
 

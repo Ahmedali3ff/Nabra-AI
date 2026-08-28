@@ -6,7 +6,7 @@ export default function LiveTranscription() {
   const [history, setHistory] = useState([]);
   const [interimText, setInterimText] = useState("");
   const [error, setError] = useState("");
-  
+
   const recognitionRef = useRef(null);
   const scrollRef = useRef(null);
   const isListeningRef = useRef(isListening);
@@ -23,9 +23,12 @@ export default function LiveTranscription() {
   }, [history, interimText]);
 
   useEffect(() => {
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    const SpeechRecognition =
+      window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!SpeechRecognition) {
-      setError("Speech recognition is not supported in this browser (use Chrome or Edge).");
+      setError(
+        "Speech recognition is not supported in this browser (use Chrome or Edge).",
+      );
       return;
     }
 
@@ -54,10 +57,10 @@ export default function LiveTranscription() {
 
     recognition.onerror = (event) => {
       console.error("Speech recognition error:", event.error);
-      if (event.error === 'not-allowed') {
+      if (event.error === "not-allowed") {
         setError("Microphone permission denied.");
         setIsListening(false);
-      } else if (event.error !== 'no-speech') {
+      } else if (event.error !== "no-speech") {
         setError(`Transcription error: ${event.error}`);
         setIsListening(false);
       }
@@ -88,7 +91,7 @@ export default function LiveTranscription() {
 
   const toggleListening = () => {
     if (error && error.includes("not supported")) return;
-    
+
     setError("");
     if (isListening) {
       isExpectedStopRef.current = true;
@@ -137,8 +140,8 @@ export default function LiveTranscription() {
             type="button"
             onClick={toggleListening}
             className={`px-3 py-1.5 rounded-md text-xs font-bold transition ${
-              isListening 
-                ? "bg-coral text-white hover:bg-coral/90" 
+              isListening
+                ? "bg-coral text-white hover:bg-coral/90"
                 : "bg-mint text-ink hover:bg-mint/80 dark:bg-glow/20 dark:text-glow dark:hover:bg-glow/30"
             }`}
           >
@@ -153,7 +156,7 @@ export default function LiveTranscription() {
           <p>{error}</p>
         </div>
       ) : (
-        <div 
+        <div
           ref={scrollRef}
           className="flex-1 overflow-y-auto bg-cloud dark:bg-black rounded-md p-4 border border-ink/5 dark:border-border/50 font-medium"
         >
@@ -162,14 +165,14 @@ export default function LiveTranscription() {
               Click Listen to start transcribing room audio.
             </p>
           )}
-          
+
           <div className="space-y-3">
             {history.map((text, i) => (
               <p key={i} className="text-ink dark:text-neutral-200">
                 {text}
               </p>
             ))}
-            
+
             {interimText && (
               <p className="text-ink/60 dark:text-neutral-400 italic">
                 {interimText}

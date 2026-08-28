@@ -40,7 +40,7 @@ export default function AuthView({ onAuthSuccess }) {
       const res = await fetch(endpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username: trimmedUsername, password })
+        body: JSON.stringify({ username: trimmedUsername, password }),
       });
 
       const data = await res.json();
@@ -61,7 +61,6 @@ export default function AuthView({ onAuthSuccess }) {
   return (
     <div className="flex min-h-[80vh] items-center justify-center px-4 py-12 sm:px-6 lg:px-8">
       <div className="w-full max-w-md space-y-8 rounded-2xl border border-white/20 bg-white/40 p-8 shadow-2xl backdrop-blur-xl dark:border-border/30 dark:bg-surface/30">
-        
         {/* Header */}
         <div className="text-center">
           <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-mint/20 text-moss dark:bg-glow/20 dark:text-glow">
@@ -89,7 +88,6 @@ export default function AuthView({ onAuthSuccess }) {
 
         {/* Form */}
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-          
           {error && (
             <div className="rounded-md bg-red-500/10 border border-red-500/20 p-3 text-sm text-red-600 dark:text-red-400">
               {error}

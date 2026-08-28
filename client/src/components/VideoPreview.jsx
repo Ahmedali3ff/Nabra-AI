@@ -2,26 +2,30 @@
 import React from "react";
 import { useTheme } from "./ThemeContext";
 import { useEffect, useRef } from "react";
+import { Loader2 } from "lucide-react";
 import { AudioProcessor } from "../utils/audioProcessor";
 import { FaceProcessor } from "../utils/faceProcessor";
 
-export default React.forwardRef(function VideoPreview({
-  webcamStream,
-  audioUrl,
-  isSpeaking,
-  onSpeakingChange,
-  calibration = { xOffset: 0, yOffset: 0, scale: 1.0 },
-  isCalibrating = false,
-  avatarImage = null,
-  subtitlesEnabled = true,
-  subtitleFontSize = "medium",
-  subtitleBgOpacity = 0.6,
-  activeText = "",
-  status = "idle",
-}, ref) {
+export default React.forwardRef(function VideoPreview(
+  {
+    webcamStream,
+    audioUrl,
+    isSpeaking,
+    onSpeakingChange,
+    calibration = { xOffset: 0, yOffset: 0, scale: 1.0 },
+    isCalibrating = false,
+    avatarImage = null,
+    subtitlesEnabled = true,
+    subtitleFontSize = "medium",
+    subtitleBgOpacity = 0.6,
+    activeText = "",
+    status = "idle",
+  },
+  ref,
+) {
   const videoRef = React.useRef(null);
   const animationRef = React.useRef(null);
-  const audioRef = useRef(null);   
+  const audioRef = useRef(null);
   const audioProcessorRef = useRef(null);
   const faceProcessorRef = useRef(null);
   const subtitlesEnabledRef = React.useRef(subtitlesEnabled);
@@ -44,7 +48,8 @@ export default React.forwardRef(function VideoPreview({
   const activeTextRef = React.useRef(activeText);
 
   const pipVideoRef = React.useRef(null);
-  const isPiPSupported = typeof document !== "undefined" && document.pictureInPictureEnabled;
+  const isPiPSupported =
+    typeof document !== "undefined" && document.pictureInPictureEnabled;
 
   const togglePiP = async () => {
     try {
@@ -67,16 +72,25 @@ export default React.forwardRef(function VideoPreview({
   const isSegmentingRef = React.useRef(false);
   const maskCanvasRef = React.useRef(null);
 
-  React.useEffect(() => { subtitlesEnabledRef.current = subtitlesEnabled; }, [subtitlesEnabled]);
-  React.useEffect(() => { subtitleFontSizeRef.current = subtitleFontSize; }, [subtitleFontSize]);
-  React.useEffect(() => { subtitleBgOpacityRef.current = subtitleBgOpacity; }, [subtitleBgOpacity]);
-  React.useEffect(() => { activeTextRef.current = activeText; }, [activeText]);
+  React.useEffect(() => {
+    subtitlesEnabledRef.current = subtitlesEnabled;
+  }, [subtitlesEnabled]);
+  React.useEffect(() => {
+    subtitleFontSizeRef.current = subtitleFontSize;
+  }, [subtitleFontSize]);
+  React.useEffect(() => {
+    subtitleBgOpacityRef.current = subtitleBgOpacity;
+  }, [subtitleBgOpacity]);
+  React.useEffect(() => {
+    activeTextRef.current = activeText;
+  }, [activeText]);
 
   React.useEffect(() => {
     let isSegmenterMounted = true;
     async function initSegmenter() {
       try {
-        const { SelfieSegmentation } = await import("@mediapipe/selfie_segmentation");
+        const { SelfieSegmentation } =
+          await import("@mediapipe/selfie_segmentation");
         const segmenter = new SelfieSegmentation({
           locateFile: (file) => {
             if (typeof window !== "undefined" && window.location.origin) {
@@ -96,24 +110,30 @@ export default React.forwardRef(function VideoPreview({
           mCanvas.width = results.image.width;
           mCanvas.height = results.image.height;
           const mCtx = mCanvas.getContext("2d");
-          
+
           mCtx.save();
           mCtx.clearRect(0, 0, mCanvas.width, mCanvas.height);
-          
-          mCtx.drawImage(results.segmentationMask, 0, 0, mCanvas.width, mCanvas.height);
-          
+
+          mCtx.drawImage(
+            results.segmentationMask,
+            0,
+            0,
+            mCanvas.width,
+            mCanvas.height,
+          );
+
           mCtx.globalCompositeOperation = "source-in";
           mCtx.drawImage(results.image, 0, 0, mCanvas.width, mCanvas.height);
-          
+
           mCtx.globalCompositeOperation = "destination-over";
           mCtx.filter = "blur(12px)";
           mCtx.drawImage(results.image, 0, 0, mCanvas.width, mCanvas.height);
-          
+
           mCtx.restore();
-          
+
           isSegmentingRef.current = false;
         });
-        
+
         // Pre-initialize
         await segmenter.initialize();
         if (isSegmenterMounted) {
@@ -168,7 +188,12 @@ export default React.forwardRef(function VideoPreview({
 
   // Initialize AudioProcessor when audio element is ready
   useEffect(() => {
-    if (audioUrl && audioRef.current && audioProcessorRef.current && !audioRef.current.dataset.audioProcessorInitialized) {
+    if (
+      audioUrl &&
+      audioRef.current &&
+      audioProcessorRef.current &&
+      !audioRef.current.dataset.audioProcessorInitialized
+    ) {
       audioProcessorRef.current.initialize(audioRef.current);
       audioRef.current.dataset.audioProcessorInitialized = "true";
     }
@@ -373,33 +398,60 @@ export default React.forwardRef(function VideoPreview({
       const drawMouth = isSpeaking || isCalibratingRef.current;
       if (drawMouth) {
         let inferenceSucceeded = false;
-        const useONNX = isSpeaking && ortSessionRef.current && audioProcessorRef.current && faceProcessorRef.current && ortRef.current;
+        const useONNX =
+          isSpeaking &&
+          ortSessionRef.current &&
+          audioProcessorRef.current &&
+          faceProcessorRef.current &&
+          ortRef.current;
 
         // Try ONNX Inference first
-        if (isSpeaking && ortSessionRef.current && audioProcessorRef.current && faceProcessorRef.current && ortRef.current) {
+        if (
+          isSpeaking &&
+          ortSessionRef.current &&
+          audioProcessorRef.current &&
+          faceProcessorRef.current &&
+          ortRef.current
+        ) {
           if (!isInferencingRef.current) {
             isInferencingRef.current = true;
             (async () => {
               try {
-                const melFeatures = audioProcessorRef.current.getLatestFeatures();
+                const melFeatures =
+                  audioProcessorRef.current.getLatestFeatures();
                 let syncTimestamp = timestamp;
-                const audioTime = audioProcessorRef.current.getAudioTime() * 1000;
+                const audioTime =
+                  audioProcessorRef.current.getAudioTime() * 1000;
                 if (audioTime > 0) {
                   if (audioTimeOffset === null) {
-                     audioTimeOffset = timestamp - audioTime;
+                    audioTimeOffset = timestamp - audioTime;
                   }
                   const targetSyncTime = audioTime + audioTimeOffset;
-                  syncTimestamp = targetSyncTime <= lastSyncTime ? lastSyncTime + 1 : targetSyncTime;
+                  syncTimestamp =
+                    targetSyncTime <= lastSyncTime
+                      ? lastSyncTime + 1
+                      : targetSyncTime;
                   lastSyncTime = syncTimestamp;
                 }
 
-                const landmarks = faceProcessorRef.current.detectFace(video, syncTimestamp);
-                
+                const landmarks = faceProcessorRef.current.detectFace(
+                  video,
+                  syncTimestamp,
+                );
+
                 if (melFeatures && landmarks && tempCanvasRef.current) {
                   const ort = ortRef.current;
-                  const audioTensor = new ort.Tensor('float32', melFeatures, [1, 1, 80, 16]);
-                  
-                  const cropResult = faceProcessorRef.current.cropMouthRegion(canvas, landmarks, tempCanvasRef.current);
+                  const audioTensor = new ort.Tensor(
+                    "float32",
+                    melFeatures,
+                    [1, 1, 80, 16],
+                  );
+
+                  const cropResult = faceProcessorRef.current.cropMouthRegion(
+                    canvas,
+                    landmarks,
+                    tempCanvasRef.current,
+                  );
                   if (cropResult) {
                     const { imageData, coords } = cropResult;
                     const float32Data = new Float32Array(1 * 6 * 96 * 96);
@@ -414,23 +466,39 @@ export default React.forwardRef(function VideoPreview({
                       float32Data[4 * 96 * 96 + i] = g;
                       float32Data[5 * 96 * 96 + i] = b;
                     }
-                    const videoTensor = new ort.Tensor('float32', float32Data, [1, 6, 96, 96]);
-                    
-                    const results = await ortSessionRef.current.run({ audio: audioTensor, video: videoTensor });
+                    const videoTensor = new ort.Tensor(
+                      "float32",
+                      float32Data,
+                      [1, 6, 96, 96],
+                    );
+
+                    const results = await ortSessionRef.current.run({
+                      audio: audioTensor,
+                      video: videoTensor,
+                    });
                     const outTensor = results[Object.keys(results)[0]];
-                    
+
                     const outData = outTensor.data;
                     const newImageData = new ImageData(96, 96);
                     for (let i = 0; i < 96 * 96; i++) {
-                      newImageData.data[i * 4 + 0] = Math.max(0, Math.min(255, outData[i] * 255));
-                      newImageData.data[i * 4 + 1] = Math.max(0, Math.min(255, outData[96 * 96 + i] * 255));
-                      newImageData.data[i * 4 + 2] = Math.max(0, Math.min(255, outData[2 * 96 * 96 + i] * 255));
+                      newImageData.data[i * 4 + 0] = Math.max(
+                        0,
+                        Math.min(255, outData[i] * 255),
+                      );
+                      newImageData.data[i * 4 + 1] = Math.max(
+                        0,
+                        Math.min(255, outData[96 * 96 + i] * 255),
+                      );
+                      newImageData.data[i * 4 + 2] = Math.max(
+                        0,
+                        Math.min(255, outData[2 * 96 * 96 + i] * 255),
+                      );
                       newImageData.data[i * 4 + 3] = 255;
                     }
-                    
+
                     lastInferenceRef.current = {
                       imageData: newImageData,
-                      coords: coords
+                      coords: coords,
                     };
                   }
                 }
@@ -446,95 +514,126 @@ export default React.forwardRef(function VideoPreview({
             const { imageData, coords } = lastInferenceRef.current;
             const tempCtx = tempCanvasRef.current.getContext("2d");
             tempCtx.putImageData(imageData, 0, 0);
-            context.drawImage(tempCanvasRef.current, 0, 0, 96, 96, coords.x, coords.y, coords.w, coords.h);
+            context.drawImage(
+              tempCanvasRef.current,
+              0,
+              0,
+              96,
+              96,
+              coords.x,
+              coords.y,
+              coords.w,
+              coords.h,
+            );
             inferenceSucceeded = true;
           }
-          amplitude = sum / dataArray.length;
         }
 
-        // Map amplitude (0-255) to mouth height range
-        const mouthOpen = isSpeaking ? 6 + (amplitude * 0.12) : 14;
-        const currentCalibration = calibrationRef.current || {};
-        const xOffset = typeof currentCalibration.xOffset === "number" && !isNaN(currentCalibration.xOffset)
-          ? Math.max(-400, Math.min(400, currentCalibration.xOffset))
-          : 0;
-        const yOffset = typeof currentCalibration.yOffset === "number" && !isNaN(currentCalibration.yOffset)
-          ? Math.max(-250, Math.min(150, currentCalibration.yOffset))
-          : 0;
-        const scale = typeof currentCalibration.scale === "number" && !isNaN(currentCalibration.scale)
-          ? Math.max(0.5, Math.min(2.5, currentCalibration.scale))
-          : 1.0;
+        if (!inferenceSucceeded) {
+          const currentCalibration = calibrationRef.current || {};
+          const xOffset =
+            typeof currentCalibration.xOffset === "number" &&
+            !isNaN(currentCalibration.xOffset)
+              ? Math.max(-400, Math.min(400, currentCalibration.xOffset))
+              : 0;
+          const yOffset =
+            typeof currentCalibration.yOffset === "number" &&
+            !isNaN(currentCalibration.yOffset)
+              ? Math.max(-250, Math.min(150, currentCalibration.yOffset))
+              : 0;
+          const scale =
+            typeof currentCalibration.scale === "number" &&
+            !isNaN(currentCalibration.scale)
+              ? Math.max(0.5, Math.min(2.5, currentCalibration.scale))
+              : 1.0;
+          const mouthOpen = isSpeaking ? 14 : 4;
 
-        // Try ONNX Inference first
-        if (
-          isSpeaking &&
-          ortSessionRef.current &&
-          audioProcessorRef.current &&
-          faceProcessorRef.current
-        ) {
-          try {
-            // 1. Get Audio Features
-            const melFeatures = audioProcessorRef.current.getLatestFeatures();
+          const centerX = canvas.width / 2 + xOffset;
+          const centerY = canvas.height * 0.65 + yOffset;
+          const radiusX = 40 * scale;
+          const radiusY = Math.max(3, mouthOpen * scale);
 
-        context.save();
-        
-        // 1. Draw inner mouth cavity (dark reddish/maroon shade)
-        context.fillStyle = isDark ? "rgba(69, 10, 10, 0.9)" : "rgba(59, 7, 18, 0.9)";
-        context.beginPath();
-        context.ellipse(
-          canvas.width / 2,
-          canvas.height * 0.63,
-          56,
-          mouthOpen,
-          0,
-          0,
-          Math.PI * 2,
+          context.save();
+
+          // 1. Draw inner mouth cavity
+          context.fillStyle = isDark
+            ? "rgba(69, 10, 10, 0.9)"
+            : "rgba(59, 7, 18, 0.9)";
+          context.beginPath();
+          context.ellipse(
+            centerX,
+            centerY,
+            radiusX,
+            radiusY,
+            0,
+            0,
+            Math.PI * 2,
+          );
+          context.fill();
+
+          // 2. Draw lips shape outline and fill tint
+          context.strokeStyle = "#f43f5e";
+          context.fillStyle = "rgba(244, 63, 94, 0.15)";
+          context.lineWidth = 5 * scale;
+          context.lineCap = "round";
+          context.lineJoin = "round";
+
+          context.beginPath();
+          context.moveTo(centerX - radiusX, centerY);
+          context.bezierCurveTo(
+            centerX - radiusX / 2,
+            centerY - radiusY - 8 * scale,
+            centerX - radiusX / 4,
+            centerY - radiusY - 10 * scale,
+            centerX,
+            centerY - radiusY / 2,
+          );
+          context.bezierCurveTo(
+            centerX + radiusX / 4,
+            centerY - radiusY - 10 * scale,
+            centerX + radiusX / 2,
+            centerY - radiusY - 8 * scale,
+            centerX + radiusX,
+            centerY,
+          );
+          context.bezierCurveTo(
+            centerX + radiusX / 2,
+            centerY + radiusY + 12 * scale,
+            centerX - radiusX / 2,
+            centerY + radiusY + 12 * scale,
+            centerX - radiusX,
+            centerY,
+          );
+          context.closePath();
+          context.fill();
+          context.stroke();
+
+          // 3. Add soft lip gloss highlight
+          context.strokeStyle = "rgba(255, 255, 255, 0.4)";
+          context.lineWidth = 2 * scale;
+          context.beginPath();
+          context.moveTo(centerX - radiusX / 2, centerY + radiusY + 4 * scale);
+          context.bezierCurveTo(
+            centerX - radiusX / 4,
+            centerY + radiusY + 7 * scale,
+            centerX + radiusX / 4,
+            centerY + radiusY + 7 * scale,
+            centerX + radiusX / 2,
+            centerY + radiusY + 4 * scale,
+          );
+          context.stroke();
+
+          context.restore();
+        }
+      }
+
+      if (subtitlesEnabledRef.current && activeTextRef.current) {
+        drawSubtitles(
+          context,
+          activeTextRef.current,
+          subtitleFontSizeRef.current,
+          subtitleBgOpacityRef.current,
         );
-        context.fill();
-
-        // 2. Draw lips shape outline and fill tint
-        context.strokeStyle = "#f43f5e"; // rose/coral lip color
-        context.fillStyle = "rgba(244, 63, 94, 0.15)"; // subtle soft coral tint
-        context.lineWidth = 5 * scale;
-        context.lineCap = "round";
-        context.lineJoin = "round";
-
-        // Cupid's bow upper lip curve
-        context.beginPath();
-        context.moveTo(centerX - radiusX, centerY);
-        context.bezierCurveTo(
-          centerX - radiusX / 2, centerY - radiusY - 8 * scale,
-          centerX - radiusX / 4, centerY - radiusY - 10 * scale,
-          centerX, centerY - radiusY / 2
-        );
-        context.bezierCurveTo(
-          centerX + radiusX / 4, centerY - radiusY - 10 * scale,
-          centerX + radiusX / 2, centerY - radiusY - 8 * scale,
-          centerX + radiusX, centerY
-        );
-        // Lower lip bottom curve
-        context.bezierCurveTo(
-          centerX + radiusX / 2, centerY + radiusY + 12 * scale,
-          centerX - radiusX / 2, centerY + radiusY + 12 * scale,
-          centerX - radiusX, centerY
-        );
-        context.closePath();
-        context.fill();
-        context.stroke();
-
-        // 3. Add a soft lip gloss highlight curve on the lower lip
-        context.strokeStyle = "rgba(255, 255, 255, 0.4)";
-        context.lineWidth = 2 * scale;
-        context.beginPath();
-        context.moveTo(centerX - radiusX / 2, centerY + radiusY + 4 * scale);
-        context.bezierCurveTo(
-          centerX - radiusX / 4, centerY + radiusY + 7 * scale,
-          centerX + radiusX / 4, centerY + radiusY + 7 * scale,
-          centerX + radiusX / 2, centerY + radiusY + 4 * scale
-        );
-        context.stroke();
-
-        context.restore();
       }
 
       if (video && video.requestVideoFrameCallback && !avatarImage) {
@@ -545,7 +644,11 @@ export default React.forwardRef(function VideoPreview({
     }
 
     const videoElement = videoRef.current;
-    if (videoElement && videoElement.requestVideoFrameCallback && !avatarImage) {
+    if (
+      videoElement &&
+      videoElement.requestVideoFrameCallback &&
+      !avatarImage
+    ) {
       animationRef.current = videoElement.requestVideoFrameCallback(draw);
     } else {
       animationRef.current = requestAnimationFrame(draw);

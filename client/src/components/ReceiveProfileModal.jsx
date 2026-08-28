@@ -66,7 +66,10 @@ export function ReceiveProfileModal({ onClose, onSuccess }) {
 
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
-      if (previousFocusRef.current && typeof previousFocusRef.current.focus === "function") {
+      if (
+        previousFocusRef.current &&
+        typeof previousFocusRef.current.focus === "function"
+      ) {
         previousFocusRef.current.focus();
       }
     };
@@ -201,7 +204,9 @@ export function ReceiveProfileModal({ onClose, onSuccess }) {
         className="relative w-full max-w-md overflow-hidden rounded-xl bg-white shadow-xl outline-none dark:bg-surface dark:text-neutral-100"
       >
         <div className="flex items-center justify-between border-b border-ink/10 p-4 dark:border-border">
-          <h2 id={HEADING_ID} className="text-xl font-bold">Receive Voice Profile</h2>
+          <h2 id={HEADING_ID} className="text-xl font-bold">
+            Receive Voice Profile
+          </h2>
           <button
             type="button"
             onClick={onClose}
@@ -217,13 +222,19 @@ export function ReceiveProfileModal({ onClose, onSuccess }) {
             Peer-to-peer WebRTC voice profile receiver helper.
           </p>
           <div role="status" aria-live="polite" className="sr-only">
-            {step === "waiting_for_offer" && "Ready to scan or paste sender offer."}
-            {step === "generating_answer" && "Processing offer and creating connection answer."}
+            {step === "waiting_for_offer" &&
+              "Ready to scan or paste sender offer."}
+            {step === "generating_answer" &&
+              "Processing offer and creating connection answer."}
             {step === "receiving" && "Receiving voice profile data."}
-            {step === "completed" && "Voice profile received and saved successfully."}
+            {step === "completed" &&
+              "Voice profile received and saved successfully."}
           </div>
           {error && (
-            <div role="alert" className="mb-4 rounded-md bg-coral/10 p-3 text-sm text-coral">
+            <div
+              role="alert"
+              className="mb-4 rounded-md bg-coral/10 p-3 text-sm text-coral"
+            >
               {error}
             </div>
           )}
@@ -319,3 +330,5 @@ export function ReceiveProfileModal({ onClose, onSuccess }) {
     </div>
   );
 }
+
+export default ReceiveProfileModal;

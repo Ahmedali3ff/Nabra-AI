@@ -44,7 +44,10 @@ const upload = multer({
     parts: 6,
   },
   fileFilter: (_request, file, callback) => {
-    const isAudioMime = file.mimetype.startsWith("audio/") || file.mimetype === "video/webm" || file.mimetype === "application/octet-stream";
+    const isAudioMime =
+      file.mimetype.startsWith("audio/") ||
+      file.mimetype === "video/webm" ||
+      file.mimetype === "application/octet-stream";
     if (!isAudioMime) {
       callback(new Error("Please upload an audio recording."));
       return;
@@ -52,13 +55,17 @@ const upload = multer({
 
     if (file.buffer) {
       if (!isValidAudioBuffer(file.buffer)) {
-        callback(new Error("Uploaded file is not a valid audio recording. The file contents do not match an audio format."));
+        callback(
+          new Error(
+            "Uploaded file is not a valid audio recording. The file contents do not match an audio format.",
+          ),
+        );
         return;
       }
     }
 
     callback(null, true);
-  }
+  },
 });
 
 export function handleUploadMiddleware(fieldName) {
@@ -67,7 +74,9 @@ export function handleUploadMiddleware(fieldName) {
     single(req, res, (err) => {
       if (err instanceof multer.MulterError) {
         if (err.code === "LIMIT_FILE_SIZE") {
-          return res.status(400).json({ error: "File size exceeds the 12MB limit." });
+          return res
+            .status(400)
+            .json({ error: "File size exceeds the 12MB limit." });
         }
         return res.status(400).json({ error: `Upload error: ${err.message}` });
       } else if (err) {

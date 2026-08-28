@@ -17,11 +17,14 @@ import { fileURLToPath } from "url";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 dotenv.config({ path: path.resolve(__dirname, "../.env") });
 
-if (process.env.NODE_ENV === "production" && !process.env.STREAM_SECRET?.trim()) {
+if (
+  process.env.NODE_ENV === "production" &&
+  !process.env.STREAM_SECRET?.trim()
+) {
   console.error(
     "[VoiceForge] FATAL: STREAM_SECRET is not set in production. " +
-    "All speech tokens would be invalidated on every server restart. " +
-    "Set STREAM_SECRET in your environment and restart."
+      "All speech tokens would be invalidated on every server restart. " +
+      "Set STREAM_SECRET in your environment and restart.",
   );
   process.exit(1);
 }
@@ -30,8 +33,8 @@ if (process.env.NODE_ENV === "production" && !process.env.STREAM_SECRET?.trim())
 if (getIsMock()) {
   console.warn(
     "\x1b[33m[VoiceForge] Mock mode active — Chatterbox calls are stubbed." +
-    " Voice clone returns a fixture voice_id; TTS streams silent audio." +
-    " Set MOCK_CHATTERBOX=false to use the real Hugging Face engine.\x1b[0m"
+      " Voice clone returns a fixture voice_id; TTS streams silent audio." +
+      " Set MOCK_CHATTERBOX=false to use the real Hugging Face engine.\x1b[0m",
   );
 }
 
@@ -48,20 +51,26 @@ app.set("trust proxy", 1);
 app.use((req, res, next) => {
   res.setTimeout(30000, () => {
     if (!res.headersSent) {
-      res.status(408).json({ error: "Request Timeout: operation exceeded 30 seconds" });
+      res
+        .status(408)
+        .json({ error: "Request Timeout: operation exceeded 30 seconds" });
     }
   });
   next();
 });
 
-app.use(
+app.use((req, res, next) => {
+  const isDev = process.env.NODE_ENV !== "production";
   helmet({
     crossOriginOpenerPolicy: { policy: "same-origin" },
     crossOriginEmbedderPolicy: { policy: "require-corp" },
     contentSecurityPolicy: {
       directives: {
         defaultSrc: ["'self'"],
-        scriptSrc: ["'self'", ...(isDev ? ["'unsafe-inline'", "'unsafe-eval'"] : [])],
+        scriptSrc: [
+          "'self'",
+          ...(isDev ? ["'unsafe-inline'", "'unsafe-eval'"] : []),
+        ],
         styleSrc: ["'self'", ...(isDev ? ["'unsafe-inline'"] : [])],
         imgSrc: ["'self'", "data:", "blob:"],
         mediaSrc: ["'self'", "blob:"],
@@ -75,17 +84,24 @@ app.use(
           "https://api.github.com",
           "https://cdn.jsdelivr.net",
           "https://storage.googleapis.com",
-          ...(isDev ? ["ws://localhost:5173", "http://localhost:5173", "ws://localhost:*", "ws://127.0.0.1:*"] : []),
+          ...(isDev
+            ? [
+                "ws://localhost:5173",
+                "http://localhost:5173",
+                "ws://localhost:*",
+                "ws://127.0.0.1:*",
+              ]
+            : []),
         ],
       },
     },
-  })
-);
+  })(req, res, next);
+});
 
 app.use((_req, res, next) => {
   res.setHeader(
     "Permissions-Policy",
-    "microphone=(self), camera=(self), geolocation=(), interest-cohort=()"
+    "microphone=(self), camera=(self), geolocation=(), interest-cohort=()",
   );
   next();
 });
@@ -102,7 +118,7 @@ const globalLimiter = rateLimit({
 app.use(globalLimiter);
 
 // AFTER — restricted CORS with explicit origin and credentials
-const allowedOrigin = process.env.CLIENT_URL || 'http://localhost:5173';
+const allowedOrigin = process.env.CLIENT_URL || "http://localhost:5173";
 
 app.use(
   cors({
@@ -115,9 +131,9 @@ app.use(
       }
     },
     credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
-  })
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+  }),
 );
 app.use((err, req, res, next) => {
   if (err.message === "Not allowed by CORS") {
@@ -138,7 +154,7 @@ const voiceRateLimiter = rateLimit({
   skip: (request) => {
     // Skip rate limiting for /health endpoint
     return request.path === "/health";
-  }
+  },
 });
 
 // Stricter limiter for /clone endpoint since it requires file upload.
@@ -147,7 +163,9 @@ const cloneRateLimiter = rateLimit({
   max: 5,
   standardHeaders: true,
   legacyHeaders: false,
-  message: { error: "Too many voice clone requests. Please try again in a minute." }
+  message: {
+    error: "Too many voice clone requests. Please try again in a minute.",
+  },
 });
 
 app.get("/api/health", async (_request, response) => {
@@ -165,7 +183,7 @@ app.get("/api/health", async (_request, response) => {
     service: "voiceforge-api",
     database: dbStatus,
     uptime: Math.round(process.uptime()),
-    timestamp: new Date().toISOString()
+    timestamp: new Date().toISOString(),
   });
 });
 
@@ -185,7 +203,7 @@ app.use((error, _request, response, _next) => {
 });
 
 let server;
-if (process.env.NODE_ENV !== "test") {
+if (process.env.NODE_ENV !== "test" && !process.env.NO_SERVER_LISTEN) {
   server = app.listen(port, () => {
     console.log(`VoiceForge API listening on http://localhost:${port}`);
   });
@@ -194,11 +212,15 @@ if (process.env.NODE_ENV !== "test") {
     console.log(`[VoiceForge] Received ${signal}. Shutting down gracefully...`);
     if (server) {
       server.close(() => {
-        console.log("[VoiceForge] Closed remaining connections. Exiting process.");
+        console.log(
+          "[VoiceForge] Closed remaining connections. Exiting process.",
+        );
         process.exit(0);
       });
       setTimeout(() => {
-        console.error("[VoiceForge] Forcefully terminating due to shutdown timeout.");
+        console.error(
+          "[VoiceForge] Forcefully terminating due to shutdown timeout.",
+        );
         process.exit(1);
       }, 10000).unref();
     } else {

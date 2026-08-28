@@ -11,7 +11,8 @@ function requireApiKey(request, response, next) {
   const apiKey = request.get("X-ElevenLabs-Api-Key")?.trim();
   if (!apiKey) {
     response.status(401).json({
-      error: "An ElevenLabs API key is required. Add it via the X-ElevenLabs-Api-Key header."
+      error:
+        "An ElevenLabs API key is required. Add it via the X-ElevenLabs-Api-Key header.",
     });
     return;
   }
@@ -27,7 +28,9 @@ const cloneRateLimit = rateLimit({
   max: 3,
   standardHeaders: true,
   legacyHeaders: false,
-  message: { error: "Too many voice clone requests. Please wait before trying again." }
+  message: {
+    error: "Too many voice clone requests. Please wait before trying again.",
+  },
 });
 
 // TTS (speak) is billed per character. Limit each IP to 20 requests per minute
@@ -37,7 +40,7 @@ const speakRateLimit = rateLimit({
   max: 20,
   standardHeaders: true,
   legacyHeaders: false,
-  message: { error: "Too many speech requests. Please slow down." }
+  message: { error: "Too many speech requests. Please slow down." },
 });
 
 router.post("/clone", cloneRateLimit, upload.single("audio"), cloneVoice);

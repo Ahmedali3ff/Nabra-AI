@@ -1,7 +1,12 @@
 import React, { useEffect, useState } from "react";
-import { Play, Pause, Share2, Trash2 } from "lucide-react";
+import { Play, Pause, Share2, Trash2, Download } from "lucide-react";
 
-export function ProfileCard({ profile, onDelete, onShare }) {
+export function ProfileCard({
+  profile,
+  onDelete,
+  onShare,
+  onExport = () => {},
+}) {
   const [isPlaying, setIsPlaying] = useState(false);
   const [audioUrl, setAudioUrl] = useState(null);
   const audioRef = React.useRef(null);
@@ -31,7 +36,7 @@ export function ProfileCard({ profile, onDelete, onShare }) {
     }
   };
 
-  const formattedDate = profile.createdAt 
+  const formattedDate = profile.createdAt
     ? new Date(profile.createdAt).toLocaleDateString()
     : "Unknown date";
 
@@ -50,7 +55,7 @@ export function ProfileCard({ profile, onDelete, onShare }) {
           {profile.name.substring(0, 2)}
         </div>
       </div>
-      
+
       <div className="flex flex-1 flex-col p-4">
         <p className="mb-4 text-xs font-mono text-ink/50 dark:text-muted truncate">
           ID: {profile.voice_id}

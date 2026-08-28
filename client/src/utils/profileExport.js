@@ -76,7 +76,7 @@ export async function importSetupPayload(compressedString) {
     LZString.decompressFromEncodedURIComponent(compressedString);
   if (!decompressed) {
     throw new Error(
-      "Failed to decompress setup data. The link or QR code may be corrupt or truncated."
+      "Failed to decompress setup data. The link or QR code may be corrupt or truncated.",
     );
   }
 
@@ -104,18 +104,30 @@ export async function importSetupPayload(compressedString) {
   // Restore voice profiles to IndexedDB
   if (Array.isArray(data.profiles)) {
     for (const p of data.profiles) {
-      if (p && typeof p === "object" && typeof p.voice_id === "string" && p.voice_id.trim()) {
+      if (
+        p &&
+        typeof p === "object" &&
+        typeof p.voice_id === "string" &&
+        p.voice_id.trim()
+      ) {
         const safeVoiceId = p.voice_id.trim();
-        const safeName = typeof p.name === "string" && p.name.trim() ? p.name.trim() : "Imported Voice";
+        const safeName =
+          typeof p.name === "string" && p.name.trim()
+            ? p.name.trim()
+            : "Imported Voice";
         try {
           await saveProfile({
             id: safeVoiceId,
             voice_id: safeVoiceId,
             name: safeName,
             colorTag: typeof p.colorTag === "string" ? p.colorTag : "emerald",
-            avatarIcon: typeof p.avatarIcon === "string" ? p.avatarIcon : "user",
+            avatarIcon:
+              typeof p.avatarIcon === "string" ? p.avatarIcon : "user",
             ownerToken: typeof p.ownerToken === "string" ? p.ownerToken : null,
-            createdAt: typeof p.createdAt === "string" ? p.createdAt : new Date().toISOString(),
+            createdAt:
+              typeof p.createdAt === "string"
+                ? p.createdAt
+                : new Date().toISOString(),
             audioBlob: null,
           });
         } catch (err) {
@@ -146,7 +158,7 @@ export function generateTransferUrl(
   compressedPayload,
   origin = typeof window !== "undefined"
     ? window.location.origin
-    : "http://localhost:5173"
+    : "http://localhost:5173",
 ) {
   return `${origin}/?import_payload=${compressedPayload}`;
 }

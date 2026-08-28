@@ -1,9 +1,17 @@
 // Handles microphone permission, short reference recording, playback, and upload readiness.
 import React from "react";
-import { Mic, Square, Upload, CircleAlert, Loader2, FileUp } from "lucide-react";
+import {
+  Mic,
+  Square,
+  Upload,
+  CircleAlert,
+  Loader2,
+  FileUp,
+} from "lucide-react";
 import { extractAudioFromFile } from "../utils/audioExtractor.js";
 
 const MAX_RECORDING_SECONDS = 300; // 5 minute max recording cap
+const MIN_DURATION = 3; // 3 second min duration threshold
 
 export default function VoiceRecorder({ onRecordingReady, disabled = false }) {
   const [isRecording, setIsRecording] = React.useState(false);
@@ -13,11 +21,12 @@ export default function VoiceRecorder({ onRecordingReady, disabled = false }) {
   const durationRef = React.useRef(0);
   const [recorderError, setRecorderError] = React.useState("");
   const [isExtracting, setIsExtracting] = React.useState(false);
-  
-  const fileInputRef = React.useRef(null);
+  const [rawAudioBlob, setRawAudioBlob] = React.useState(null);
+
   const recorderRef = React.useRef(null);
   const fileInputRef = React.useRef(null);
   const chunksRef = React.useRef([]);
+
   const timerRef = React.useRef(null);
   const streamRef = React.useRef(null);
   const isMountedRef = React.useRef(true);
@@ -194,39 +203,7 @@ export default function VoiceRecorder({ onRecordingReady, disabled = false }) {
     }
   }
 
-  async function handleFileUpload(event) {
-    const file = event.target.files?.[0];
-    if (!file) return;
-    setIsExtracting(true);
-    setRecorderError("");
-    try {
-      const { blob, duration: fileDuration } = await extractAudioFromFile(file);
-      setRawAudioBlob(blob);
-      const url = URL.createObjectURL(blob);
-      setAudioUrl((previous) => {
-        if (previous) URL.revokeObjectURL(previous);
-        return url;
-      });
-      onRecordingReady(blob);
-      streamRef.current?.getTracks().forEach((track) => track.stop());
-    };
-
-    setDuration(0);
-    timerRef.current = window.setInterval(
-      () => setDuration((value) => value + 1),
-      1000,
-    );
-    recorder.start();
-    setIsRecording(true);
-  }
-
   function stopRecording() {
-    if (durationRef.current < MIN_DURATION) {
-      const confirmStop = window.confirm(
-        `Your recording is only ${durationRef.current} seconds. A minimum of ${MIN_DURATION} seconds is recommended for high-quality voice cloning. Stop recording anyway?`,
-      );
-      if (!confirmStop) return;
-    }
     if (streamRef.current) {
       streamRef.current.getTracks().forEach((track) => {
         try {
@@ -235,36 +212,6 @@ export default function VoiceRecorder({ onRecordingReady, disabled = false }) {
       });
     }
     recorderRef.current?.stop();
-  }
-
-  async function handleFileUpload(event) {
-    const [file] = event.target.files || [];
-    if (!file) return;
-
-    try {
-      setIsExtracting(true);
-      setRecorderError("");
-      const { blob, duration: extractedDuration } = await extractAudioFromFile(file);
-      const normalizedDuration = Math.max(0, Math.round(extractedDuration));
-
-      setRawAudioBlob(blob);
-      const url = URL.createObjectURL(blob);
-      setAudioUrl((previous) => {
-        if (previous) URL.revokeObjectURL(previous);
-        return url;
-      });
-      setDuration(normalizedDuration);
-      durationRef.current = normalizedDuration;
-      onRecordingReady(blob, { duration: normalizedDuration, isValid: normalizedDuration >= MIN_DURATION });
-    } catch (err) {
-      const friendlyMessage = err?.message || "Unable to process the selected file.";
-      setRecorderError(friendlyMessage);
-      if (errorTimerRef.current) clearTimeout(errorTimerRef.current);
-      errorTimerRef.current = setTimeout(() => setRecorderError(""), 6000);
-    } finally {
-      setIsExtracting(false);
-      event.target.value = "";
-    }
   }
 
   async function handleFileUpload(event) {
@@ -278,9 +225,9 @@ export default function VoiceRecorder({ onRecordingReady, disabled = false }) {
     onRecordingReady(null);
     setDuration(0);
     durationRef.current = 0;
-    
+
     setIsExtracting(true);
-    
+
     try {
       const { blob, duration } = await extractAudioFromFile(file);
       const url = URL.createObjectURL(blob);
@@ -403,10 +350,13 @@ export default function VoiceRecorder({ onRecordingReady, disabled = false }) {
     <section className="rounded-lg border border-ink/10 bg-white p-5 shadow-soft dark:border-border dark:bg-surface dark:text-neutral-100 dark:shadow-soft-dk">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h2 className="text-xl font-bold">Record or upload a 10-second reference</h2>
+          <h2 className="text-xl font-bold">
+            Record or upload a 10-second reference
+          </h2>
           <p className="mt-1 max-w-2xl text-sm leading-6 text-ink/70 dark:text-muted">
             Use your own voice or a trusted reference speaker with consent. Keep
-            background noise low. You can also upload a video (.mp4, .mov) or audio file.
+            background noise low. You can also upload a video (.mp4, .mov) or
+            audio file.
           </p>
         </div>
         <span className="rounded-md bg-mint px-3 py-1 text-sm font-semibold text-ink dark:bg-glow/15 dark:text-glow">
@@ -419,8 +369,16 @@ export default function VoiceRecorder({ onRecordingReady, disabled = false }) {
           type="button"
           onClick={isRecording ? stopRecording : startRecording}
           disabled={disabled}
-          title={isRecording ? "Stop recording your voice" : "Start recording your voice"}
-          aria-label={isRecording ? "Stop recording your voice" : "Start recording your voice"}
+          title={
+            isRecording
+              ? "Stop recording your voice"
+              : "Start recording your voice"
+          }
+          aria-label={
+            isRecording
+              ? "Stop recording your voice"
+              : "Start recording your voice"
+          }
           className={`inline-flex items-center justify-center gap-2 rounded-md px-5 py-3 font-bold text-white transition ${
             isRecording
               ? "bg-coral hover:bg-coral/90"

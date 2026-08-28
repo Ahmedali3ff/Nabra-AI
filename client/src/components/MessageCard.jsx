@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { Copy, Pin, Play, RotateCcw, Trash2 } from "lucide-react";
 
 function formatTime(timestamp) {
@@ -11,7 +11,10 @@ function formatTime(timestamp) {
       minute: "2-digit",
     });
   }
-  return new Date(timestamp).toLocaleDateString([], { month: "short", day: "numeric" });
+  return new Date(timestamp).toLocaleDateString([], {
+    month: "short",
+    day: "numeric",
+  });
 }
 
 export function MessageCard({
@@ -25,28 +28,17 @@ export function MessageCard({
   audioUrl,
   onDownload,
 }) {
-  const { id, text, timestamp, tags } = message;
-  const timeLabel = useRelativeTime(timestamp);
-
-  const [isAddingTag, setIsAddingTag] = useState(false);
-  const [newTagText, setNewTagText] = useState("");
-
-  const handleAddTagSubmit = (e) => {
-    e.preventDefault();
-    const tag = newTagText.trim();
-    if (!tag) return;
-    if (tag.length > 15) return;
-    onAddTag(id, tag);
-    setNewTagText("");
-    setIsAddingTag(false);
-  };
+  const { id, text, timestamp } = message;
+  const timeLabel = formatTime(timestamp);
 
   return (
     <article
       className={[
         "group relative rounded-md border bg-white p-3 text-sm shadow-none",
         "transition-all duration-150 hover:border-blue-400 dark:bg-surface",
-        isPinned ? "border-l-4 border-l-amber-400 border-neutral-200 dark:border-border dark:border-l-amber-400" : "border-neutral-200 dark:border-border",
+        isPinned
+          ? "border-l-4 border-l-amber-400 border-neutral-200 dark:border-border dark:border-l-amber-400"
+          : "border-neutral-200 dark:border-border",
       ].join(" ")}
       aria-label={`Message: ${text}`}
     >
@@ -67,13 +59,25 @@ export function MessageCard({
           role="group"
           aria-label="Message actions"
         >
-          <ActionButton onClick={() => onReplay(text)} aria-label="Replay this message" title="Replay">
+          <ActionButton
+            onClick={() => onReplay(text)}
+            aria-label="Replay this message"
+            title="Replay"
+          >
             <Play size={14} aria-hidden="true" fill="currentColor" />
           </ActionButton>
-          <ActionButton onClick={() => onReuse(text)} aria-label="Load this message into the composer" title="Reuse">
+          <ActionButton
+            onClick={() => onReuse(text)}
+            aria-label="Load this message into the composer"
+            title="Reuse"
+          >
             <RotateCcw size={14} aria-hidden="true" />
           </ActionButton>
-          <ActionButton onClick={() => onCopy(text)} aria-label="Copy message to clipboard" title="Copy">
+          <ActionButton
+            onClick={() => onCopy(text)}
+            aria-label="Copy message to clipboard"
+            title="Copy"
+          >
             <Copy size={14} aria-hidden="true" />
           </ActionButton>
           <ActionButton
@@ -83,7 +87,11 @@ export function MessageCard({
             title={isPinned ? "Unpin" : "Pin"}
             className={isPinned ? "text-amber-500" : ""}
           >
-            <Pin size={14} aria-hidden="true" fill={isPinned ? "currentColor" : "none"} />
+            <Pin
+              size={14}
+              aria-hidden="true"
+              fill={isPinned ? "currentColor" : "none"}
+            />
           </ActionButton>
           <ActionButton
             onClick={() => onDelete(id)}

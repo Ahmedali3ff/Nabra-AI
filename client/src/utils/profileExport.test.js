@@ -54,7 +54,7 @@ describe("profileExport utility", () => {
   it("exports, compresses, and generates a valid transfer URL", async () => {
     localStorage.setItem(
       EXPORT_STORAGE_KEYS.quick_replies,
-      JSON.stringify(["Yes", "No"])
+      JSON.stringify(["Yes", "No"]),
     );
     localStorage.setItem(EXPORT_STORAGE_KEYS.language, "es");
 
@@ -74,17 +74,17 @@ describe("profileExport utility", () => {
 
     const transferUrl = generateTransferUrl(
       payload,
-      "https://app.voiceforge.io"
+      "https://app.voiceforge.io",
     );
     expect(transferUrl).toBe(
-      `https://app.voiceforge.io/?import_payload=${payload}`
+      `https://app.voiceforge.io/?import_payload=${payload}`,
     );
   });
 
   it("decompresses and imports setup data into localStorage and IndexedDB", async () => {
     localStorage.setItem(
       EXPORT_STORAGE_KEYS.quick_replies,
-      JSON.stringify(["Hello"])
+      JSON.stringify(["Hello"]),
     );
     localStorage.setItem(EXPORT_STORAGE_KEYS.language, "fr");
 
@@ -109,26 +109,26 @@ describe("profileExport utility", () => {
     expect(imported.version).toBe(1);
     expect(localStorage.getItem(EXPORT_STORAGE_KEYS.language)).toBe("fr");
     expect(localStorage.getItem(EXPORT_STORAGE_KEYS.quick_replies)).toBe(
-      JSON.stringify(["Hello"])
+      JSON.stringify(["Hello"]),
     );
 
     expect(db.saveProfile).toHaveBeenCalledWith(
       expect.objectContaining({
         voice_id: "voice_abc",
         name: "Clinician Voice",
-      })
+      }),
     );
   });
 
   it("throws clear error on corrupted or invalid payloads", async () => {
     await expect(
-      importSetupPayload("not-a-valid-lz-string-payload")
+      importSetupPayload("not-a-valid-lz-string-payload"),
     ).rejects.toThrow();
     await expect(importSetupPayload("")).rejects.toThrow(
-      "Invalid transfer payload."
+      "Invalid transfer payload.",
     );
     await expect(importSetupPayload(null)).rejects.toThrow(
-      "Invalid transfer payload."
+      "Invalid transfer payload.",
     );
   });
 });

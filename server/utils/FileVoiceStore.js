@@ -55,11 +55,11 @@ export class FileVoiceStore {
   async set(voiceId, data) {
     await this.initPromise;
     const { audioBuffer, ...meta } = data;
-    
+
     // Save buffer to disk
     const filePath = path.join(this.voicesDir, voiceId);
     await fs.writeFile(filePath, audioBuffer);
-    
+
     // Save metadata
     this.metadata.set(voiceId, meta);
     await this._saveDb();
@@ -69,7 +69,7 @@ export class FileVoiceStore {
     await this.initPromise;
     const meta = this.metadata.get(voiceId);
     if (!meta) return undefined;
-    
+
     try {
       const filePath = path.join(this.voicesDir, voiceId);
       const audioBuffer = await fs.readFile(filePath);
@@ -88,7 +88,7 @@ export class FileVoiceStore {
   async delete(voiceId) {
     await this.initPromise;
     if (!this.metadata.has(voiceId)) return false;
-    
+
     this.metadata.delete(voiceId);
     const filePath = path.join(this.voicesDir, voiceId);
     try {
@@ -98,7 +98,7 @@ export class FileVoiceStore {
         logger.error({ err, voiceId }, "Failed to delete voice file");
       }
     }
-    
+
     await this._saveDb();
     return true;
   }
@@ -107,13 +107,34 @@ export class FileVoiceStore {
     return this.metadata.size;
   }
 
+  async clear() {
+    await this.initPromise;
+    this.metadata.clear();
+    try {
+      const files = await fs.readdir(this.voicesDir);
+      for (const file of files) {
+        await fs.unlink(path.join(this.voicesDir, file)).catch(() => {});
+      }
+    } catch (e) {}
+    await this._saveDb();
+  }
+
   async prune(now = Date.now()) {
     await this.initPromise;
     let changed = false;
 
+    const envTtl = Number(process.env.VOICE_STORE_TTL_MS);
+    const effectiveTtl =
+      Number.isFinite(envTtl) && envTtl > 0 ? Math.max(1000, envTtl) : null;
+
     // Remove expired
     for (const [voiceId, entry] of this.metadata.entries()) {
-      if (entry.expiresAt <= now) {
+      const isExpiredByTimestamp = entry.expiresAt <= now;
+      const isExpiredByTtlEnv =
+        effectiveTtl &&
+        entry.createdAt &&
+        now - entry.createdAt >= effectiveTtl;
+      if (isExpiredByTimestamp || isExpiredByTtlEnv) {
         this.metadata.delete(voiceId);
         changed = true;
         try {
@@ -122,8 +143,12 @@ export class FileVoiceStore {
       }
     }
 
+    const envMax = Number(process.env.VOICE_STORE_MAX);
+    const effectiveMax =
+      Number.isFinite(envMax) && envMax > 0 ? envMax : this.maxVoices;
+
     // Enforce max size
-    while (this.metadata.size > this.maxVoices) {
+    while (this.metadata.size > effectiveMax) {
       const oldestVoiceId = this.metadata.keys().next().value;
       if (!oldestVoiceId) break;
       this.metadata.delete(oldestVoiceId);

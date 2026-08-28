@@ -8,7 +8,12 @@ self.onmessage = async (e) => {
 
   if (!chunk) {
     if (isLast) {
-      self.postMessage({ status: "success", chunkIndex, pcmData: new Float32Array(0), isLast: true });
+      self.postMessage({
+        status: "success",
+        chunkIndex,
+        pcmData: new Float32Array(0),
+        isLast: true,
+      });
     }
     return;
   }
@@ -27,7 +32,9 @@ self.onmessage = async (e) => {
       const decodeBuffer = accumulatedBytes.buffer.slice(0);
       audioBuffer = await ctx.decodeAudioData(decodeBuffer);
     } else {
-      throw new Error("OffscreenAudioContext not supported in this environment");
+      throw new Error(
+        "OffscreenAudioContext not supported in this environment",
+      );
     }
 
     const channelData = audioBuffer.getChannelData(0);
@@ -42,20 +49,23 @@ self.onmessage = async (e) => {
       }
       lastDecodedSamples = totalSamples;
 
-      self.postMessage({
-        status: "success",
-        chunkIndex,
-        pcmData: newSamples,
-        sampleRate: audioBuffer.sampleRate,
-        isLast
-      }, [newSamples.buffer]);
+      self.postMessage(
+        {
+          status: "success",
+          chunkIndex,
+          pcmData: newSamples,
+          sampleRate: audioBuffer.sampleRate,
+          isLast,
+        },
+        [newSamples.buffer],
+      );
     } else {
       self.postMessage({
         status: "success",
         chunkIndex,
         pcmData: new Float32Array(0),
         sampleRate: audioBuffer.sampleRate,
-        isLast
+        isLast,
       });
     }
   } catch (err) {
@@ -65,12 +75,12 @@ self.onmessage = async (e) => {
       self.postMessage({
         status: "error",
         chunkIndex,
-        error: err.message || "Failed to decode final audio chunk"
+        error: err.message || "Failed to decode final audio chunk",
       });
     } else {
       self.postMessage({
         status: "pending",
-        chunkIndex
+        chunkIndex,
       });
     }
   }

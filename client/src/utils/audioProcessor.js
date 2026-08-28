@@ -41,7 +41,9 @@ export class AudioProcessor {
    */
   async initialize(audioElement) {
     if (!audioElement) {
-      throw new TypeError("AudioProcessor.initialize() requires a media element.");
+      throw new TypeError(
+        "AudioProcessor.initialize() requires a media element.",
+      );
     }
 
     const existingBinding = mediaElementSources.get(audioElement);
@@ -53,9 +55,11 @@ export class AudioProcessor {
       this.audioContext = existingBinding.context;
     } else if (!this.audioContext) {
       // Must be created after a user gesture
-      this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+      this.audioContext = new (
+        window.AudioContext || window.webkitAudioContext
+      )();
     }
-    
+
     if (this.audioContext.state === "suspended") {
       await this.audioContext.resume();
     }
@@ -143,7 +147,7 @@ export class AudioProcessor {
 
   /**
    * Returns the most recently extracted mel-spectrogram.
-   * Format expected by Wav2Lip ONNX is usually [1, 1, 80, 16] 
+   * Format expected by Wav2Lip ONNX is usually [1, 1, 80, 16]
    * which flattens to a Float32Array of length 1280.
    * @returns {Float32Array|null}
    */
@@ -207,7 +211,11 @@ export class AudioProcessor {
       this.mediaElement &&
       mediaElementSources.get(this.mediaElement)?.context === this.audioContext;
 
-    if (!ownsMediaBinding && this.audioContext && this.audioContext.state !== "closed") {
+    if (
+      !ownsMediaBinding &&
+      this.audioContext &&
+      this.audioContext.state !== "closed"
+    ) {
       this.audioContext.close();
     }
 

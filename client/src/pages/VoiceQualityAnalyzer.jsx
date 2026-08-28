@@ -35,8 +35,14 @@ export default function VoiceQualityAnalyzer() {
       }
       frames.sort((a, b) => a - b);
       const topIdx = Math.floor(frames.length * 0.8);
-      const signalRms = frames.slice(topIdx).reduce((s, v) => s + v, 0) / (frames.length - topIdx);
-      const noiseRms = frames.slice(0, Math.floor(frames.length * 0.2)).reduce((s, v) => s + v, 0) / Math.floor(frames.length * 0.2) || 1e-10;
+      const signalRms =
+        frames.slice(topIdx).reduce((s, v) => s + v, 0) /
+        (frames.length - topIdx);
+      const noiseRms =
+        frames
+          .slice(0, Math.floor(frames.length * 0.2))
+          .reduce((s, v) => s + v, 0) / Math.floor(frames.length * 0.2) ||
+        1e-10;
       const snr = 20 * Math.log10(signalRms / noiseRms);
       return Math.round(snr * 10) / 10;
     } catch {
@@ -55,7 +61,9 @@ export default function VoiceQualityAnalyzer() {
     const loudness = Math.floor(Math.random() * 20) + 80;
     const clarity = Math.floor(Math.random() * 25) + 70;
     const completeness = Math.floor(Math.random() * 20) + 80;
-    const total = Math.round((noise + duration + loudness + clarity + completeness) / 5);
+    const total = Math.round(
+      (noise + duration + loudness + clarity + completeness) / 5,
+    );
 
     setMetrics({ noise, duration, loudness, clarity, completeness });
     setQualityScore(total);
@@ -87,8 +95,8 @@ export default function VoiceQualityAnalyzer() {
             value >= 80
               ? "bg-green-500"
               : value >= 60
-              ? "bg-yellow-500"
-              : "bg-red-500"
+                ? "bg-yellow-500"
+                : "bg-red-500"
           }`}
           style={{ width: `${value}%` }}
         />
@@ -125,9 +133,7 @@ export default function VoiceQualityAnalyzer() {
       {file && (
         <>
           <div className="mt-10 rounded-xl border p-6 bg-white dark:bg-neutral-900 shadow">
-            <h2 className="text-2xl font-semibold mb-6">
-              Recording Analysis
-            </h2>
+            <h2 className="text-2xl font-semibold mb-6">Recording Analysis</h2>
 
             <Progress title="Background Noise" value={metrics.noise} />
             <Progress title="Recording Duration" value={metrics.duration} />
@@ -142,19 +148,27 @@ export default function VoiceQualityAnalyzer() {
               <h3 className="text-xl font-bold">Quality Score</h3>
               <div
                 className={`text-6xl font-extrabold mt-3 ${
-                  qualityScore >= 80 ? "text-green-500" : qualityScore >= 60 ? "text-yellow-500" : "text-red-500"
+                  qualityScore >= 80
+                    ? "text-green-500"
+                    : qualityScore >= 60
+                      ? "text-yellow-500"
+                      : "text-red-500"
                 }`}
               >
                 {qualityScore}%
               </div>
               {snrDb !== null && (
                 <div className="mt-4 flex items-center justify-center gap-2">
-                  <span className="text-sm font-semibold text-neutral-500">SNR: {snrDb} dB</span>
+                  <span className="text-sm font-semibold text-neutral-500">
+                    SNR: {snrDb} dB
+                  </span>
                   <span
                     className={`rounded-full px-3 py-0.5 text-xs font-bold ${
-                      snrRating === "Good" ? "bg-green-100 text-green-700" :
-                      snrRating === "Fair" ? "bg-yellow-100 text-yellow-700" :
-                      "bg-red-100 text-red-700"
+                      snrRating === "Good"
+                        ? "bg-green-100 text-green-700"
+                        : snrRating === "Fair"
+                          ? "bg-yellow-100 text-yellow-700"
+                          : "bg-red-100 text-red-700"
                     }`}
                     aria-label={`Recording environment: ${snrRating}`}
                   >
@@ -165,9 +179,7 @@ export default function VoiceQualityAnalyzer() {
             </div>
 
             <div className="mt-8">
-              <h3 className="text-xl font-semibold mb-3">
-                Suggestions
-              </h3>
+              <h3 className="text-xl font-semibold mb-3">Suggestions</h3>
 
               <ul className="space-y-2">
                 {metrics.noise < 80 && (

@@ -46,6 +46,7 @@ export function createResponse() {
     },
     setHeader(name, value) {
       this.headers[name] = value;
+      this.headers[String(name).toLowerCase()] = value;
     },
     write(chunk) {
       this.chunks.push(chunk);

@@ -1,10 +1,19 @@
 import React, { useDeferredValue, useMemo, useState } from "react";
-import { ChevronLeft, ChevronRight, Inbox, Pin, Search, Trash2, Download } from "lucide-react";
+import {
+  ChevronLeft,
+  ChevronRight,
+  Inbox,
+  Pin,
+  Search,
+  Trash2,
+  Download,
+} from "lucide-react";
 import { MessageCard } from "./MessageCard";
 import useDebounce from "../hooks/useDebounce";
 
-export function SpeechHistory({history,
-  favorites,
+export function SpeechHistory({
+  history = [],
+  favorites = new Set(),
   sessionTranscript = [],
   onReuse,
   onReplay,
@@ -20,85 +29,105 @@ export function SpeechHistory({history,
   const [search, setSearch] = useState("");
   const deferredSearch = useDeferredValue(search);
 
+  const safeHistory = Array.isArray(history) ? history : [];
+  const safeFavorites =
+    favorites instanceof Set
+      ? favorites
+      : new Set(Array.isArray(favorites) ? favorites : []);
+  const safeSessionTranscript = Array.isArray(sessionTranscript)
+    ? sessionTranscript
+    : [];
+
   const visible = useMemo(() => {
-    let messages = tab === "pinned" ? history.filter((message) => favorites.has(message.id)) : history;
+    let messages =
+      tab === "pinned"
+        ? safeHistory.filter(
+            (message) => message && safeFavorites.has(message.id),
+          )
+        : safeHistory;
 
     if (deferredSearch.trim()) {
       const query = deferredSearch.toLowerCase();
-      messages = messages.filter((message) => message.text.toLowerCase().includes(query));
+      messages = messages.filter(
+        (message) =>
+          message && message.text && message.text.toLowerCase().includes(query),
+      );
     }
 
     return messages;
-  }, [history, favorites, tab, deferredSearch]);
+  }, [safeHistory, safeFavorites, tab, deferredSearch]);
 
   const tabs = ["all", "pinned"];
 
   function handleTabKeyDown(event, currentIndex) {
     let nextIndex = currentIndex;
 
-    if (event.key === "ArrowRight") nextIndex = (currentIndex + 1) % tabs.length;
-    if (event.key === "ArrowLeft") nextIndex = (currentIndex - 1 + tabs.length) % tabs.length;
+    if (event.key === "ArrowRight")
+      nextIndex = (currentIndex + 1) % tabs.length;
+    if (event.key === "ArrowLeft")
+      nextIndex = (currentIndex - 1 + tabs.length) % tabs.length;
 
     if (nextIndex !== currentIndex) setTab(tabs[nextIndex]);
   }
 
   function handleClearHistory() {
-    if (window.confirm("Clear all history? Pinned messages will also be removed.")) {
+    if (
+      window.confirm("Clear all history? Pinned messages will also be removed.")
+    ) {
       onClearHistory();
     }
   }
 
   function handleExportTranscript() {
-  if (!sessionTranscript || sessionTranscript.length === 0) return;
+    if (!sessionTranscript || sessionTranscript.length === 0) return;
 
-  const formattedText = sessionTranscript
-    .map(
-      (item) =>
-        `[${new Date(item.timestamp).toLocaleTimeString()}] ${item.text} - ${
-          item.status ?? "unknown"
-        }`
-    )
-    .join("\n");
+    const formattedText = sessionTranscript
+      .map(
+        (item) =>
+          `[${new Date(item.timestamp).toLocaleTimeString()}] ${item.text} - ${
+            item.status ?? "unknown"
+          }`,
+      )
+      .join("\n");
 
-  const blob = new Blob([formattedText], { type: "text/plain" });
-  const url = URL.createObjectURL(blob);
+    const blob = new Blob([formattedText], { type: "text/plain" });
+    const url = URL.createObjectURL(blob);
 
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = `Transcript-${new Date().toISOString().split("T")[0]}.txt`;
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `Transcript-${new Date().toISOString().split("T")[0]}.txt`;
 
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
 
-  URL.revokeObjectURL(url);
-}
-function handleExportJson() {
-  if (!sessionTranscript || sessionTranscript.length === 0) return;
+    URL.revokeObjectURL(url);
+  }
+  function handleExportJson() {
+    if (!sessionTranscript || sessionTranscript.length === 0) return;
 
-  const exportData = sessionTranscript.map((item) => ({
-    command: item.text,
-    timestamp: new Date(item.timestamp).toISOString(),
-    status: item.status ?? "unknown",
-  }));
+    const exportData = sessionTranscript.map((item) => ({
+      command: item.text,
+      timestamp: new Date(item.timestamp).toISOString(),
+      status: item.status ?? "unknown",
+    }));
 
-  const blob = new Blob(
-    [JSON.stringify(exportData, null, 2)],
-    { type: "application/json" }
-  );
+    const blob = new Blob([JSON.stringify(exportData, null, 2)], {
+      type: "application/json",
+    });
 
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
 
-  a.href = url;
-  a.download = `Transcript-${new Date().toISOString().split("T")[0]}.json`;
+    a.href = url;
+    a.download = `Transcript-${new Date().toISOString().split("T")[0]}.json`;
 
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
 
-  URL.revokeObjectURL(url);
-}
+    URL.revokeObjectURL(url);
+  }
   return (
     <aside
       className={[
@@ -111,11 +140,17 @@ function handleExportJson() {
       <div className="flex flex-shrink-0 items-center gap-2 border-b border-neutral-200 px-3 py-3 dark:border-border">
         <button
           onClick={() => setCollapsed((value) => !value)}
-          aria-label={collapsed ? "Expand history panel" : "Collapse history panel"}
+          aria-label={
+            collapsed ? "Expand history panel" : "Collapse history panel"
+          }
           aria-expanded={!collapsed}
           className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded border border-neutral-200 bg-white text-neutral-500 transition hover:bg-neutral-100 focus:outline-none focus:ring-2 focus:ring-blue-400 dark:border-border dark:bg-surface dark:text-neutral-400 dark:hover:bg-neutral-900"
         >
-          {collapsed ? <ChevronRight size={15} aria-hidden="true" /> : <ChevronLeft size={15} aria-hidden="true" />}
+          {collapsed ? (
+            <ChevronRight size={15} aria-hidden="true" />
+          ) : (
+            <ChevronLeft size={15} aria-hidden="true" />
+          )}
         </button>
 
         {!collapsed && (
@@ -123,9 +158,9 @@ function handleExportJson() {
             <span className="flex-1 truncate text-sm font-medium text-neutral-700 dark:text-neutral-200">
               History
             </span>
-            {history.length > 0 && (
+            {safeHistory.length > 0 && (
               <span className="rounded-full bg-neutral-200 px-2 py-0.5 text-xs text-neutral-600 dark:bg-surface dark:text-neutral-300">
-                {history.length}
+                {safeHistory.length}
               </span>
             )}
           </>
@@ -139,7 +174,11 @@ function handleExportJson() {
               Search history
             </label>
             <div className="relative">
-              <Search size={14} aria-hidden="true" className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-neutral-400" />
+              <Search
+                size={14}
+                aria-hidden="true"
+                className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-neutral-400"
+              />
               <input
                 id="vf-search"
                 type="search"
@@ -193,20 +232,25 @@ function handleExportJson() {
             tabIndex={0}
           >
             {visible.length === 0 ? (
-              <EmptyState tab={tab} hasSearch={Boolean(deferredSearch.trim())} />
+              <EmptyState
+                tab={tab}
+                hasSearch={Boolean(deferredSearch.trim())}
+              />
             ) : (
               <ul className="space-y-2" aria-label="Message list">
                 {visible.map((message) => (
                   <li key={message.id}>
                     <MessageCard
                       message={message}
-                      isPinned={favorites.has(message.id)}
+                      isPinned={safeFavorites.has(message.id)}
                       onReuse={onReuse}
                       onReplay={onReplay}
                       onToggleFav={onToggleFav}
                       onDelete={onDelete}
                       onCopy={onCopy}
-                      audioUrl={getAudioUrl ? getAudioUrl(message.id) : undefined}
+                      audioUrl={
+                        getAudioUrl ? getAudioUrl(message.id) : undefined
+                      }
                       onDownload={onDownload}
                     />
                   </li>
@@ -215,37 +259,37 @@ function handleExportJson() {
             )}
           </div>
 
-         {sessionTranscript?.length > 0 && (
-  <div className="flex flex-col gap-2 flex-shrink-0 border-t border-neutral-200 p-2 dark:border-border">
-    <button
-      onClick={handleExportTranscript}
-      className="flex w-full items-center justify-center gap-1.5 rounded-md border border-neutral-200 px-3 py-1.5 text-xs text-neutral-600 transition hover:border-blue-300 hover:bg-blue-50 hover:text-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-300 dark:border-border dark:text-neutral-300 dark:hover:border-blue-800 dark:hover:bg-blue-900/20 dark:hover:text-blue-400"
-    >
-      <Download size={13} aria-hidden="true" />
-      Export TXT
-    </button>
+          {safeSessionTranscript.length > 0 && (
+            <div className="flex flex-col gap-2 flex-shrink-0 border-t border-neutral-200 p-2 dark:border-border">
+              <button
+                onClick={handleExportTranscript}
+                className="flex w-full items-center justify-center gap-1.5 rounded-md border border-neutral-200 px-3 py-1.5 text-xs text-neutral-600 transition hover:border-blue-300 hover:bg-blue-50 hover:text-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-300 dark:border-border dark:text-neutral-300 dark:hover:border-blue-800 dark:hover:bg-blue-900/20 dark:hover:text-blue-400"
+              >
+                <Download size={13} aria-hidden="true" />
+                Export TXT
+              </button>
 
-    <button
-      onClick={handleExportJson}
-      className="flex w-full items-center justify-center gap-1.5 rounded-md border border-neutral-200 px-3 py-1.5 text-xs text-neutral-600 transition hover:border-blue-300 hover:bg-blue-50 hover:text-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-300 dark:border-border dark:text-neutral-300 dark:hover:border-blue-800 dark:hover:bg-blue-900/20 dark:hover:text-blue-400"
-    >
-      <Download size={13} aria-hidden="true" />
-      Export JSON
-    </button>
-  </div>
-)}
+              <button
+                onClick={handleExportJson}
+                className="flex w-full items-center justify-center gap-1.5 rounded-md border border-neutral-200 px-3 py-1.5 text-xs text-neutral-600 transition hover:border-blue-300 hover:bg-blue-50 hover:text-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-300 dark:border-border dark:text-neutral-300 dark:hover:border-blue-800 dark:hover:bg-blue-900/20 dark:hover:text-blue-400"
+              >
+                <Download size={13} aria-hidden="true" />
+                Export JSON
+              </button>
+            </div>
+          )}
 
-{history.length > 0 && (
-  <div className="flex-shrink-0 border-t border-neutral-200 p-2 dark:border-border">
-    <button
-      onClick={handleClearHistory}
-      className="flex w-full items-center justify-center gap-1.5 rounded-md border border-neutral-200 px-3 py-1.5 text-xs text-neutral-500 transition hover:border-red-300 hover:bg-red-50 hover:text-red-600 focus:outline-none focus:ring-2 focus:ring-red-300 dark:border-border dark:hover:border-red-800 dark:hover:bg-red-500/15 dark:hover:text-red-400"
-    >
-      <Trash2 size={13} aria-hidden="true" />
-      Clear all history
-    </button>
-  </div>
-)}
+          {safeHistory.length > 0 && (
+            <div className="flex-shrink-0 border-t border-neutral-200 p-2 dark:border-border">
+              <button
+                onClick={handleClearHistory}
+                className="flex w-full items-center justify-center gap-1.5 rounded-md border border-neutral-200 px-3 py-1.5 text-xs text-neutral-500 transition hover:border-red-300 hover:bg-red-50 hover:text-red-600 focus:outline-none focus:ring-2 focus:ring-red-300 dark:border-border dark:hover:border-red-800 dark:hover:bg-red-500/15 dark:hover:text-red-400"
+              >
+                <Trash2 size={13} aria-hidden="true" />
+                Clear all history
+              </button>
+            </div>
+          )}
         </>
       )}
     </aside>

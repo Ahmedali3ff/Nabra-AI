@@ -12,7 +12,11 @@ describe("Local-First asset resolution and offline fallback helpers", () => {
       return `https://cdn.jsdelivr.net/npm/@mediapipe/selfie_segmentation/${fileName}`;
     };
 
-    expect(getLocateFile(origin, file)).toBe("http://localhost:5173/wasm/segmenter.wasm");
-    expect(getLocateFile(null, file)).toBe("https://cdn.jsdelivr.net/npm/@mediapipe/selfie_segmentation/segmenter.wasm");
+    expect(getLocateFile(origin, file)).toBe(
+      "http://localhost:5173/wasm/segmenter.wasm",
+    );
+    expect(getLocateFile(null, file)).toBe(
+      "https://cdn.jsdelivr.net/npm/@mediapipe/selfie_segmentation/segmenter.wasm",
+    );
   });
 });

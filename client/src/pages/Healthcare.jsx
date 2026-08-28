@@ -1,6 +1,13 @@
 import React, { useState } from "react";
 import { dbRecovery } from "../utils/db.js";
-import { Heart, Shield, RefreshCw, AlertCircle, Eye, EyeOff } from "lucide-react";
+import {
+  Heart,
+  Shield,
+  RefreshCw,
+  AlertCircle,
+  Eye,
+  EyeOff,
+} from "lucide-react";
 
 export default function Healthcare() {
   const [role, setRole] = useState("Admin");
@@ -9,7 +16,11 @@ export default function Healthcare() {
   const [statusMsg, setStatusMsg] = useState("");
 
   const handleWipeDb = async () => {
-    if (window.confirm("WARNING: This will completely delete all profiles and transcripts from local browser storage. Continue?")) {
+    if (
+      window.confirm(
+        "WARNING: This will completely delete all profiles and transcripts from local browser storage. Continue?",
+      )
+    ) {
       const ok = await dbRecovery();
       if (ok) {
         setStatusMsg("Database wiped. Reloading page...");
@@ -24,15 +35,18 @@ export default function Healthcare() {
     "I need urgent assistance. Please call my primary caregiver.",
     "Please bring me my water and daily medication.",
     "I am experiencing severe physical discomfort, please help.",
-    "I would like to rest. Please adjust the room temperature."
+    "I would like to rest. Please adjust the room temperature.",
   ];
 
   return (
     <div className="space-y-6">
       <header className="rounded-lg border border-ink/10 bg-white p-5 shadow-soft dark:border-border dark:bg-surface">
-        <h2 className="text-2xl font-bold dark:text-neutral-100">Healthcare Workspace</h2>
+        <h2 className="text-2xl font-bold dark:text-neutral-100">
+          Healthcare Workspace
+        </h2>
         <p className="mt-1 text-sm text-ink/65 dark:text-muted">
-          Patient emergency assistance, caregiver communication tools, and local voice governance controls.
+          Patient emergency assistance, caregiver communication tools, and local
+          voice governance controls.
         </p>
       </header>
 
@@ -77,12 +91,15 @@ export default function Healthcare() {
             Voice Governance & RBAC
           </h3>
           <p className="text-sm text-ink/65 dark:text-muted leading-relaxed">
-            Manage simulated organization permissions and characters consumption controls.
+            Manage simulated organization permissions and characters consumption
+            controls.
           </p>
 
           <div className="space-y-4">
             <div className="space-y-1">
-              <label className="text-xs font-bold text-ink/50 dark:text-neutral-400 uppercase block">User Profile Role</label>
+              <label className="text-xs font-bold text-ink/50 dark:text-neutral-400 uppercase block">
+                User Profile Role
+              </label>
               <select
                 value={role}
                 onChange={(e) => setRole(e.target.value)}
@@ -95,7 +112,9 @@ export default function Healthcare() {
             </div>
 
             <div className="space-y-1">
-              <label className="text-xs font-bold text-ink/50 dark:text-neutral-400 uppercase block">Session Character Cap</label>
+              <label className="text-xs font-bold text-ink/50 dark:text-neutral-400 uppercase block">
+                Session Character Cap
+              </label>
               <input
                 type="number"
                 value={sessionCap}
@@ -106,8 +125,12 @@ export default function Healthcare() {
 
             <div className="border-t border-ink/10 pt-4 flex justify-between items-center">
               <div>
-                <span className="font-bold text-sm text-ink dark:text-neutral-200 block">Database Recovery</span>
-                <span className="text-xs text-ink/50 dark:text-neutral-400">Purge local IndexedDB database</span>
+                <span className="font-bold text-sm text-ink dark:text-neutral-200 block">
+                  Database Recovery
+                </span>
+                <span className="text-xs text-ink/50 dark:text-neutral-400">
+                  Purge local IndexedDB database
+                </span>
               </div>
               <button
                 onClick={handleWipeDb}

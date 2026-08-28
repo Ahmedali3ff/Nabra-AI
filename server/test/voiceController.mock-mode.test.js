@@ -51,7 +51,7 @@ test("MOCK_CHATTERBOX: cloneVoice returns fixture voice_id", async (t) => {
   request.file = {
     buffer: Buffer.concat([
       Buffer.from([0x1a, 0x45, 0xdf, 0xa3]),
-      Buffer.alloc(12)
+      Buffer.alloc(12),
     ]),
     mimetype: "audio/webm",
     originalname: "test.webm",
@@ -154,7 +154,7 @@ test("MOCK_CHATTERBOX: streamSpeech returns 400 for an invalid speechId", async 
   const response = createResponse();
   const err = await invoke(streamSpeech, request, response);
   assert.ok(err, "should call next with an error for invalid token");
-assert.equal(err.status, 400);
+  assert.equal(err.status, 400);
 });
 
 // ---------------------------------------------------------------------------
@@ -170,7 +170,7 @@ test("MOCK_CHATTERBOX is ignored in production: cloneVoice still runs (no key re
   request.file = {
     buffer: Buffer.concat([
       Buffer.from([0x1a, 0x45, 0xdf, 0xa3]),
-      Buffer.alloc(12)
+      Buffer.alloc(12),
     ]),
     mimetype: "audio/webm",
     originalname: "test.webm",
