@@ -1,0 +1,3 @@
+DEPLOYMENT_ID=dpl_AGZHoQjchrEUsbvMYuT8TRuSJTnk
+DEPLOYMENT_URL=https://nabra-ai-client-nh5coeui2-ahmed-6357.vercel.app
+STATE=INITIALIZING

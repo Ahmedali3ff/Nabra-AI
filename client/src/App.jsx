@@ -218,15 +218,6 @@ export default function App() {
     };
   }, []);
 
-  /* Scroll ProgressBar */
-  const { scrollYProgress } = useScroll();
-
-  const scaleX = useSpring(scrollYProgress, {
-    stiffness: 120,
-    damping: 30,
-    mass: 0.2,
-  });
-
   return (
     <div className="min-h-screen flex flex-col bg-cloud text-ink dark:bg-night dark:text-neutral-100">
       <BrowserWarningBanner />
