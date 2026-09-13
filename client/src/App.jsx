@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { motion, useScroll, useSpring } from "framer-motion";
 import {
   Camera,
   Mic2,
@@ -116,6 +117,8 @@ function Route({ element }) {
 export default function App() {
   const [activeTab, setActiveTab] = useState(getSavedTab);
   const { theme, toggleTheme } = useTheme();
+  const { scrollYProgress } = useScroll();
+  const scaleX = useSpring(scrollYProgress, { stiffness: 100, damping: 30, restDelta: 0.001 });
   const [shortcutsOpen, setShortcutsOpen] = React.useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
 
