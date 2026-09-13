@@ -26,7 +26,6 @@ import NotFound from "./pages/NotFound.jsx";
 import Contributors from "./pages/Contributors.jsx";
 import { clearTokens as clearStorage, logout } from "./utils/auth.js";
 import BrowserWarningBanner from "./components/BrowserWarningBanner.jsx";
-import { motion, useScroll, useSpring } from "framer-motion";
 
 const tabs = [
   { id: "landing", label: "Home", icon: Sparkles },
