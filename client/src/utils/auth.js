@@ -71,6 +71,14 @@ async function performTokenRefresh() {
  * Normalizes headers using standard Headers object to prevent 401 failures on custom instances.
  */
 export async function authFetch(url, options = {}) {
+  // In mock mode, skip all auth-gated API calls and return empty success
+  if (import.meta.env.VITE_MOCK_MODE === "true") {
+    return new Response(JSON.stringify([]), {
+      status: 200,
+      headers: { "Content-Type": "application/json" },
+    });
+  }
+
   const headers = new Headers(options.headers || {});
   const token = getAccessToken();
   if (token) {

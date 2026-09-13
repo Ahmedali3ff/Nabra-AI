@@ -35,7 +35,25 @@ export default function useTTS() {
       if (typeof onSpeakingChange === "function") onSpeakingChange(true);
 
       try {
-        const voiceSettings = loadVoiceSettings();
+        // ── Mock mode: use browser's built-in speech synthesis ───────────
+        if (import.meta.env.VITE_MOCK_MODE === "true") {
+          await new Promise((resolve, reject) => {
+            if (!window.speechSynthesis) {
+              reject(new Error("Browser speech synthesis not supported."));
+              return;
+            }
+            window.speechSynthesis.cancel();
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.lang = languageCode || "en";
+            utterance.onend = resolve;
+            utterance.onerror = (e) => reject(new Error(e.error));
+            window.speechSynthesis.speak(utterance);
+          });
+          setStatus("ready");
+          if (typeof onSpeakingChange === "function") onSpeakingChange(false);
+          return { audioUrl: "", blobUrl: "" };
+        }
+        // ─────────────────────────────────────────────────────────────────
         const modelId =
           localStorage.getItem("voiceforge:selectedModelId") ||
           "eleven_multilingual_v2";

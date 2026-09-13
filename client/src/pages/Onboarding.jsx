@@ -10,6 +10,7 @@ import {
 import VoiceRecorder from "../components/VoiceRecorder.jsx";
 import useVoiceClone from "../hooks/useVoiceClone.js";
 import { useToast, ToastContainer } from "../components/useToast.jsx";
+import ResponsibleCloningNotice from "../components/ResponsibleCloningNotice.jsx";
 import { API_BASE_URL } from "../utils/apiConfig.js";
 
 import {
@@ -221,11 +222,16 @@ export default function Onboarding({ onReady }) {
     setRecordingDuration(duration);
   }
 
-  const [voiceName, setVoiceName] = React.useState("VoiceForge Voice");
+  const [voiceName, setVoiceName] = React.useState("Voxena Voice");
   const [successProfile, setSuccessProfile] = React.useState(null);
   const { cloneVoice, status, error: apiError } = useVoiceClone();
   const { toasts, showToast } = useToast();
   const isCloning = status === "cloning";
+
+  // Responsible cloning notice — session-scoped (React ref, NOT localStorage)
+  const hasAcknowledgedRef = React.useRef(false);
+  const [isNoticeOpen, setIsNoticeOpen] = React.useState(false);
+  const pendingCloneRef = React.useRef(false);
   const [serverStatus, setServerStatus] = React.useState({
     isMock: false,
     space: "",
@@ -233,6 +239,19 @@ export default function Onboarding({ onReady }) {
   });
 
   React.useEffect(() => {
+    // Skip server check in mock mode
+    const isMockMode = import.meta.env.VITE_MOCK_MODE === "true";
+    if (isMockMode) {
+      setServerStatus({ 
+        status: "mock", 
+        message: "Mock mode enabled",
+        isMock: true,
+        hasServerKey: true,
+        space: "mock"
+      });
+      return;
+    }
+
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 5000); // 5-second timeout
 
@@ -272,7 +291,7 @@ export default function Onboarding({ onReady }) {
     };
   }, []);
   const hasKey = React.useMemo(() => {
-    return serverStatus.isMock || Boolean(serverStatus.space);
+    return serverStatus.isMock || serverStatus.status === "mock" || Boolean(serverStatus.space);
   }, [serverStatus]);
 
   const nameError = React.useMemo(() => {
@@ -343,6 +362,14 @@ export default function Onboarding({ onReady }) {
   async function handleClone() {
     if (!hasKey || !recording) return;
     if (nameError) return;
+
+    // Show responsible cloning notice on first attempt each session
+    if (!hasAcknowledgedRef.current) {
+      pendingCloneRef.current = true;
+      setIsNoticeOpen(true);
+      return;
+    }
+
     try {
       const profile = await cloneVoice(recording, voiceName);
       setSuccessProfile(profile);
@@ -351,8 +378,28 @@ export default function Onboarding({ onReady }) {
     }
   }
 
+  function handleNoticeAcknowledge() {
+    hasAcknowledgedRef.current = true;
+    setIsNoticeOpen(false);
+    if (pendingCloneRef.current) {
+      pendingCloneRef.current = false;
+      // Re-trigger the clone flow now that notice is acknowledged
+      handleClone();
+    }
+  }
+
+  function handleNoticeCancel() {
+    pendingCloneRef.current = false;
+    setIsNoticeOpen(false);
+  }
+
   return (
     <div className="space-y-6">
+      <ResponsibleCloningNotice
+        isOpen={isNoticeOpen}
+        onAcknowledge={handleNoticeAcknowledge}
+        onCancel={handleNoticeCancel}
+      />
       <section className="rounded-lg bg-black p-6 text-white shadow-soft dark:border dark:border-border dark:bg-surface dark:shadow-soft-dk">
         <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
           <div>

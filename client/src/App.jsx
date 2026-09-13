@@ -42,7 +42,7 @@ const ALL_TAB_IDS = new Set([...tabs.map((tab) => tab.id), "contributors"]);
 
 function getSavedTab() {
   try {
-    const saved = localStorage.getItem("voiceforge:activeTab");
+    const saved = localStorage.getItem("nabra:activeTab");
     if (saved === "landing") return saved;
     return ALL_TAB_IDS.has(saved) ? saved : DEFAULT_TAB;
   } catch {
@@ -52,7 +52,7 @@ function getSavedTab() {
 
 function saveActiveTab(tab) {
   try {
-    localStorage.setItem("voiceforge:activeTab", tab);
+    localStorage.setItem("nabra:activeTab", tab);
   } catch {
     // Storage can be unavailable in private or restricted browser contexts.
   }
@@ -240,22 +240,20 @@ export default function App() {
             onClick={() => selectTab("landing")}
             role="button"
             tabIndex={0}
-            aria-label="Go to home"
+            aria-label="Go to Nabra AI home"
             onKeyDown={(e) =>
               (e.key === "Enter" || e.key === " ") && selectTab("landing")
             }
           >
-            <img
-              src="/models/logo5.png"
-              alt="VoiceForge Logo"
-              className="h-10 w-10 flex-shrink-0 object-contain sm:h-12 sm:w-12"
-            />
+            <div className="h-10 w-10 flex-shrink-0 rounded-xl bg-primary-600 flex items-center justify-center sm:h-12 sm:w-12">
+              <span className="text-white font-bold text-lg sm:text-xl select-none">ن</span>
+            </div>
             <div className="min-w-0">
-              <p className="hidden text-xs font-semibold uppercase tracking-[0.18em] text-moss dark:text-glow sm:block">
-                Open source assistive video
+              <p className="hidden text-xs font-semibold uppercase tracking-[0.18em] text-primary-600 dark:text-primary-400 sm:block">
+                Voice · Accessible · Expressive
               </p>
               <h1 className="text-xl font-bold tracking-normal text-ink dark:text-neutral-50 sm:text-2xl lg:text-3xl">
-                VoiceForge
+                Nabra AI <span className="font-arabic text-primary-500">نَبْرة</span>
               </h1>
             </div>
           </div>
@@ -296,7 +294,7 @@ export default function App() {
 
           {/* Desktop nav + theme toggle */}
           <div className="hidden items-center gap-2 sm:flex">
-            <nav className="flex gap-2" aria-label="VoiceForge pages">
+            <nav className="flex gap-2" aria-label="Nabra AI pages">
               {tabs.map((tab) => {
                 const Icon = tab.icon;
                 const selected = activeTab === tab.id;

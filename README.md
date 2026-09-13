@@ -1,169 +1,201 @@
-<!-- Documents the VoiceForge local development workflow, browser constraints, and MVP roadmap. -->
+# Nabra AI — نَبْرة
 
-# VoiceForge
+> **Type it. Speak it. Communicate.**  
+> صوتك، بلغتك.
 
-VoiceForge is a browser-based assistive video tool that lets a user type during calls and output cloned speech with a lip-synced face preview.
-
----
-
-## 📑 Table of Contents
-
-- [Why This Exists](#why-this-exists)
-- [Tech Stack](#tech-stack)
-- [Browser Compatibility](#browser-compatibility)
-- [Prerequisites](#prerequisites)
-- [Setup](#setup)
-- [Environment Variables](#environment-variables)
-- [Using VoiceForge In A Call](#using-voiceforge-in-a-call)
-- [OBS Virtual Camera Setup](#obs-virtual-camera-setup)
-- [API](#api)
-- [Roadmap](#roadmap)
-- [License](#license)
-- [About](#about)
-- [Troubleshooting & FAQ](docs/TROUBLESHOOTING.md)
+Nabra AI is an accessible voice communication platform built on the
+[VoiceForge](https://github.com/itzzavdhesh/VoiceForge) open-source foundation
+by [itzzavdhesh](https://github.com/itzzavdhesh), licensed under the MIT License.
 
 ---
 
 ## Why This Exists
 
-Deaf and speech-impaired people on video calls are often pushed into chat boxes, delayed interpretation, or awkward turn-taking. VoiceForge explores a local-first interface where typed intent can become spoken audio and a synchronized visual feed, helping the user participate in the same conversational channel as everyone else.
+Nabra AI extends VoiceForge with three original features — Smart Phrase Library,
+Context Suggestions, and Conversation History — designed to make daily typed
+communication faster and more accessible, especially for users who rely on TTS
+for real-time interaction in meetings, classrooms, and daily life.
 
-## Tech Stack
-
-![React](https://img.shields.io/badge/React-18-61DAFB?logo=react&logoColor=111)
-![Vite](https://img.shields.io/badge/Vite-5-646CFF?logo=vite&logoColor=fff)
-![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-3-38B2AC?logo=tailwindcss&logoColor=fff)
-![Node.js](https://img.shields.io/badge/Node.js-Express-339933?logo=node.js&logoColor=fff)
-![Hugging Face](https://img.shields.io/badge/Hugging_Face-Chatterbox_TTS-FFD21E?logo=huggingface&logoColor=111)
-![ONNX Runtime](https://img.shields.io/badge/ONNX_Runtime-Web-005CED)
-![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)
-
-## Browser Compatibility
-
-VoiceForge targets Chrome and Edge only. WebRTC Insertable Streams and canvas capture APIs are still uneven across browsers, so Firefox and Safari are not supported for the virtual camera MVP.
+The Arabic name **نَبْرة** (Nabra) means *tone*, *intonation*, or *voice inflection* —
+a fitting identity for an expressive voice communication tool.
 
 ---
 
-## Prerequisites
+## Features
 
-VoiceForge's voice cloning engine is **100% free** — no paid API plan, no account sign-up, and no API key required.
+### Core Features (from VoiceForge)
 
-It is powered by [ResembleAI/Chatterbox-Multilingual-TTS](https://huggingface.co/spaces/ResembleAI/Chatterbox-Multilingual-TTS), a production-grade multilingual voice cloning model hosted as a public Hugging Face Space. The server connects to it using the official [`@gradio/client`](https://www.npmjs.com/package/@gradio/client) bridge package, which is installed automatically with `npm install`.
+These capabilities come directly from the VoiceForge foundation — credit goes entirely to itzzavdhesh:
 
-**What you need:**
+- **Voice Recording** — short reference recording via browser microphone or file upload
+- **Voice Cloning** — create a local voice profile from a recording
+- **Multilingual TTS** — speech generation via Chatterbox Multilingual TTS (Gradio / Hugging Face)
+- **Voice Profile Management** — save and switch between cloned voice profiles (IndexedDB)
+- **Emotion Presets** — neutral, excited, serious, whispering, cheerful
+- **ONNX Lip-Sync** — synchronized facial animation output via ONNX Runtime Web
+- **Virtual Camera Workflow** — stream lip-synced canvas output to OBS / virtual camera
+- **Mock / Offline Mode** — full UI flow without live backend or Hugging Face connection
+- **Dark / Light Mode** — system-aware theme switching
 
-- Node.js 18 or newer
-- npm 9 or newer
-- Chrome or Edge (for the virtual camera feature)
-- An internet connection when running in live mode (see [Environment Variables](#environment-variables) for offline mock mode)
+### Original Development (by Ahmed Ali Elwekil)
+
+These features were designed and built by Ahmed Ali Elwekil on top of the VoiceForge foundation:
+
+- **Nabra AI Branding** — نَبْرة identity, deep teal + amber design system, redesigned landing page
+- **Smart Phrase Library** — save, search, categorize, and reuse frequently used phrases; "Use Phrase" inserts text into the TTS composer; localStorage persistence
+- **Context Suggestions** — rule-based (no ML/AI) phrase suggestions for 5 contexts (Meeting, Daily Conversation, Classroom, Emergency, Presentation); labeled transparently; works fully offline
+- **Conversation History** — last 50 speech events with audio replay, "Use Again" reinsert, localStorage persistence
+- **Responsible Cloning Notice** — consent-gating modal for voice cloning; session-scoped
+- **Server Env Validation** — startup check that required env vars are set in production
+- **Deployment Configuration** — Vercel SPA routing, Render/Railway backend docs
+
+---
+
+## Architecture
+
+```
+nabra-ai/                         (repo root — originally voxena/)
+├── client/                       # Vite + React 18 SPA
+│   └── src/
+│       ├── components/
+│       │   ├── ui/               # Nabra AI design system (Button, Card, Badge…)
+│       │   ├── landing/          # LandingPage (9 sections)
+│       │   ├── phrase-library/   # Smart Phrase Library
+│       │   ├── context-suggestions/ # Context Suggestions
+│       │   ├── history/          # Conversation History
+│       │   └── [VoiceForge core — unmodified]
+│       ├── hooks/                # usePhraseLibrary, useConversationHistory, useInView
+│       ├── data/                 # contextSuggestions.js (static, no ML)
+│       └── utils/                # phraseStorage.js, historyStorage.js
+├── server/                       # Express + SQLite (VoiceForge core — no logic changes)
+│   └── validateEnv.js            # Nabra AI: startup env var validation
+├── vercel.json                   # SPA rewrite config
+└── .env.example                  # Complete env var documentation
+```
+
+---
+
+## Tech Stack
+
+| Layer       | Technology                                               |
+|-------------|----------------------------------------------------------|
+| Frontend    | React 18, Vite, Tailwind CSS v3                          |
+| Voice / ML  | ONNX Runtime Web, MediaPipe, Chatterbox TTS via Gradio   |
+| Backend     | Node.js, Express, SQLite, JWT, Helmet                    |
+| Storage     | IndexedDB (voice/audio), localStorage (phrases/history)  |
+| Testing     | Vitest, @testing-library/react                           |
+| Deployment  | Vercel (frontend), Render / Railway (backend)            |
 
 ---
 
 ## Setup
 
-1. Install Node.js 18 or newer.
-2. From the repository root, install all dependencies (this includes `@gradio/client`):
+### Prerequisites
+
+- Node.js ≥ 20.19.0
+- npm ≥ 9
+
+### Local Development
 
 ```bash
+# 1. Clone and enter the repo
+git clone https://github.com/YOUR_USERNAME/nabra-ai
+cd nabra-ai
+
+# 2. Install all workspace dependencies
 npm install
-```
 
-3. Copy the example environment file:
-
-```bash
+# 3. Copy and configure environment variables
 cp .env.example .env
-```
+# Edit .env — set VITE_MOCK_MODE=true to run without a live TTS backend
 
-4. _(Optional)_ Open `.env` and review the settings. The defaults run in offline mock mode, so no API key or internet access is needed. See [Environment Variables](#environment-variables) for the full reference.
-5. Start the client and server together:
-
-```bash
+# 4. Start both frontend and backend in watch mode
 npm run dev
 ```
 
-6. Open `http://localhost:5173` in Chrome or Edge.
+- Frontend: http://localhost:5173
+- Backend: http://localhost:3001
 
 ---
 
 ## Environment Variables
 
-| Variable             | Required | Description                                                                                                                                                                                                                              |
-| -------------------- | -------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `ELEVENLABS_API_KEY` | Yes      | Server-side API key used for voice cloning and TTS requests.                                                                                                                                                                             |
-| `PORT`               | No       | Express API port. Defaults to `3001`.                                                                                                                                                                                                    |
-| `CLIENT_URL`         | No       | Trusted frontend origin for the CORS policy. In production, set this to your deployed frontend URL (e.g. `https://voice-forge-client.vercel.app`). Defaults to `http://localhost:5173`. Requests from any other origin will be rejected. |
+See `.env.example` for the complete list with descriptions.
 
-## Using VoiceForge In A Call
+| Variable            | Required in prod | Description                                     |
+|---------------------|------------------|-------------------------------------------------|
+| `PORT`              | No               | Backend port (default: 3001)                    |
+| `NODE_ENV`          | Yes              | `production` or `development`                   |
+| `CLIENT_URL`        | Yes              | Frontend origin for CORS                        |
+| `JWT_SECRET`        | Yes              | Secret for JWT signing (min 32 chars)           |
+| `STREAM_SECRET`     | Yes              | Prevents token invalidation on restart          |
+| `GRADIO_SPACE`      | No               | Chatterbox TTS Gradio space override            |
+| `MOCK_CHATTERBOX`   | No               | `true` to skip all TTS network calls            |
+| `VITE_API_BASE_URL` | No (dev)         | Backend public URL for production frontend      |
+| `VITE_MOCK_MODE`    | No               | `true` to enable client-side mock mode          |
 
-1. Open VoiceForge in Chrome or Edge.
-2. Record a 10-second consent-based reference clip.
-3. Clone the voice and continue to the Call page.
-4. Allow webcam access.
-5. Type a phrase and press Enter or Speak.
-6. Turn on Go Live to expose the canvas stream inside the browser.
-7. In Zoom, Google Meet, or Microsoft Teams, open camera settings and select the virtual camera source you have configured.
+---
 
-## OBS Virtual Camera Setup
+## Testing
 
-Most video call apps cannot directly select a browser tab as a system camera. For the MVP, install [OBS Studio](https://obsproject.com/) and use OBS Virtual Camera as the bridge.
+```bash
+# From the repo root
+npm run test --workspace client
 
-1. Install OBS Studio.
-2. Add a **Browser Source** pointing to `http://localhost:5173`. Set the width to 1920 and height to 1080 to capture the full interface.
+# Or directly from client/
+cd client
+npx vitest run --config vitest.config.js
+```
 
-   ![OBS Browser Source Configuration](docs/images/obs_browser_source.png)
+Test files for Nabra AI original features:
+- `client/src/components/phrase-library/__tests__/PhraseLibrary.test.js`
+- `client/src/components/context-suggestions/__tests__/ContextSuggestions.test.js`
+- `client/src/components/history/__tests__/ConversationHistory.test.js`
 
-3. Crop the source to focus on the lip-synced output preview.
-4. Click **Start Virtual Camera** in the OBS Controls panel.
+---
 
-   ![OBS Start Virtual Camera](docs/images/obs_virtual_camera.png)
+## Deployment
 
-5. Select **OBS Virtual Camera** as your camera in your preferred video call application.
+### Frontend — Vercel
 
-### Video Call App Configuration
+1. Import the repository into [Vercel](https://vercel.com)
+2. `vercel.json` is already configured (SPA rewrite + Vite build)
+3. Set environment variables in the Vercel dashboard:
+   - `VITE_API_BASE_URL` → your backend URL
+   - `VITE_MOCK_MODE=false`
 
-**Zoom:**
-Go to Settings > Video > Camera and select **OBS Virtual Camera**.
+### Backend — Render or Railway
 
-![Zoom Camera Picker](docs/images/zoom_camera_picker.png)
+**Start command:** `node server/index.js`  
+**Build command:** `npm install`  
+Set all variables from `.env.example` in the platform dashboard.
 
-**Google Meet:**
-Go to Settings > Video > Camera and select **OBS Virtual Camera**.
+---
 
-![Google Meet Camera Picker](docs/images/meet_camera_picker.png)
+## Credits
 
-**Microsoft Teams:**
-Go to Settings > Devices > Camera and select **OBS Virtual Camera**.
+**Original foundation:**
+> **VoiceForge** by [itzzavdhesh](https://github.com/itzzavdhesh)  
+> Repository: https://github.com/itzzavdhesh/VoiceForge  
+> License: MIT
 
-![Microsoft Teams Camera Picker](docs/images/teams_camera_picker.png)
+The voice recording, cloning, Chatterbox TTS, ONNX lip-sync, virtual camera
+workflow, and core Express backend are from VoiceForge. Full attribution is
+maintained in the `LICENSE` file.
 
-**For detailed setup guides (including Discord and Webex) and troubleshooting tips, see our [Virtual Camera Guide](docs/virtual-camera.md).**
+**Additional development:**  
+Ahmed Ali Elwekil added the three original features, the Nabra AI برanding and
+landing page, deployment configuration, and test coverage described above.
 
-## API
-
-| Method | Endpoint                               | Description                                                                                                         |
-| ------ | -------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
-| `POST` | `/api/voice/clone`                     | Upload reference audio. Stores it server-side and returns a `voice_id`. No external API call in mock mode.          |
-| `POST` | `/api/voice/speak`                     | Send text, `voice_id`, and optional voice settings. Returns a signed `speechId` and streaming `audioUrl`.           |
-| `GET`  | `/api/voice/speak/stream?t=<speechId>` | Stream the Chatterbox-generated audio for a pending signed speech token (`t`). Proxied from the Hugging Face Space. |
-| `GET`  | `/api/voice/status`                    | Returns current engine mode (`isMock`, `space`) for debugging.                                                      |
-| `GET`  | `/api/health`                          | Returns local API health status.                                                                                    |
-
-## Roadmap
-
-- Done: Store cloned voice profiles and reference audio Blobs in IndexedDB via `client/src/utils/db.js`.
-- Done: Stream TTS audio through `POST /api/voice/speak` and `GET /api/voice/speak/stream`.
-- Done: Replaced ElevenLabs with the free ResembleAI Chatterbox Multilingual TTS engine via `@gradio/client`.
-- In progress: Voice tuning controls are wired through persisted `voice_settings`; multilingual output supports 23 languages via Chatterbox, with dedicated language controls in the UI.
-- In progress: The MVP virtual camera uses canvas capture; full WebRTC Insertable Streams frame replacement remains future work.
-- TODO: Replace the placeholder `models/wav2lip.onnx` with a real lightweight browser Wav2Lip ONNX model.
-- TODO: Implement real ONNX Runtime Web Wav2Lip inference.
-- TODO: Replace the fallback mouth animation with model-driven mouth movement.
-- Done: Add richer virtual camera documentation for OBS and each call provider.
-- TODO: Add automated browser tests for camera and microphone permission flows.
-- Done: Persist voice profiles across server restarts (local filesystem).
+---
 
 ## License
 
-MIT
+MIT License — see `LICENSE` for the original VoiceForge copyright and license text.  
+Additional work in this repository is released under the same MIT License.
 
-# TODO: feat: add an "interrupt / stop speech" button (#448)
+---
+
+## Portfolio Description
+
+> Nabra AI (نَبْرة) is a portfolio project built on the [VoiceForge](https://github.com/itzzavdhesh/VoiceForge) open-source foundation (MIT, by itzzavdhesh). The voice cloning, multilingual TTS, and lip-sync infrastructure come from that foundation. Ahmed Ali Elwekil's original contributions: Smart Phrase Library (localStorage CRUD), Context Suggestions (rule-based, offline-capable, 5 contexts), Conversation History (50-entry FIFO, replay, reuse), Nabra AI brand identity and landing page, Responsible Cloning Notice, and Vitest test suites. Stack: React 18, Vite, Tailwind CSS v3, Node.js, Express, Vitest.

@@ -1,4 +1,4 @@
-// Starts the local Express API that proxies VoiceForge requests to ElevenLabs.
+// Starts the Nabra AI Express API (built on VoiceForge foundation).
 import dotenv from "dotenv";
 import cors from "cors";
 import express from "express";
@@ -10,6 +10,7 @@ import { getDatabase } from "./utils/db.js";
 import { getIsMock } from "./utils/mock.js";
 import helmet from "helmet";
 import { requestId } from "./middleware/requestId.js";
+import { validateEnv } from "./validateEnv.js";
 
 import path from "path";
 import { fileURLToPath } from "url";
@@ -17,12 +18,15 @@ import { fileURLToPath } from "url";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 dotenv.config({ path: path.resolve(__dirname, "../.env") });
 
+// Validate environment variables before anything else
+validateEnv();
+
 if (
   process.env.NODE_ENV === "production" &&
   !process.env.STREAM_SECRET?.trim()
 ) {
   console.error(
-    "[VoiceForge] FATAL: STREAM_SECRET is not set in production. " +
+    "[Nabra AI] FATAL: STREAM_SECRET is not set in production. " +
       "All speech tokens would be invalidated on every server restart. " +
       "Set STREAM_SECRET in your environment and restart.",
   );
@@ -32,7 +36,7 @@ if (
 // Warn clearly when mock mode is active so it is never silently enabled.
 if (getIsMock()) {
   console.warn(
-    "\x1b[33m[VoiceForge] Mock mode active — Chatterbox calls are stubbed." +
+    "\x1b[33m[Nabra AI] Mock mode active — Chatterbox calls are stubbed." +
       " Voice clone returns a fixture voice_id; TTS streams silent audio." +
       " Set MOCK_CHATTERBOX=false to use the real Hugging Face engine.\x1b[0m",
   );
@@ -180,7 +184,7 @@ app.get("/api/health", async (_request, response) => {
 
   response.json({
     ok: true,
-    service: "voiceforge-api",
+    service: "nabra-ai-api",
     database: dbStatus,
     uptime: Math.round(process.uptime()),
     timestamp: new Date().toISOString(),
@@ -198,28 +202,28 @@ app.use((error, _request, response, _next) => {
     return _next(error);
   }
   response.status(error.status || 500).json({
-    error: error.message || "Unexpected VoiceForge server error.",
+    error: error.message || "Unexpected Nabra AI server error.",
   });
 });
 
 let server;
 if (process.env.NODE_ENV !== "test" && !process.env.NO_SERVER_LISTEN) {
   server = app.listen(port, () => {
-    console.log(`VoiceForge API listening on http://localhost:${port}`);
+    console.log(`Nabra AI API listening on http://localhost:${port}`);
   });
 
   const handleShutdown = (signal) => {
-    console.log(`[VoiceForge] Received ${signal}. Shutting down gracefully...`);
+    console.log(`[Nabra AI] Received ${signal}. Shutting down gracefully...`);
     if (server) {
       server.close(() => {
         console.log(
-          "[VoiceForge] Closed remaining connections. Exiting process.",
+          "[Nabra AI] Closed remaining connections. Exiting process.",
         );
         process.exit(0);
       });
       setTimeout(() => {
         console.error(
-          "[VoiceForge] Forcefully terminating due to shutdown timeout.",
+          "[Nabra AI] Forcefully terminating due to shutdown timeout.",
         );
         process.exit(1);
       }, 10000).unref();

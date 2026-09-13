@@ -8,6 +8,10 @@ import { useSpeechHistory } from "../hooks/useSpeechHistory";
 import useTTS from "../hooks/useTTS.js";
 import { LanguageSelector } from "./LanguageSelector.jsx";
 import { loadLanguage, persistLanguage } from "../utils/languages.js";
+import PhraseLibraryPanel from "./phrase-library/PhraseLibraryPanel.jsx";
+import ContextSuggestionsPanel from "./context-suggestions/ContextSuggestionsPanel.jsx";
+import HistoryPanel from "./history/HistoryPanel.jsx";
+import { useConversationHistory } from "../hooks/useConversationHistory.js";
 
 const MAX_CHARS = 500;
 
@@ -24,6 +28,7 @@ export default function VoiceForge() {
   const audioMapRef = useRef(new Map());
 
   const { speak: ttsSpeak } = useTTS();
+  const { addEntry } = useConversationHistory();
 
   const {
     history,
@@ -75,6 +80,7 @@ export default function VoiceForge() {
     try {
       await speak(text);
       addMessage(text);
+      addEntry(text, language, null); // record in Voxena conversation history
       showToast("Saved to history", "success");
     } catch {
       // speech failed — don't save to history
@@ -127,6 +133,16 @@ export default function VoiceForge() {
   );
 
   const handleReuse = useCallback(
+    (text) => {
+      setInputText(text);
+      textareaRef.current?.focus();
+      showToast("Loaded into composer", "success");
+    },
+    [showToast],
+  );
+
+  // insertToTTSInput — shared callback for Phrase Library, Context Suggestions, and History
+  const insertToTTSInput = useCallback(
     (text) => {
       setInputText(text);
       textareaRef.current?.focus();
@@ -270,7 +286,7 @@ export default function VoiceForge() {
       >
         <header className="flex flex-shrink-0 items-center gap-2 border-b border-neutral-200 px-5 py-3.5 dark:border-border dark:bg-black">
           <h1 className="text-base font-semibold text-neutral-800 dark:text-neutral-100">
-            VoiceForge
+            Nabra AI
           </h1>
           <span className="text-sm text-neutral-400 dark:text-neutral-500">
             Speech Composer
@@ -298,6 +314,14 @@ export default function VoiceForge() {
         />
 
         <QuickReplies onSelect={handleQuickReply} showToast={showToast} />
+
+        {/* ── Voxena original features ─────────────────────────────── */}
+        <div className="flex flex-col gap-3 px-5 pt-3">
+          <PhraseLibraryPanel insertToTTSInput={insertToTTSInput} />
+          <ContextSuggestionsPanel insertToTTSInput={insertToTTSInput} />
+          <HistoryPanel insertToTTSInput={insertToTTSInput} />
+        </div>
+        {/* ─────────────────────────────────────────────────────────── */}
 
         <div className="flex flex-1 flex-col gap-3 overflow-auto p-5 dark:bg-black">
           <div className="flex items-center justify-between">

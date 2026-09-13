@@ -1,4 +1,4 @@
-// Mounts the VoiceForge React application into the browser DOM.
+// Mounts the Nabra AI React application into the browser DOM.
 import React from "react";
 import ReactDOM from "react-dom/client";
 import App from "./App.jsx";
